@@ -107,6 +107,22 @@ dotnet build windows/OtpAuthenticator.App/OtpAuthenticator.App.csproj -p:Platfor
 
 To regenerate C# bindings after changing `otp-ffi`: `windows/scripts/generate-bindings.ps1`.
 
+## Multi-Device Setup
+
+Register once, use everywhere — full guide: **[docs/SYNC.md](docs/SYNC.md)**.
+
+- **All-Apple (same Apple ID)**: enable iCloud Sync on the first device; other
+  devices pick "Restore from iCloud" and enter the master password once.
+- **Cross-platform / self-hosted**: point every device at the same WebDAV URL
+  (`otp sync setup webdav <url> --user <u>`, then `otp restore <url>` on new
+  devices). The server only ever stores an encrypted blob.
+- **No server**: `otp export backup.otpvault` produces a portable encrypted
+  container — AirDrop/copy it anywhere and `otp import --merge` on the other
+  device. Same file works on Windows, Apple, and the CLI.
+
+The master password is only typed when a device joins; afterwards each device
+unlocks silently via its OS keystore and syncs merge automatically.
+
 ## Security Model
 
 - Account secrets exist only inside the encrypted vault (AES-256-GCM, random
