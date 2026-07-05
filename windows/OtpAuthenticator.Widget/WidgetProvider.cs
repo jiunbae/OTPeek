@@ -172,10 +172,11 @@ public partial class WidgetProvider : IWidgetProvider
             };
 
             WidgetManager.GetDefault().UpdateWidget(updateOptions);
+            Log($"UpdateWidget completed: Id={widgetId}, DataLength={data.Length}");
         }
-        catch
+        catch (Exception ex)
         {
-            // 업데이트 실패 무시
+            Log($"UpdateWidget failed: Id={widgetId}, {ex.GetType().Name}: {ex.Message}");
         }
     }
 
@@ -226,9 +227,16 @@ public partial class WidgetProvider : IWidgetProvider
                     "type": "Action.Execute",
                     "title": "Copy",
                     "verb": "copy",
-                    "data": "${otpCode}"
+                    "data": "${rawCode}"
                 }
-            ]
+            ],
+            "refresh": {
+                "action": {
+                    "type": "Action.Execute",
+                    "verb": "refresh"
+                },
+                "expires": "2099-12-31T23:59:59Z"
+            }
         }
         """;
     }
@@ -314,14 +322,21 @@ public partial class WidgetProvider : IWidgetProvider
                     "type": "Action.Execute",
                     "title": "Copy",
                     "verb": "copy",
-                    "data": "${otpCode}"
+                    "data": "${rawCode}"
                 },
                 {
                     "type": "Action.Execute",
                     "title": "Next",
                     "verb": "next"
                 }
-            ]
+            ],
+            "refresh": {
+                "action": {
+                    "type": "Action.Execute",
+                    "verb": "refresh"
+                },
+                "expires": "2099-12-31T23:59:59Z"
+            }
         }
         """;
     }

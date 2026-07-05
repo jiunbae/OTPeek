@@ -19,6 +19,7 @@ namespace OtpAuthenticator.App;
 /// </summary>
 public partial class App : Application
 {
+    private const int MaxTrayOtpItems = 10;
     private TaskbarIcon? _trayIcon;
 
     /// <summary>
@@ -617,8 +618,42 @@ public partial class App : Application
     private MenuFlyout CreateContextMenu()
     {
         var menu = new MenuFlyout();
+        menu.Opening += (s, e) => PopulateContextMenu(menu);
+        PopulateContextMenu(menu);
+        return menu;
+    }
 
-        // 메인 창 열기
+    private void PopulateContextMenu(MenuFlyout menu)
+    {
+        menu.Items.Clear();
+
+        var codes = GetTrayOtpCodes();
+        if (codes.Count > 0)
+        {
+            foreach (var code in codes)
+            {
+                var item = new MenuFlyoutItem
+                {
+                    Text = GetTrayOtpMenuText(code),
+                    Icon = new FontIcon { Glyph = "\uE8C8" }
+                };
+                item.Click += async (s, e) => await CopyTrayOtpAsync(code.Code);
+                menu.Items.Add(item);
+            }
+
+            menu.Items.Add(new MenuFlyoutSeparator());
+        }
+        else
+        {
+            menu.Items.Add(new MenuFlyoutItem
+            {
+                Text = "No OTP codes available",
+                IsEnabled = false,
+                Icon = new FontIcon { Glyph = "\uE946" }
+            });
+            menu.Items.Add(new MenuFlyoutSeparator());
+        }
+
         var openItem = new MenuFlyoutItem
         {
             Text = "Open OTP Authenticator",
@@ -647,8 +682,39 @@ public partial class App : Application
         };
         exitItem.Click += (s, e) => Exit();
         menu.Items.Add(exitItem);
+    }
 
-        return menu;
+    private static IReadOnlyList<QuickOtpCode> GetTrayOtpCodes()
+    {
+        try
+        {
+            return Services.GetRequiredService<QuickOtpCodeProvider>().GetCodes(MaxTrayOtpItems);
+        }
+        catch
+        {
+            return Array.Empty<QuickOtpCode>();
+        }
+    }
+
+    private static string GetTrayOtpMenuText(QuickOtpCode code)
+    {
+        string name = string.IsNullOrWhiteSpace(code.Issuer)
+            ? code.AccountName
+            : string.IsNullOrWhiteSpace(code.AccountName)
+                ? code.Issuer
+                : $"{code.Issuer} ({code.AccountName})";
+
+        return $"{name}    {code.FormattedCode}";
+    }
+
+    private static async Task CopyTrayOtpAsync(string code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+            return;
+
+        var settings = Services.GetRequiredService<ISettingsService>().Settings;
+        var clipboard = Services.GetRequiredService<IClipboardService>();
+        await clipboard.CopyAsync(code, settings.ClipboardClearSeconds);
     }
 
     private void OpenSettings()

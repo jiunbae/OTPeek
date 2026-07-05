@@ -21,6 +21,8 @@ public static class ServiceCollectionExtensions
 
         // Rust 코어 볼트 래퍼 (앱 전역에서 단일 인스턴스로 공유)
         services.AddSingleton<IOtpClientService, OtpClientService>();
+        services.AddSingleton(sp => new QuickOtpCodeProvider(
+            sp.GetRequiredService<ISecureStorageService>().DataDirectory));
 
         // v1 → v2 마이그레이션
         services.AddSingleton<ILegacyMigrationService, LegacyMigrationService>();

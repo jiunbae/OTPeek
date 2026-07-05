@@ -43,7 +43,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Widget reads the vault directly through the Rust core bindings (no WinUI, no Core). -->
+    <!-- Widget reads quick OTP data without WinUI. -->
+    <ProjectReference Include="..\OtpAuthenticator.Core.Windows\OtpAuthenticator.Core.Windows.csproj" />
     <ProjectReference Include="..\OtpAuthenticator.Interop\OtpAuthenticator.Interop.csproj" />
   </ItemGroup>
 

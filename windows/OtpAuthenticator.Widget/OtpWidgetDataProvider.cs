@@ -1,24 +1,33 @@
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
-using Uniffi.Otp;
+using OtpAuthenticator.Core.Windows.Services;
 
 namespace OtpAuthenticator.Widget;
 
 /// <summary>
-/// 위젯 데이터 제공자.
-/// DPAPI로 보호된 VMK로 볼트를 열고(OtpClient.OpenWithKey), CodesAt로 모든 TOTP 코드를
-/// 조회합니다. 위젯 프로세스에서는 Argon2를 실행하지 않으며 마스터 비밀번호도 다루지 않습니다.
-/// (docs/ARCHITECTURE.md §5.1, §10.5)
+/// 위젯 데이터 제공자. v2 볼트를 우선 읽고, 아직 볼트가 없으면 v1 로컬 저장소를 fallback으로 사용합니다.
 /// </summary>
 public class OtpWidgetDataProvider
 {
-    // SecureStorageService와 동일해야 하는 상수
-    private static readonly byte[] VmkEntropy = Encoding.UTF8.GetBytes("OtpAuthenticator.Vmk.v2");
+    private readonly QuickOtpCodeProvider _codeProvider = new();
 
-    private List<AccountCode> _cachedCodes = new();
+    private List<QuickOtpCode> _cachedCodes = new();
     private DateTime _lastRefresh = DateTime.MinValue;
     private static readonly TimeSpan CacheExpiry = TimeSpan.FromSeconds(5);
+
+    private static void Log(string message)
+    {
+        try
+        {
+            var logPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "OtpAuthenticator", "widget.log");
+            Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
+            File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [Data] {message}\n");
+        }
+        catch
+        {
+        }
+    }
 
     /// <summary>
     /// 위젯 데이터 JSON 반환
@@ -35,32 +44,16 @@ public class OtpWidgetDataProvider
 
         try
         {
-            var account = entry.account;
-            var otp = entry.code;
-
-            string raw = otp.code;
-            string formattedCode = raw.Length == 6
-                ? $"{raw[..3]} {raw[3..]}"
-                : (raw.Length == 8 ? $"{raw[..4]} {raw[4..]}" : raw);
-
-            long nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            long periodMs = Math.Max(1, otp.validUntil - otp.validFrom);
-            double progress = Math.Clamp((double)(otp.validUntil - nowMs) / periodMs, 0.0, 1.0);
-            int remainingSeconds = (int)Math.Max(0, (otp.validUntil - nowMs) / 1000);
-
-            string issuer = string.IsNullOrEmpty(account.issuer) ? "OTP" : account.issuer!;
-            string initial = ComputeInitial(account);
-
             var data = new
             {
-                issuer,
-                accountName = account.accountName,
-                initial,
-                otpCode = formattedCode,
-                rawCode = raw,
-                timeProgress = progress,
-                remainingSeconds,
-                progressColor = progress > 0.3 ? "accent" : "attention",
+                issuer = string.IsNullOrWhiteSpace(entry.Issuer) ? "OTP" : entry.Issuer,
+                accountName = entry.AccountName,
+                initial = entry.Initial,
+                otpCode = entry.FormattedCode,
+                rawCode = entry.Code,
+                timeProgress = entry.Progress,
+                remainingSeconds = entry.RemainingSeconds,
+                progressColor = entry.Progress > 0.3 ? "accent" : "attention",
                 accountCount = _cachedCodes.Count,
                 currentIndex = index + 1,
                 hasNext = index < _cachedCodes.Count - 1,
@@ -69,19 +62,11 @@ public class OtpWidgetDataProvider
 
             return JsonSerializer.Serialize(data);
         }
-        catch
+        catch (Exception ex)
         {
+            Log($"GetWidgetData failed: {ex.GetType().Name}: {ex.Message}");
             return GetEmptyData();
         }
-    }
-
-    private static string ComputeInitial(OtpAccount account)
-    {
-        if (!string.IsNullOrEmpty(account.issuer))
-            return account.issuer![..1].ToUpperInvariant();
-        if (!string.IsNullOrEmpty(account.accountName))
-            return account.accountName[..1].ToUpperInvariant();
-        return "?";
     }
 
     private static string GetEmptyData()
@@ -112,52 +97,14 @@ public class OtpWidgetDataProvider
 
         try
         {
-            byte[]? vmk = LoadVaultKey();
-            if (vmk == null)
-            {
-                _cachedCodes = new List<AccountCode>();
-                _lastRefresh = DateTime.UtcNow;
-                return;
-            }
-
-            using var client = OtpClient.OpenWithKey(VaultPath, vmk);
-            long nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-
-            // 즐겨찾기 우선, 그 다음 정렬 순서
-            _cachedCodes = client.CodesAt(nowMs)
-                .OrderByDescending(c => c.account.isFavorite)
-                .ThenBy(c => c.account.sortOrder)
-                .ToList();
-
+            _cachedCodes = _codeProvider.GetCodes(maxCount: 20).ToList();
             _lastRefresh = DateTime.UtcNow;
+            Log($"Refreshed {_cachedCodes.Count} OTP code(s)");
         }
-        catch
+        catch (Exception ex)
         {
-            // 로드 실패 시 기존 캐시 유지
-        }
-    }
-
-    private static string DataDirectory => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "OtpAuthenticator");
-
-    private static string VaultPath => Path.Combine(DataDirectory, "vault.otpvault");
-
-    private static string VmkPath => Path.Combine(DataDirectory, "vmk.bin");
-
-    private static byte[]? LoadVaultKey()
-    {
-        try
-        {
-            if (!File.Exists(VmkPath))
-                return null;
-
-            byte[] encrypted = File.ReadAllBytes(VmkPath);
-            return ProtectedData.Unprotect(encrypted, VmkEntropy, DataProtectionScope.CurrentUser);
-        }
-        catch
-        {
-            return null;
+            Log($"Refresh failed: {ex.GetType().Name}: {ex.Message}");
+            _lastRefresh = DateTime.UtcNow;
         }
     }
 }

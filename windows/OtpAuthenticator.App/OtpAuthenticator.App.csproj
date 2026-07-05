@@ -38,6 +38,12 @@
     <ProjectReference Include="..\OtpAuthenticator.Interop\OtpAuthenticator.Interop.csproj" />
   </ItemGroup>
 
+  <Target Name="BuildWidgetForPackage" BeforeTargets="CopyWidgetToPackage" Condition="'$(WindowsPackageType)' == 'MSIX'">
+    <MSBuild Projects="..\OtpAuthenticator.Widget\OtpAuthenticator.Widget.csproj"
+             Targets="Build"
+             Properties="Configuration=$(Configuration);Platform=$(Platform)" />
+  </Target>
+
   <!-- Widget 출력 파일을 패키지에 복사 (Widget.exe만, DLL은 App과 공유) -->
   <Target Name="CopyWidgetToPackage" AfterTargets="Build" Condition="'$(WindowsPackageType)' == 'MSIX'">
     <PropertyGroup>
@@ -57,6 +63,23 @@
       <WidgetTemplates Include="$(WidgetOutputPath)\Templates\**\*.*" />
     </ItemGroup>
     <Copy SourceFiles="@(WidgetTemplates)" DestinationFolder="$(OutputPath)Templates\%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="AddWidgetFilesToMsixPayload" BeforeTargets="_ComputeAppxPackagePayload" DependsOnTargets="CopyWidgetToPackage" Condition="'$(WindowsPackageType)' == 'MSIX'">
+    <ItemGroup>
+      <WidgetPackageRootFiles Include="$(OutputPath)OtpAuthenticator.Widget.exe" />
+      <WidgetPackageRootFiles Include="$(OutputPath)OtpAuthenticator.Widget.dll" />
+      <WidgetPackageRootFiles Include="$(OutputPath)OtpAuthenticator.Widget.deps.json" />
+      <WidgetPackageRootFiles Include="$(OutputPath)OtpAuthenticator.Widget.runtimeconfig.json" />
+      <WidgetPackageTemplateFiles Include="$(OutputPath)Templates\**\*.*" />
+
+      <AppxPackagePayload Include="@(WidgetPackageRootFiles)">
+        <TargetPath>%(Filename)%(Extension)</TargetPath>
+      </AppxPackagePayload>
+      <AppxPackagePayload Include="@(WidgetPackageTemplateFiles)">
+        <TargetPath>Templates\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+      </AppxPackagePayload>
+    </ItemGroup>
   </Target>
 
   <ItemGroup>
