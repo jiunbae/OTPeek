@@ -230,6 +230,29 @@ public final class OtpStore: ObservableObject {
         }
     }
 
+    /// 백업/`.otpvault` 파일 가져오기 결과. UI 가 가져온 개수 피드백과 "비밀번호 오류 → 재시도"
+    /// 를 구분해서 보여줄 수 있도록 성공(개수) / 비밀번호 오류 / 기타 실패를 나눠서 반환한다.
+    public enum ImportOutcome {
+        case success(Int)
+        case wrongPassword
+        case failure(String)
+    }
+
+    /// `importBackup` 과 동일하지만 가져온 계정 수와 오류 종류를 함께 돌려준다.
+    public func importBackupChecked(data: Data, password: String, merge: Bool) -> ImportOutcome {
+        guard let client = client else { return .failure("Vault is not open.") }
+        do {
+            let count = try client.importBackup(data: data, password: password, merge: merge)
+            refresh()
+            VaultAccess.notifyChange()
+            return .success(Int(count))
+        } catch OtpError.WrongPassword {
+            return .wrongPassword
+        } catch {
+            return .failure(describe(error))
+        }
+    }
+
     // MARK: - 코드 (필요 시 코어 경유)
 
     /// 계정의 현재 코드. HOTP 는 코어에서 카운터 증가 없이 peek.

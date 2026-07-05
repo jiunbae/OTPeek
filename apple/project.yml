@@ -44,6 +44,24 @@ buildCoreScript: &buildCoreScript
       "${PROJECT_DIR}/scripts/build-core.sh"
     fi
 
+# `.otpvault` 파일 연결 (Path C: 백업 파일을 열면 앱이 바로 가져오기로 진입).
+# Exported UTI + CFBundleDocumentTypes 를 iOS/macOS 앱 타깃 Info.plist 에 심는다.
+otpvaultExportedTypes: &otpvaultExportedTypes
+  - UTTypeIdentifier: com.otpauthenticator.otpvault
+    UTTypeDescription: OTP Encrypted Vault
+    UTTypeConformsTo:
+      - public.data
+    UTTypeTagSpecification:
+      public.filename-extension:
+        - otpvault
+
+otpvaultDocumentTypes: &otpvaultDocumentTypes
+  - CFBundleTypeName: OTP Encrypted Vault
+    CFBundleTypeRole: Editor
+    LSHandlerRank: Owner
+    LSItemContentTypes:
+      - com.otpauthenticator.otpvault
+
 targets:
   # iOS App
   OtpAuthenticator-iOS:
@@ -63,10 +81,30 @@ targets:
       - *coreFramework
       - target: OtpWidgetExtension-iOS
         embed: true
+    # Info.plist 를 XcodeGen 이 생성한다(INFOPLIST_FILE 는 자동 설정). 문서 타입은
+    # 여기 properties 로 주입. iOS 는 파일을 컨테이너로 복사하도록 in-place 를 끈다.
+    info:
+      path: OtpAuthenticator/Info-iOS.plist
+      properties:
+        CFBundleDisplayName: OTP Authenticator
+        ITSAppUsesNonExemptEncryption: false
+        NSCameraUsageDescription: Camera access is needed to scan QR codes for adding accounts.
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        LSSupportsOpeningDocumentsInPlace: false
+        UTExportedTypeDeclarations: *otpvaultExportedTypes
+        CFBundleDocumentTypes: *otpvaultDocumentTypes
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.otpauthenticator.app
-        INFOPLIST_FILE: OtpAuthenticator/Info.plist
         CODE_SIGN_ENTITLEMENTS: OtpAuthenticator/OtpAuthenticator.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         PRODUCT_NAME: OTP Authenticator
@@ -93,10 +131,18 @@ targets:
       - *coreFramework
       - target: OtpWidgetExtension-macOS
         embed: true
+    # Info.plist 를 XcodeGen 이 생성한다(INFOPLIST_FILE 는 자동 설정). 문서 타입 주입.
+    info:
+      path: OtpAuthenticator/Info-macOS.plist
+      properties:
+        CFBundleDisplayName: OTP Authenticator
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        ITSAppUsesNonExemptEncryption: false
+        UTExportedTypeDeclarations: *otpvaultExportedTypes
+        CFBundleDocumentTypes: *otpvaultDocumentTypes
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.otpauthenticator.app
-        INFOPLIST_FILE: OtpAuthenticator/Info.plist
         CODE_SIGN_ENTITLEMENTS: OtpAuthenticator/OtpAuthenticator.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         PRODUCT_NAME: OTP Authenticator

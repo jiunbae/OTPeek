@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 /// 볼트를 생성/열기 하는 진입점이 필요해졌다.
 struct OnboardingView: View {
     @EnvironmentObject var store: OtpStore
+    @EnvironmentObject var incoming: IncomingVaultFile
 
     @State private var password = ""
     @State private var confirmPassword = ""
@@ -79,6 +80,18 @@ struct OnboardingView: View {
         .frame(width: 460, height: 460)
         #endif
         .sheet(isPresented: $showingRestore) { restoreSheet }
+        // 신규 설치 상태에서 .otpvault 파일이 열리면, 그 파일을 복원 blob 으로 삼아 복원 시트를 연다.
+        .onAppear { consumeIncomingFileIfNeeded() }
+        .onChange(of: incoming.pendingData) { _, _ in consumeIncomingFileIfNeeded() }
+    }
+
+    /// 볼트가 아직 없을 때(=복원 가능한 create/migrate 모드) 열린 파일을 복원 대상으로 소비한다.
+    /// pendingData 를 즉시 비워 RootView 의 가져오기 시트와 이중 처리되지 않게 한다.
+    private func consumeIncomingFileIfNeeded() {
+        guard mode != .unlock, let data = incoming.pendingData else { return }
+        restoreData = data
+        incoming.pendingData = nil
+        showingRestore = true
     }
 
     // MARK: - Copy
@@ -184,4 +197,5 @@ struct OnboardingView: View {
 #Preview {
     OnboardingView()
         .environmentObject(OtpStore())
+        .environmentObject(IncomingVaultFile.shared)
 }

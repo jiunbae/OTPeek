@@ -22,6 +22,10 @@ struct SettingsView: View {
     @State private var backupPassword = ""
     @State private var pendingImportData: Data?
 
+    // 내보내기 대상: 파일로 저장할지 / 공유 시트(AirDrop 등)로 보낼지.
+    private enum ExportDestination { case save, share }
+    @State private var exportDestination: ExportDestination = .save
+
     var body: some View {
         Form {
             Section("General") {
@@ -86,8 +90,17 @@ struct SettingsView: View {
                 #endif
 
                 Button("Export Encrypted Backup") {
+                    exportDestination = .save
                     backupPassword = ""
                     showingExportPassword = true
+                }
+
+                Button {
+                    exportDestination = .share
+                    backupPassword = ""
+                    showingExportPassword = true
+                } label: {
+                    Label("Share Backup (AirDrop…)", systemImage: "square.and.arrow.up")
                 }
 
                 Button("Import Backup") {
@@ -154,18 +167,57 @@ struct SettingsView: View {
 
     private func exportBackup() {
         guard let data = appState.exportBackup(password: backupPassword) else { return }
+        switch exportDestination {
+        case .save:  saveBackup(data)
+        case .share: shareBackup(data)
+        }
+    }
 
+    /// 내보낸 컨테이너를 임시 디렉터리에 이름 있는 `.otpvault` 파일로 쓴다.
+    /// 공유 시트/AirDrop 은 원시 Data 보다 파일 URL 일 때 확장자·파일명이 유지된다.
+    private func writeTempBackup(_ data: Data) -> URL? {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("OTP Backup.otpvault")
+        do {
+            try data.write(to: url, options: .atomic)
+            return url
+        } catch {
+            return nil
+        }
+    }
+
+    private func saveBackup(_ data: Data) {
         #if os(macOS)
         let panel = NSSavePanel()
         panel.nameFieldStringValue = "otp_backup.otpvault"
+        if let type = UTType(filenameExtension: "otpvault") {
+            panel.allowedContentTypes = [type]
+        }
         if panel.runModal() == .OK, let url = panel.url {
             try? data.write(to: url)
         }
         #else
-        let activityVC = UIActivityViewController(activityItems: [data], applicationActivities: nil)
+        // iOS 에는 저장 패널이 없다: 공유 시트의 "파일에 저장"으로 저장한다.
+        shareBackup(data)
+        #endif
+    }
+
+    private func shareBackup(_ data: Data) {
+        guard let url = writeTempBackup(data) else { return }
+        #if os(macOS)
+        let picker = NSSharingServicePicker(items: [url])
+        if let view = NSApp.keyWindow?.contentView {
+            picker.show(relativeTo: view.bounds, of: view, preferredEdge: .minY)
+        }
+        #else
+        let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let window = windowScene.windows.first,
            let rootVC = window.rootViewController {
+            // iPad: 팝오버 앵커가 없으면 크래시하므로 화면 중앙에 앵커.
+            activityVC.popoverPresentationController?.sourceView = rootVC.view
+            activityVC.popoverPresentationController?.sourceRect = CGRect(
+                x: rootVC.view.bounds.midX, y: rootVC.view.bounds.midY, width: 0, height: 0)
             rootVC.present(activityVC, animated: true)
         }
         #endif
