@@ -12,6 +12,17 @@ struct OtpAuthenticatorApp: App {
     // macOS 에서 SwiftUI App 의 .onOpenURL 은 파일(문서) 오픈에 신뢰성이 떨어진다.
     // Finder 더블클릭 / AirDrop 수신은 AppDelegate 의 application(_:open:) 로 받는 것이 확실하다.
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
+    /// A template menu-bar icon sized to fill the bar. Built from the SF Symbol
+    /// at an explicit point size because MenuBarExtra ignores SwiftUI font sizing.
+    static var menuBarIcon: NSImage {
+        let config = NSImage.SymbolConfiguration(pointSize: 19, weight: .semibold)
+        let image = NSImage(systemSymbolName: "lock.shield.fill",
+                            accessibilityDescription: "OTP Authenticator")?
+            .withSymbolConfiguration(config)
+        image?.isTemplate = true
+        return image ?? NSImage()
+    }
     #endif
 
     var body: some Scene {
@@ -39,7 +50,9 @@ struct OtpAuthenticatorApp: App {
             MenuBarView()
                 .environmentObject(appState)
         } label: {
-            Image(systemName: "lock.shield.fill")
+            // SwiftUI ignores .font() on a MenuBarExtra label, so build an
+            // explicitly-sized template NSImage to fill the menu bar height.
+            Image(nsImage: Self.menuBarIcon)
         }
         .menuBarExtraStyle(.window)
         #endif

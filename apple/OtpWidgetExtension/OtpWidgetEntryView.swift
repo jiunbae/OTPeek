@@ -34,7 +34,7 @@ struct SmallWidgetView: View {
         VStack(alignment: .leading, spacing: 8) {
             // Header
             HStack {
-                InitialCircle(initial: entry.initial, color: entry.color, size: 32)
+                WidgetAccountIcon(iconData: entry.iconData, initial: entry.initial, color: entry.color, size: 32)
 
                 Spacer()
 
@@ -75,7 +75,7 @@ struct MediumWidgetView: View {
         HStack(spacing: 16) {
             // Left: Account Info
             VStack(alignment: .leading, spacing: 8) {
-                InitialCircle(initial: entry.initial, color: entry.color, size: 44)
+                WidgetAccountIcon(iconData: entry.iconData, initial: entry.initial, color: entry.color, size: 44)
 
                 Text(entry.displayIssuer)
                     .font(.headline)

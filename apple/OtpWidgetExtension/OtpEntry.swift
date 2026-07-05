@@ -8,6 +8,8 @@ struct OtpEntry: TimelineEntry {
     let code: String
     let progress: Double
     let remainingSeconds: Int
+    /// 공유 캐시에서 읽은 파비콘/로고(있으면). 없으면 이니셜 원.
+    var iconData: Data? = nil
 
     var hasAccount: Bool {
         return account != nil

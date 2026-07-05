@@ -1,14 +1,47 @@
 import SwiftUI
 
+#if os(iOS)
+/// iOS 계정 목록의 폴더 필터. macOS 는 사이드바가 담당한다.
+enum FolderFilter: Hashable {
+    case all, favorites, uncategorized, folder(String)
+}
+#endif
+
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
+    #if os(iOS)
+    // iOS 는 설정을 담을 별도 씬(macOS Settings/MenuBar)이 없으므로 시트로 띄운다.
+    @State private var showingSettings = false
+    // iOS 폴더(그룹) 필터/편집 상태.
+    @State private var folderFilter: FolderFilter = .all
+    @State private var editingFolder: OtpFolder?
+
+    /// 선택된 폴더 칩에 맞춰 계정 목록을 필터링해서 보여준다.
+    @ViewBuilder private var filteredAccountList: some View {
+        switch folderFilter {
+        case .all:            AccountListView()
+        case .favorites:      AccountListView(showOnlyFavorites: true)
+        case .uncategorized:  AccountListView(folderId: "uncategorized")
+        case .folder(let id): AccountListView(folderId: id)
+        }
+    }
+    #endif
 
     var body: some View {
         #if os(iOS)
         NavigationStack {
-            AccountListView()
-                .navigationTitle("OTP Authenticator")
+            VStack(spacing: 0) {
+                FolderChipBar(filter: $folderFilter, onEdit: { editingFolder = $0 })
+                filteredAccountList
+            }
                 .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            showingSettings = true
+                        } label: {
+                            Image(systemName: "gearshape")
+                        }
+                    }
                     ToolbarItem(placement: .primaryAction) {
                         Menu {
                             Button {
@@ -23,12 +56,18 @@ struct ContentView: View {
                                 Label("Import from Image", systemImage: "photo")
                             }
 
-                            Divider()
-
                             Button {
                                 appState.showingAddAccount = true
                             } label: {
                                 Label("Add Manually", systemImage: "plus")
+                            }
+
+                            Divider()
+
+                            Button {
+                                appState.showingAddFolder = true
+                            } label: {
+                                Label("New Folder", systemImage: "folder.badge.plus")
                             }
                         } label: {
                             Image(systemName: "plus")
@@ -45,6 +84,27 @@ struct ContentView: View {
                 }
                 .sheet(isPresented: $appState.showingQRImageImport) {
                     QRImageImportView()
+                        .environmentObject(appState)
+                }
+                .sheet(isPresented: $showingSettings) {
+                    NavigationStack {
+                        SettingsView()
+                            .environmentObject(appState)
+                            .navigationTitle("Settings")
+                            .navigationBarTitleDisplayMode(.inline)
+                            .toolbar {
+                                ToolbarItem(placement: .confirmationAction) {
+                                    Button("Done") { showingSettings = false }
+                                }
+                            }
+                    }
+                }
+                .sheet(isPresented: $appState.showingAddFolder) {
+                    AddFolderView()
+                        .environmentObject(appState)
+                }
+                .sheet(item: $editingFolder) { folder in
+                    EditFolderView(folder: folder)
                         .environmentObject(appState)
                 }
         }
@@ -454,6 +514,75 @@ struct EditFolderView: View {
         .frame(width: 380)
     }
 }
+
+// MARK: - iOS Folder Chip Bar
+
+#if os(iOS)
+/// 계정 목록 위 가로 스크롤 폴더(그룹) 칩 바. 탭으로 필터 전환, 롱프레스로 편집/삭제.
+struct FolderChipBar: View {
+    @EnvironmentObject var appState: AppState
+    @Binding var filter: FolderFilter
+    var onEdit: (OtpFolder) -> Void
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                chip(title: "All", icon: "square.grid.2x2",
+                     count: appState.accounts.count, value: .all)
+
+                chip(title: "Favorites", icon: "star.fill",
+                     count: appState.accounts.filter { $0.isFavorite }.count, value: .favorites)
+
+                ForEach(appState.folders) { folder in
+                    chip(title: folder.name, icon: folder.iconName,
+                         count: appState.accountCount(inFolder: folder.id), value: .folder(folder.id))
+                        .contextMenu {
+                            Button { onEdit(folder) } label: { Label("Edit Folder", systemImage: "pencil") }
+                            Button(role: .destructive) {
+                                if filter == .folder(folder.id) { filter = .all }
+                                appState.deleteFolder(folder)
+                            } label: { Label("Delete Folder", systemImage: "trash") }
+                        }
+                }
+
+                chip(title: "Uncategorized", icon: "tray",
+                     count: appState.unfolderedAccounts.count, value: .uncategorized)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+        }
+        .background(.bar)
+    }
+
+    @ViewBuilder
+    private func chip(title: String, icon: String, count: Int, value: FolderFilter) -> some View {
+        let selected = filter == value
+        Button {
+            filter = value
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: icon)
+                    .font(.system(size: 11, weight: .semibold))
+                Text(title)
+                    .font(.system(size: 13, weight: .medium))
+                    .lineLimit(1)
+                if count > 0 {
+                    Text("\(count)")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(selected ? Color.white.opacity(0.9) : .secondary)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(
+                Capsule().fill(selected ? Color.accentColor : Color.secondary.opacity(0.15))
+            )
+            .foregroundStyle(selected ? Color.white : Color.primary)
+        }
+        .buttonStyle(.plain)
+    }
+}
+#endif
 
 // MARK: - Preview
 

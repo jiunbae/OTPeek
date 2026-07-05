@@ -85,40 +85,57 @@ struct AccountListView: View {
 
     private var accountList: some View {
         ScrollView {
-            LazyVStack(spacing: 12) {
-                // Show favorites section if not already filtering by favorites and has favorites
+            // LazyVStack keeps only visible rows alive, so idle CPU stays minimal
+            // and drops to ~0 when the window is occluded (per-row TimelineViews pause).
+            LazyVStack(alignment: .leading, spacing: 0) {
                 if !showOnlyFavorites && !favorites.isEmpty {
-                    Section {
-                        ForEach(favorites) { account in
-                            AccountCardView(account: account)
-                                .contextMenu {
-                                    accountContextMenu(for: account)
-                                }
-                        }
-                    } header: {
-                        SectionHeader(title: "Favorites", icon: "star.fill")
-                    }
+                    sectionHeader("Favorites", icon: "star.fill", count: favorites.count)
+                    rows(favorites)
                 }
 
-                // Show regular accounts
-                let accountsToShow = showOnlyFavorites ? displayedAccounts : regular
-                if !accountsToShow.isEmpty {
-                    Section {
-                        ForEach(accountsToShow) { account in
-                            AccountCardView(account: account)
-                                .contextMenu {
-                                    accountContextMenu(for: account)
-                                }
-                        }
-                    } header: {
-                        if !showOnlyFavorites && !favorites.isEmpty {
-                            SectionHeader(title: "Accounts", icon: "list.bullet")
-                        }
+                let rest = showOnlyFavorites ? displayedAccounts : regular
+                if !rest.isEmpty {
+                    if !showOnlyFavorites && !favorites.isEmpty {
+                        sectionHeader("All Accounts", icon: "person.text.rectangle", count: rest.count)
                     }
+                    rows(rest)
                 }
             }
-            .padding()
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    @ViewBuilder
+    private func rows(_ accounts: [OtpAccount]) -> some View {
+        ForEach(Array(accounts.enumerated()), id: \.element.id) { index, account in
+            AccountCardView(account: account)
+                .padding(.horizontal, 12)
+                .contextMenu { accountContextMenu(for: account) }
+            if index < accounts.count - 1 {
+                Divider().padding(.leading, 68).padding(.trailing, 16)
+            }
+        }
+    }
+
+    private func sectionHeader(_ title: String, icon: String, count: Int) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 11, weight: .semibold))
+            Text(title.uppercased())
+                .font(.system(size: 11, weight: .semibold))
+            Text("\(count)")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 1)
+                .background(Capsule().fill(Color.secondary.opacity(0.15)))
+            Spacer()
+        }
+        .foregroundColor(.secondary)
+        .padding(.horizontal, 20)
+        .padding(.top, 14)
+        .padding(.bottom, 6)
     }
 
     @ViewBuilder

@@ -9,6 +9,9 @@ struct OtpWidgetBundle: WidgetBundle {
 
         // Configurable widget (user can select account)
         ConfigurableOtpWidget()
+
+        // Multi-account list widget (tap a row to copy its code)
+        MultiOtpWidget()
     }
 }
 

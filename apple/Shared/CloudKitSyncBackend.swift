@@ -4,7 +4,7 @@ import CloudKit
 /// 코어의 `SyncBackend`(UniFFI foreign trait) 를 CloudKit 으로 구현한다.
 /// 백엔드는 암호화된 불투명 바이트만 옮기며 평문을 절대 보지 않는다.
 ///
-/// - Container: iCloud.com.otpauthenticator
+/// - Container: iCloud.ai.callabo.otpauthenticator (see `containerIdentifier`)
 /// - Private DB, record type "Vault", recordName "vault"
 /// - blob: Data, recordChangeTag 를 etag 로 사용
 /// - if_match → save policy .ifServerRecordUnchanged
@@ -14,7 +14,13 @@ import CloudKit
 /// 반드시 메인 스레드가 아닌 곳에서 호출해야 한다(OtpStore.syncNow 가 보장).
 public final class CloudKitSyncBackend: SyncBackend, @unchecked Sendable {
 
-    private let containerId = "iCloud.com.otpauthenticator"
+    /// CloudKit container backing sync. Must match the app's
+    /// `com.apple.developer.icloud-container-identifiers` entitlement.
+    /// A team-unique reverse-DNS id (not the generic `iCloud.com.otpauthenticator`,
+    /// which is globally taken) so automatic provisioning can create it.
+    public static let containerIdentifier = "iCloud.ai.callabo.otpauthenticator"
+
+    private let containerId = CloudKitSyncBackend.containerIdentifier
     private let recordType = "Vault"
     private let recordName = "vault"
     private let blobField = "blob"

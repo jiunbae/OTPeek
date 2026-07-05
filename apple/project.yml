@@ -12,6 +12,9 @@ settings:
   base:
     SWIFT_VERSION: "5.9"
     ENABLE_USER_SCRIPT_SANDBOXING: NO
+    # 서명 팀. xcodegen generate 가 매번 프로젝트를 새로 만들므로 여기 고정해
+    # Xcode 에서 팀을 다시 고르지 않아도 되게 한다(자동 서명과 함께 동작).
+    DEVELOPMENT_TEAM: BU7DZ6PQ2D
 
 configs:
   Debug: debug
@@ -71,6 +74,13 @@ targets:
       - path: OtpAuthenticator
         excludes:
           - "**/.DS_Store"
+          # 타깃별 Info plist 는 아래 `info.path` 로 INFOPLIST_FILE 에 지정된다.
+          # 소스로도 쓸어 담기면 다른 플랫폼 plist 가 Copy Bundle Resources 로 들어가
+          # 번들 루트에 CFBundleExecutable=$(EXECUTABLE_NAME)(미치환) stray plist 를 남긴다.
+          # CoreDevice 가 Info*.plist 글롭 시 Info-macOS.plist 를 먼저 읽어 실기기 설치가
+          # "main executable could not be determined" 로 깨진다. 둘 다 리소스에서 제외.
+          - "Info-iOS.plist"
+          - "Info-macOS.plist"
       - path: Shared
         excludes:
           - "**/.DS_Store"
@@ -121,6 +131,13 @@ targets:
       - path: OtpAuthenticator
         excludes:
           - "**/.DS_Store"
+          # 타깃별 Info plist 는 아래 `info.path` 로 INFOPLIST_FILE 에 지정된다.
+          # 소스로도 쓸어 담기면 다른 플랫폼 plist 가 Copy Bundle Resources 로 들어가
+          # 번들 루트에 CFBundleExecutable=$(EXECUTABLE_NAME)(미치환) stray plist 를 남긴다.
+          # CoreDevice 가 Info*.plist 글롭 시 Info-macOS.plist 를 먼저 읽어 실기기 설치가
+          # "main executable could not be determined" 로 깨진다. 둘 다 리소스에서 제외.
+          - "Info-iOS.plist"
+          - "Info-macOS.plist"
       - path: Shared
         excludes:
           - "**/.DS_Store"

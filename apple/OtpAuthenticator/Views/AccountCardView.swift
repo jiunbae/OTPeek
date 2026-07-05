@@ -5,159 +5,138 @@ import AppKit
 import UIKit
 #endif
 
+/// One compact account row (list form). The OTP code is the emphasized element;
+/// issuer/account are secondary; the countdown ring is a quiet cue. Click the
+/// row to copy. Designed to sit inside a grouped container (see AccountListView).
 struct AccountCardView: View {
     let account: OtpAccount
     @EnvironmentObject var appState: AppState
     @State private var isCopied = false
     @State private var showingEditSheet = false
     @State private var showingDeleteAlert = false
+    @State private var hovering = false
+    // 행 탭 시 코드 복사 여부(설정에서 끌 수 있음). 기본 ON.
+    @AppStorage("autoClipboard") private var autoClipboard = true
 
-    private var currentCode: String {
-        appState.code(for: account) ?? "------"
-    }
+    /// Freshly computed code, used for the copy action (read-only).
+    private var currentCode: String { appState.code(for: account) ?? "------" }
 
-    private var formattedCode: String {
-        let code = currentCode
-        let mid = code.count / 2
-        return String(code.prefix(mid)) + " " + String(code.suffix(code.count - mid))
-    }
-
-    private var progress: Double {
-        OtpGenerator.getProgress(period: account.period)
-    }
-
-    private var remainingSeconds: Int {
-        OtpGenerator.getRemainingSeconds(period: account.period)
+    private var title: String {
+        account.issuerText.isEmpty ? account.accountName : account.issuerText
     }
 
     var body: some View {
-        HStack(spacing: 16) {
-            // Initial Circle
-            InitialCircle(
-                initial: account.initial,
-                color: account.displayColor,
-                size: 48
-            )
+        HStack(spacing: 12) {
+            AccountIconView(account: account, size: 34)
 
-            // Account Info
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(account.issuerText.isEmpty ? account.accountName : account.issuerText)
-                        .font(.headline)
-
+            // Identity (secondary)
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(spacing: 4) {
+                    Text(title)
+                        .font(.system(size: 13, weight: .semibold))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
                     if account.isFavorite {
                         Image(systemName: "star.fill")
+                            .font(.system(size: 9))
                             .foregroundColor(.yellow)
-                            .font(.caption)
                     }
                 }
-
                 if !account.issuerText.isEmpty {
                     Text(account.accountName)
-                        .font(.subheadline)
+                        .font(.system(size: 11))
                         .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
-            Spacer()
-
-            // OTP Code (클릭하여 복사)
-            Button {
-                copyCode()
-            } label: {
-                VStack(alignment: .trailing, spacing: 6) {
-                    HStack(spacing: 6) {
-                        Text(formattedCode)
-                            .font(.system(.title2, design: .monospaced))
-                            .fontWeight(.bold)
-                            .foregroundColor(remainingSeconds < 10 ? .red : .primary)
-
-                        // 체크 아이콘 공간 미리 확보
+            // Code (hero) + countdown. The whole row copies (see below);
+            // on copy the ring swaps to a check so digits are never covered.
+            OTPTick(account: account,
+                    code: { appState.code(for: account, at: $0) ?? "------" }) { code, remaining, progress in
+                let urgent = remaining < 10
+                HStack(spacing: 10) {
+                    if isCopied {
                         Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 22))
                             .foregroundColor(.green)
-                            .font(.title3)
-                            .opacity(isCopied ? 1 : 0)
+                            .frame(width: 22, height: 22)
+                    } else {
+                        CountdownRing(progress: progress, remaining: remaining, urgent: urgent, size: 22)
                     }
-
-                    HStack(spacing: 8) {
-                        Text("\(remainingSeconds)s")
-                            .font(.caption)
-                            .foregroundColor(remainingSeconds < 10 ? .red : .secondary)
-
-                        ProgressView(value: progress)
-                            .progressViewStyle(.linear)
-                            .tint(remainingSeconds < 10 ? .red : .blue)
-                            .frame(width: 60)
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(isCopied ? Color.green.opacity(0.15) : Color.secondary.opacity(0.08))
-                )
-            }
-            .buttonStyle(.plain)
-            #if os(macOS)
-            .onHover { hovering in
-                if hovering {
-                    NSCursor.pointingHand.push()
-                } else {
-                    NSCursor.pop()
+                    Text(formatOtpCode(code))
+                        .font(.system(.title3, design: .monospaced))
+                        .fontWeight(.semibold)
+                        .monospacedDigit()
+                        .lineLimit(1)
+                        .fixedSize()
+                        .foregroundColor(isCopied ? .green : (urgent ? .red : .primary))
                 }
             }
-            #endif
-            .animation(.easeInOut(duration: 0.2), value: isCopied)
+            .fixedSize()
 
-            // Menu (더보기)
+            // Overflow menu (quiet until hover on macOS)
             Menu {
-                Button {
-                    showingEditSheet = true
-                } label: {
-                    Label("Edit", systemImage: "pencil")
+                Button { showingEditSheet = true } label: { Label("Edit", systemImage: "pencil") }
+                Button { appState.toggleFavorite(account) } label: {
+                    Label(account.isFavorite ? "Remove from Favorites" : "Add to Favorites",
+                          systemImage: account.isFavorite ? "star.slash" : "star")
                 }
-
-                Button {
-                    appState.toggleFavorite(account)
-                } label: {
-                    Label(
-                        account.isFavorite ? "Remove from Favorites" : "Add to Favorites",
-                        systemImage: account.isFavorite ? "star.slash" : "star"
-                    )
-                }
-
                 Divider()
-
-                Button(role: .destructive) {
-                    showingDeleteAlert = true
-                } label: {
+                Button(role: .destructive) { showingDeleteAlert = true } label: {
                     Label("Delete", systemImage: "trash")
                 }
             } label: {
-                Image(systemName: "ellipsis.circle")
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.secondary)
-                    .font(.title3)
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
             }
-            .buttonStyle(.borderless)
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            #if os(macOS)
+            .opacity(hovering ? 1 : 0.25)
+            #endif
         }
-        .padding()
+        .padding(.vertical, 7)
+        .padding(.horizontal, 10)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.cardBackground)
-                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+            RoundedRectangle(cornerRadius: 8)
+                .fill(rowHighlight)
         )
+        .contentShape(Rectangle())
+        .onTapGesture { if autoClipboard { copyCode() } }
+        .help(autoClipboard ? "Click anywhere to copy the code" : "Tap-to-copy is off (enable in Settings)")
+        #if os(macOS)
+        .onHover { hovering = $0
+            if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+        }
+        #endif
+        .animation(.easeInOut(duration: 0.15), value: isCopied)
+        .animation(.easeInOut(duration: 0.12), value: hovering)
         .sheet(isPresented: $showingEditSheet) {
             EditAccountView(account: account)
                 .environmentObject(appState)
         }
         .alert("Delete Account", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) {}
-            Button("Delete", role: .destructive) {
-                appState.deleteAccount(account)
-            }
+            Button("Delete", role: .destructive) { appState.deleteAccount(account) }
         } message: {
             Text("Are you sure you want to delete \(account.displayName)? This action cannot be undone.")
         }
+    }
+
+    private var rowHighlight: Color {
+        if isCopied { return Color.green.opacity(0.14) }
+        #if os(macOS)
+        return hovering ? Color.secondary.opacity(0.10) : .clear
+        #else
+        return .clear
+        #endif
     }
 
     private func copyCode() {
@@ -167,14 +146,9 @@ struct AccountCardView: View {
         #else
         UIPasteboard.general.string = currentCode
         #endif
-
-        withAnimation {
-            isCopied = true
-        }
+        withAnimation { isCopied = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            withAnimation {
-                isCopied = false
-            }
+            withAnimation { isCopied = false }
         }
     }
 }
@@ -182,13 +156,12 @@ struct AccountCardView: View {
 // MARK: - Preview
 
 #Preview {
-    AccountCardView(
-        account: OtpAccount(
-            issuer: "Google",
-            accountName: "user@gmail.com",
-            secretKey: "JBSWY3DPEHPK3PXP"
-        )
-    )
+    VStack(spacing: 0) {
+        AccountCardView(account: OtpAccount(issuer: "Google", accountName: "user@gmail.com", secretKey: "JBSWY3DPEHPK3PXP", isFavorite: true))
+        Divider()
+        AccountCardView(account: OtpAccount(issuer: "GitHub", accountName: "octocat", secretKey: "JBSWY3DPEHPK3PXP"))
+    }
     .environmentObject(AppState())
     .padding()
+    .frame(width: 420)
 }
