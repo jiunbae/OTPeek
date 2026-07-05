@@ -13,6 +13,9 @@ out/
 # Generated files
 Generated Files/
 
+# Xcode user state
+xcuserdata/
+
 # OS files
 .DS_Store
 Thumbs.db
@@ -27,3 +30,10 @@ TestResults/
 # Misc
 nul
 *.log
+
+# Rust core
+core/target/
+
+# Generated FFI bindings / built frameworks (rebuilt by scripts)
+apple/Generated/
+apple/Frameworks/

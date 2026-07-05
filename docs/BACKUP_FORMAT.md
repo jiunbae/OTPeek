@@ -1,5 +1,7 @@
 # Backup Format Specification
 
+> **Legacy (v1, import-only).** The live format is the v2 vault container defined in [ARCHITECTURE.md](ARCHITECTURE.md) §5.2. This v1 format is retained only so old backups can still be imported.
+
 This document defines the backup/export format for cross-platform data portability.
 
 ## Overview
