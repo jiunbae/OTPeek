@@ -117,6 +117,8 @@ struct ConfigurableOtpEntry: TimelineEntry {
     let remainingSeconds: Int
     let progress: Double
     let configuration: SelectAccountIntent
+    /// 공유 캐시에서 읽은 파비콘/로고(있으면).
+    var iconData: Data? = nil
 
     var displayIssuer: String {
         account?.issuerText ?? "No Account"
@@ -168,10 +170,14 @@ struct ConfigurableOtpTimelineProvider: AppIntentTimelineProvider {
         let currentDate = Date()
         let account = getAccount(for: configuration)
 
+        // 파비콘이 캐시에 없으면 받아 둔다(설정 on 일 때).
+        var iconData: Data? = nil
+        if let account { await FaviconStore.shared.prefetch(account); iconData = FaviconProvider.cachedData(for: account) }
+
         // Generate entries for the next 60 seconds
         for secondOffset in 0..<60 {
             let entryDate = currentDate.addingTimeInterval(Double(secondOffset))
-            let entry = createEntry(for: entryDate, account: account, configuration: configuration)
+            let entry = createEntry(for: entryDate, account: account, configuration: configuration, iconData: iconData)
             entries.append(entry)
         }
 
@@ -187,7 +193,7 @@ struct ConfigurableOtpTimelineProvider: AppIntentTimelineProvider {
         return WidgetVault.firstAccount(from: client)
     }
 
-    private func createEntry(for date: Date, account: OtpAccount?, configuration: SelectAccountIntent) -> ConfigurableOtpEntry {
+    private func createEntry(for date: Date, account: OtpAccount?, configuration: SelectAccountIntent, iconData: Data? = nil) -> ConfigurableOtpEntry {
         if let account = account {
             let code = account.generateCode(at: date) ?? "------"
             let remainingSeconds = OtpGenerator.getRemainingSeconds(period: account.period, date: date)
@@ -199,7 +205,8 @@ struct ConfigurableOtpTimelineProvider: AppIntentTimelineProvider {
                 code: code,
                 remainingSeconds: remainingSeconds,
                 progress: progress,
-                configuration: configuration
+                configuration: configuration,
+                iconData: iconData
             )
         } else {
             return ConfigurableOtpEntry(
@@ -247,7 +254,7 @@ struct ConfigurableSmallWidgetView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                InitialCircle(initial: entry.initial, color: entry.color, size: 32)
+                WidgetAccountIcon(iconData: entry.iconData, initial: entry.initial, color: entry.color, size: 32)
 
                 Spacer()
 
@@ -284,7 +291,7 @@ struct ConfigurableMediumWidgetView: View {
     var body: some View {
         HStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
-                InitialCircle(initial: entry.initial, color: entry.color, size: 44)
+                WidgetAccountIcon(iconData: entry.iconData, initial: entry.initial, color: entry.color, size: 44)
 
                 Text(entry.displayIssuer)
                     .font(.headline)
