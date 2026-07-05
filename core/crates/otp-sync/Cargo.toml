@@ -1,0 +1,17 @@
+[package]
+name = "otp-sync"
+version.workspace = true
+edition.workspace = true
+
+[features]
+default = ["webdav"]
+webdav = ["dep:ureq", "dep:base64"]
+
+[dependencies]
+otp-core = { path = "../otp-core" }
+otp-vault = { path = "../otp-vault" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+ureq = { workspace = true, optional = true }
+base64 = { version = "0.22", optional = true }
