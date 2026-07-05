@@ -65,6 +65,9 @@ xcodebuild -project OtpAuthenticator.xcodeproj -scheme OtpAuthenticator-macOS bu
       in widget without relaunch
 - [ ] Menu bar popup works; click-to-copy works
 - [ ] Backup export → file; import on a clean install restores accounts
+- [ ] File association: double-click a `.otpvault` in Finder → app opens the
+      import dialog; AirDrop the file from iPhone → same; export offers the
+      share sheet; opening a file on a FRESH install routes to restore
 - [ ] iCloud sync (needs signing team + CloudKit container `iCloud.com.otpauthenticator`
       provisioned in the developer portal): enable on device A, add account,
       sync; device B "Restore from iCloud" with master password → same accounts;
@@ -94,6 +97,10 @@ dotnet build windows/OtpAuthenticator.App/OtpAuthenticator.App.csproj -p:Platfor
 - [ ] Restart: no password prompt (VMK via DPAPI `vmk.bin`)
 - [ ] Tray popup, click-to-copy, folders, favorites
 - [ ] Backup export/import (v2), legacy v1 `.otpbackup` import
+- [ ] File association (after MSIX deploy): double-click a `.otpvault` in
+      Explorer → app opens the import dialog (wrong password → friendly retry);
+      opening a file on a FRESH install routes to restore; double-click while
+      the app is already running doesn't spawn a broken second instance
 - [ ] WebDAV settings section: configure server → Sync Now → vault file appears
       on the server; second machine syncs the same accounts
 - [ ] Foreign-trait check: WebDAV sync with a WRONG password shows an auth error

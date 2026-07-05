@@ -69,8 +69,16 @@ otp export backup.otpvault                 # prompts for a backup password
 otp import backup.otpvault --merge        # prompts for that backup password
 ```
 
-Apps: Backup page → Export / Import. All platforms read the same file, and the
-legacy v1 `.otpbackup` from the old apps imports with `--legacy`.
+Apps: Backup page → Export / Import. Even easier, `.otpvault` is a registered
+file type: **double-click the file (macOS/Windows), or AirDrop/share it to an
+Apple device, and the app opens directly into the import dialog** — type the
+backup password, keep "merge" on, done. Export on Apple offers the share sheet,
+so moving to a nearby device is export → AirDrop → tap. On a fresh install the
+opened file can also serve as the "restore" source (you'll be asked for the
+master password instead).
+
+All platforms read the same file, and the legacy v1 `.otpbackup` from the old
+apps imports with `--legacy`.
 
 Notes:
 - This is a **snapshot** — later changes don't propagate. Use it for one-time

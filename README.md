@@ -117,8 +117,10 @@ Register once, use everywhere — full guide: **[docs/SYNC.md](docs/SYNC.md)**.
   (`otp sync setup webdav <url> --user <u>`, then `otp restore <url>` on new
   devices). The server only ever stores an encrypted blob.
 - **No server**: `otp export backup.otpvault` produces a portable encrypted
-  container — AirDrop/copy it anywhere and `otp import --merge` on the other
-  device. Same file works on Windows, Apple, and the CLI.
+  container — AirDrop/copy it anywhere. `.otpvault` files are associated with
+  the apps: double-click (Windows/macOS) or receive via AirDrop/share sheet
+  (Apple) and the app opens straight into import — enter the backup password
+  and you're done. Same file also works with the CLI (`otp import --merge`).
 
 The master password is only typed when a device joins; afterwards each device
 unlocks silently via its OS keystore and syncs merge automatically.
