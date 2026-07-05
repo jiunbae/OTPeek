@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using OtpAuthenticator.Core.Services.Interfaces;
 using Uniffi.Otp;
+using OtpHashAlgorithm = Uniffi.Otp.HashAlgorithm;
 
 namespace OtpAuthenticator.Core.Windows.Services;
 
@@ -78,9 +79,9 @@ public sealed class LegacyMigrationService : ILegacyMigrationService
                 accountName: string.IsNullOrEmpty(data.AccountName) ? data.Issuer : data.AccountName,
                 algorithm: data.Algorithm switch
                 {
-                    1 => HashAlgorithm.Sha256,
-                    2 => HashAlgorithm.Sha512,
-                    _ => HashAlgorithm.Sha1
+                    1 => OtpHashAlgorithm.Sha256,
+                    2 => OtpHashAlgorithm.Sha512,
+                    _ => OtpHashAlgorithm.Sha1
                 },
                 digits: (uint)(data.Digits <= 0 ? 6 : data.Digits),
                 period: (uint)(data.Period <= 0 ? 30 : data.Period),

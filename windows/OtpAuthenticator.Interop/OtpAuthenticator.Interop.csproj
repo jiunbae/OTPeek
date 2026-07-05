@@ -44,11 +44,6 @@
     <RustTarget Condition="'$(RustTarget)' == ''">x86_64-pc-windows-msvc</RustTarget>
   </PropertyGroup>
 
-  <ItemGroup>
-    <!-- Committed, platform-independent generated bindings. -->
-    <Compile Include="Generated\otp.cs" />
-  </ItemGroup>
-
   <!--
     BuildNativeCore
     ===============
@@ -75,11 +70,13 @@
 
   <Target Name="BuildNativeCore"
           BeforeTargets="BeforeBuild;BeforeCompile"
-          DependsOnTargets="LocateCargo"
-          Condition="'$(CargoAvailable)' == 'true'">
-    <Message Importance="high" Text="[Interop] Building native otp_ffi.dll: cargo build -p otp-ffi --profile $(CargoProfile) --target $(RustTarget)" />
+          DependsOnTargets="LocateCargo">
+    <Message Condition="'$(CargoAvailable)' == 'true'"
+             Importance="high"
+             Text="[Interop] Building native otp_ffi.dll: cargo build -p otp-ffi --profile $(CargoProfile) --target $(RustTarget)" />
     <Exec Command="cargo build -p otp-ffi --profile $(CargoProfile) --target $(RustTarget)"
-          WorkingDirectory="$(RustCoreDir)" />
+          WorkingDirectory="$(RustCoreDir)"
+          Condition="'$(CargoAvailable)' == 'true'" />
   </Target>
 
   <!-- If we could not build and no DLL exists, fail with an actionable message. -->
@@ -90,7 +87,7 @@
     <Error Condition="'$(CargoAvailable)' != 'true'"
            Text="Rust toolchain (cargo) not found and no prebuilt native library at '$(NativeCoreDll)'. Install Rust (https://rustup.rs) and the '$(RustTarget)' target (rustup target add $(RustTarget)), or restore a prebuilt otp_ffi.dll into that path. See windows/README.md." />
     <Error Condition="'$(CargoAvailable)' == 'true'"
-           Text="cargo build succeeded checks failed: expected native library not found at '$(NativeCoreDll)'." />
+           Text="Expected native library was not found at '$(NativeCoreDll)' after running cargo build." />
   </Target>
 
   <!--
