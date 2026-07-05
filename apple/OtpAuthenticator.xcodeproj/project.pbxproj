@@ -12,12 +12,15 @@
 		046CF0B8E0904AC105EFFF63 /* OtpWidgetExtension-iOS.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4CC440DDF24AF3290FAAFFB9 /* OtpWidgetExtension-iOS.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		05BAE875FD56F0B804A00BFF /* CloudKitSyncBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = C37323DC97938BFDEEE9E8AB /* CloudKitSyncBackend.swift */; };
 		063AC1C15A69B3296C198FE9 /* SharedViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B9D9F7B48BA3FB9962876DC /* SharedViews.swift */; };
+		082BB5D0E9439750F7469BEA /* AppLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AE3562C80D20AFC3154A3A /* AppLock.swift */; };
 		09FA0FF4652151DB1F5840BA /* FaviconProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33B0B0ACE468540914766C6D /* FaviconProvider.swift */; };
 		0B72548CE616271BF4685F11 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49D7CDBB6641A74EEB9DC6AC /* OnboardingView.swift */; };
 		0C5B2E6DB9F76C541CE9EF2F /* AccountIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A909A21C75C1D59E6CFAACF /* AccountIconView.swift */; };
 		0EE39E4B3C7B9D4AB1200039 /* OtpTimelineProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBA91AA460D9869D9C7F03F0 /* OtpTimelineProvider.swift */; };
+		105F309B248233FA2E8A8A48 /* AppLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AE3562C80D20AFC3154A3A /* AppLock.swift */; };
 		10F91F6AF670DC7200CB18F0 /* AddAccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DCDB3D32FE7E7888A64099A /* AddAccountView.swift */; };
 		11059030A6F9D12C7EE2F855 /* WidgetSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01E00CB8C3266999D027CE1A /* WidgetSettingsView.swift */; };
+		1128901567654583D2F90A3E /* AppLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AE3562C80D20AFC3154A3A /* AppLock.swift */; };
 		1672160F86438E1BF93E44A6 /* OtpEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15149C37B470F632CD282837 /* OtpEntry.swift */; };
 		18F78A373114EA3D38AF138B /* OtpWidgetExtension-macOS.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7F2BD00E2F65E4942E59DA0B /* OtpWidgetExtension-macOS.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1B4393F00DF7D87264CF5589 /* AccountCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F013D6A88BC85CE5957750B7 /* AccountCardView.swift */; };
@@ -64,6 +67,7 @@
 		8D37CEAD98A52F4542E8D02D /* QRImageImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 896C2D5EDF68E21B58BDA49F /* QRImageImportView.swift */; };
 		9148D997682F6865A96DF579 /* OtpGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F87C50AF79A123BCD9B7EDC /* OtpGenerator.swift */; };
 		98C0432A96270D8956459BA1 /* AccountListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21422600993F26C5A209AA70 /* AccountListView.swift */; };
+		9902B067C130C712EA754645 /* LockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82716BB52B448C2C5DA621A9 /* LockView.swift */; };
 		9C1AF08B23607B6FFBF8F0AF /* VaultAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35077FD5A2410997DF796560 /* VaultAccess.swift */; };
 		9CCF503A363C34793048C430 /* OtpEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15149C37B470F632CD282837 /* OtpEntry.swift */; };
 		9CFAA9D91EB176C5E3738AB3 /* QRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B374450ED6BC5D552FA2616 /* QRScannerView.swift */; };
@@ -82,10 +86,12 @@
 		C866446A2EA29906FC11B9F7 /* VaultAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35077FD5A2410997DF796560 /* VaultAccess.swift */; };
 		CC0FCB819D5B2F1F8D3F26B4 /* MultiOtpWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01EE3B66EA03683178A95F58 /* MultiOtpWidget.swift */; };
 		D7F569B175977B4A5258580B /* AddAccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DCDB3D32FE7E7888A64099A /* AddAccountView.swift */; };
+		D9E5A831D59BED24A46E8CCE /* LockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82716BB52B448C2C5DA621A9 /* LockView.swift */; };
 		DAD5F5E148F63F6A331C65FB /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F80D2FD55184B5B3D603F06 /* SettingsView.swift */; };
 		DB1B890494EAD0AE107A8F52 /* OtpModelBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FFD5FDCEBF1EA227F436189 /* OtpModelBridge.swift */; };
 		DBE41BF383016220CD5EE5B9 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2242564F1A2AFDA05CB2C825 /* KeychainHelper.swift */; };
 		E418C31AC4185DDBF68CF6D8 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49D7CDBB6641A74EEB9DC6AC /* OnboardingView.swift */; };
+		E45A31AFA88F8755C78054AB /* AppLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AE3562C80D20AFC3154A3A /* AppLock.swift */; };
 		F0038E6389996A8D64951EF3 /* WidgetConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AACC3D6C181EA73FAF5137D2 /* WidgetConfiguration.swift */; };
 		F0AB457A159AD0DA4E2788E3 /* OtpCore.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55A19698377CE270B90E9B16 /* OtpCore.xcframework */; };
 		F54F9D181B57B899203CA007 /* AccountListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21422600993F26C5A209AA70 /* AccountListView.swift */; };
@@ -136,6 +142,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		01AE3562C80D20AFC3154A3A /* AppLock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLock.swift; sourceTree = "<group>"; };
 		01E00CB8C3266999D027CE1A /* WidgetSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSettingsView.swift; sourceTree = "<group>"; };
 		01EE3B66EA03683178A95F58 /* MultiOtpWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiOtpWidget.swift; sourceTree = "<group>"; };
 		0475872E5FE2BCC7F1B20997 /* OtpAuthenticator-iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "OtpAuthenticator-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -158,6 +165,7 @@
 		62A793BA1C65D176654BA922 /* otp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = otp.swift; sourceTree = "<group>"; };
 		6FFD5FDCEBF1EA227F436189 /* OtpModelBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtpModelBridge.swift; sourceTree = "<group>"; };
 		7F2BD00E2F65E4942E59DA0B /* OtpWidgetExtension-macOS.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "OtpWidgetExtension-macOS.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		82716BB52B448C2C5DA621A9 /* LockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockView.swift; sourceTree = "<group>"; };
 		896C2D5EDF68E21B58BDA49F /* QRImageImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRImageImportView.swift; sourceTree = "<group>"; };
 		9F87C50AF79A123BCD9B7EDC /* OtpGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtpGenerator.swift; sourceTree = "<group>"; };
 		A020E2693C7806A97394C93F /* OtpStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtpStore.swift; sourceTree = "<group>"; };
@@ -237,6 +245,7 @@
 		58154A290962FDDD34F741DB /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				01AE3562C80D20AFC3154A3A /* AppLock.swift */,
 				C37323DC97938BFDEEE9E8AB /* CloudKitSyncBackend.swift */,
 				33B0B0ACE468540914766C6D /* FaviconProvider.swift */,
 				2242564F1A2AFDA05CB2C825 /* KeychainHelper.swift */,
@@ -291,6 +300,7 @@
 				5DCDB3D32FE7E7888A64099A /* AddAccountView.swift */,
 				A25EEBF7EB7BA19CED1A1931 /* EditAccountView.swift */,
 				E5D36750E3C249E41A638DBD /* ImportVaultView.swift */,
+				82716BB52B448C2C5DA621A9 /* LockView.swift */,
 				CA692991C9071BAD1486C54A /* MenuBarView.swift */,
 				49D7CDBB6641A74EEB9DC6AC /* OnboardingView.swift */,
 				896C2D5EDF68E21B58BDA49F /* QRImageImportView.swift */,
@@ -565,6 +575,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				082BB5D0E9439750F7469BEA /* AppLock.swift in Sources */,
 				68B870957DFBF387D5B9336F /* CloudKitSyncBackend.swift in Sources */,
 				5E0E31DC2C79E3BFFD8C8A88 /* FaviconProvider.swift in Sources */,
 				DBE41BF383016220CD5EE5B9 /* KeychainHelper.swift in Sources */,
@@ -587,6 +598,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E45A31AFA88F8755C78054AB /* AppLock.swift in Sources */,
 				2A81EFEA8B7FD9E932D39769 /* CloudKitSyncBackend.swift in Sources */,
 				9FEFDF5A4E56BB1E6E6EE86A /* FaviconProvider.swift in Sources */,
 				516D0DDF73CCB194D6FE5C49 /* KeychainHelper.swift in Sources */,
@@ -613,12 +625,14 @@
 				815C9BD4D29B628602F40FD1 /* AccountIconView.swift in Sources */,
 				F54F9D181B57B899203CA007 /* AccountListView.swift in Sources */,
 				D7F569B175977B4A5258580B /* AddAccountView.swift in Sources */,
+				1128901567654583D2F90A3E /* AppLock.swift in Sources */,
 				05BAE875FD56F0B804A00BFF /* CloudKitSyncBackend.swift in Sources */,
 				8AF0D06193EAB6B2EE454991 /* ContentView.swift in Sources */,
 				21DEF7EB0E737BC83B2090E7 /* EditAccountView.swift in Sources */,
 				09FA0FF4652151DB1F5840BA /* FaviconProvider.swift in Sources */,
 				6F32A7FC7390C4DE7AF09E46 /* ImportVaultView.swift in Sources */,
 				2CAB3E15BFD3997CF583FF9B /* KeychainHelper.swift in Sources */,
+				9902B067C130C712EA754645 /* LockView.swift in Sources */,
 				7E556E0F563E8708A519916F /* MenuBarView.swift in Sources */,
 				0B72548CE616271BF4685F11 /* OnboardingView.swift in Sources */,
 				4894C369534B0C4A25874AF6 /* OtpAuthenticatorApp.swift in Sources */,
@@ -643,12 +657,14 @@
 				0C5B2E6DB9F76C541CE9EF2F /* AccountIconView.swift in Sources */,
 				98C0432A96270D8956459BA1 /* AccountListView.swift in Sources */,
 				10F91F6AF670DC7200CB18F0 /* AddAccountView.swift in Sources */,
+				105F309B248233FA2E8A8A48 /* AppLock.swift in Sources */,
 				B144AD3D8340B28FC1372F45 /* CloudKitSyncBackend.swift in Sources */,
 				B7D113A0213BBF14A858A903 /* ContentView.swift in Sources */,
 				007218C8356D1049D68567B9 /* EditAccountView.swift in Sources */,
 				6431EB705FD1010DD41DC132 /* FaviconProvider.swift in Sources */,
 				21221FB3A5DC8C1A480EA306 /* ImportVaultView.swift in Sources */,
 				B5C71FEB9DBD1D298C61EC59 /* KeychainHelper.swift in Sources */,
+				D9E5A831D59BED24A46E8CCE /* LockView.swift in Sources */,
 				3DE4766B5A43BF76584419F8 /* MenuBarView.swift in Sources */,
 				E418C31AC4185DDBF68CF6D8 /* OnboardingView.swift in Sources */,
 				B7902B526F60D555CC34543C /* OtpAuthenticatorApp.swift in Sources */,

@@ -11,10 +11,13 @@ import UIKit
 
 struct SettingsView: View {
     @EnvironmentObject var appState: OtpStore
+    @EnvironmentObject var appLock: AppLock
     @AppStorage("autoClipboard") private var autoClipboard = true
     @AppStorage("showInMenuBar") private var showInMenuBar = true
     @AppStorage("launchAtLogin") private var launchAtLogin = false
     @AppStorage("showFavicons", store: UserDefaults.appGroup) private var showFavicons = true
+    @AppStorage(AppLock.enabledKey) private var biometricLockEnabled = false
+    @AppStorage(AppLock.timeoutKey) private var autoLockMinutes = 5
     @State private var showingWidgetSettings = false
     @State private var showingQRImport = false
 
@@ -91,6 +94,8 @@ struct SettingsView: View {
         TabView {
             Form { generalSection }.formStyle(.grouped)
                 .tabItem { Label("General", systemImage: "gearshape") }
+            Form { securitySection }.formStyle(.grouped)
+                .tabItem { Label("Security", systemImage: "lock") }
             Form { syncSection }.formStyle(.grouped)
                 .tabItem { Label("Sync", systemImage: "icloud") }
             Form { backupSection }.formStyle(.grouped)
@@ -103,6 +108,7 @@ struct SettingsView: View {
         #else
         Form {
             generalSection
+            securitySection
             syncSection
             backupSection
             aboutSection
@@ -110,6 +116,49 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .navigationTitle("Settings")
         #endif
+    }
+
+    // MARK: - Security
+
+    @ViewBuilder
+    private var securitySection: some View {
+        Section {
+            Toggle(isOn: $biometricLockEnabled) {
+                settingLabel("Require Touch ID / Face ID", "faceid",
+                             detail: "Lock the app; unlock with biometrics or your device password.")
+            }
+            .tint(.green)
+            .onChange(of: biometricLockEnabled) { _, _ in appLock.settingsChanged() }
+            .disabled(!AppLock.biometryAvailable())
+
+            if biometricLockEnabled {
+                Picker(selection: $autoLockMinutes) {
+                    Text("Immediately").tag(0)
+                    Text("After 1 minute").tag(1)
+                    Text("After 5 minutes").tag(5)
+                    Text("After 15 minutes").tag(15)
+                    Text("After 1 hour").tag(60)
+                } label: {
+                    settingLabel("Auto-lock", "clock")
+                }
+
+                Button { appLock.lockNow() } label: {
+                    actionRow("Lock Now", "lock.fill")
+                }
+                .buttonStyle(.plain)
+            }
+
+            if !AppLock.biometryAvailable() {
+                Label("No Touch ID / Face ID or device passcode is set up on this device.",
+                      systemImage: "exclamationmark.triangle")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        } header: {
+            Text("Security")
+        } footer: {
+            Text("Codes stay hidden behind the lock screen. This is separate from your vault master password.")
+        }
     }
 
     // MARK: - General

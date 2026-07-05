@@ -7,6 +7,7 @@ import AppKit
 struct OtpAuthenticatorApp: App {
     @StateObject private var appState = OtpStore()
     @StateObject private var incoming = IncomingVaultFile.shared
+    @StateObject private var appLock = AppLock()
 
     #if os(macOS)
     // macOS 에서 SwiftUI App 의 .onOpenURL 은 파일(문서) 오픈에 신뢰성이 떨어진다.
@@ -30,6 +31,7 @@ struct OtpAuthenticatorApp: App {
             RootView()
                 .environmentObject(appState)
                 .environmentObject(incoming)
+                .environmentObject(appLock)
                 #if os(iOS)
                 // iOS 는 열린 문서를 .onOpenURL 로 받는다(문서/URL 스킴 모두 신뢰성 있음).
                 .onOpenURL { url in incoming.load(from: url) }
@@ -44,11 +46,13 @@ struct OtpAuthenticatorApp: App {
         Settings {
             SettingsView()
                 .environmentObject(appState)
+                .environmentObject(appLock)
         }
 
         MenuBarExtra {
             MenuBarView()
                 .environmentObject(appState)
+                .environmentObject(appLock)
         } label: {
             // SwiftUI ignores .font() on a MenuBarExtra label, so build an
             // explicitly-sized template NSImage to fill the menu bar height.
@@ -96,22 +100,42 @@ final class IncomingVaultFile: ObservableObject {
 struct RootView: View {
     @EnvironmentObject var appState: OtpStore
     @EnvironmentObject var incoming: IncomingVaultFile
+    @EnvironmentObject var appLock: AppLock
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
-        Group {
-            if appState.isReady {
-                ContentView()
-            } else {
-                OnboardingView()
+        ZStack {
+            Group {
+                if appState.isReady {
+                    ContentView()
+                } else {
+                    OnboardingView()
+                }
+            }
+            // 볼트가 열려 있을 때만 가져오기 시트를 띄운다.
+            // 볼트 미설정(fresh install) 상태에서는 OnboardingView 가 파일을 복원 blob 으로 소비한다.
+            .sheet(isPresented: importSheetBinding) {
+                if let data = incoming.pendingData {
+                    ImportVaultView(data: data)
+                        .environmentObject(appState)
+                        .environmentObject(incoming)
+                }
+            }
+
+            // Biometric lock gate — fully covers the UI (codes never shown while locked).
+            if appLock.isEnabled && appLock.isLocked {
+                LockView()
+                    .environmentObject(appLock)
+                    .transition(.opacity)
+                    .zIndex(1)
             }
         }
-        // 볼트가 열려 있을 때만 가져오기 시트를 띄운다.
-        // 볼트 미설정(fresh install) 상태에서는 OnboardingView 가 파일을 복원 blob 으로 소비한다.
-        .sheet(isPresented: importSheetBinding) {
-            if let data = incoming.pendingData {
-                ImportVaultView(data: data)
-                    .environmentObject(appState)
-                    .environmentObject(incoming)
+        .animation(.easeInOut(duration: 0.2), value: appLock.isLocked)
+        .onChange(of: scenePhase) { _, phase in
+            switch phase {
+            case .active:                     appLock.didBecomeActive()
+            case .inactive, .background:      appLock.didResignActive()
+            @unknown default:                 break
             }
         }
     }
