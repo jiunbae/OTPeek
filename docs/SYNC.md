@@ -71,7 +71,8 @@ otp import backup.otpvault --merge        # prompts for that backup password
 
 Apps: Backup page → Export / Import. Even easier, `.otpvault` is a registered
 file type: **double-click the file (macOS/Windows), or AirDrop/share it to an
-Apple device, and the app opens directly into the import dialog** — type the
+Apple device, and the app opens directly into the import dialog**
+(on Windows this requires the MSIX-installed app, not an unpackaged debug run) — type the
 backup password, keep "merge" on, done. Export on Apple offers the share sheet,
 so moving to a nearby device is export → AirDrop → tap. On a fresh install the
 opened file can also serve as the "restore" source (you'll be asked for the

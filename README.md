@@ -67,7 +67,8 @@ OTPWidget/
 cd core
 cargo test --workspace          # full test suite (RFC vectors, vault, sync, CLI)
 cargo build -p otp-cli --release
-./target/release/otp init       # create a vault
+sudo cp target/release/otp /usr/local/bin/   # optional: install on PATH
+otp init                        # create a vault
 ./target/release/otp add 'otpauth://totp/GitHub:me?secret=JBSWY3DPEHPK3PXP&issuer=GitHub'
 ./target/release/otp code github --copy
 ```
@@ -79,7 +80,9 @@ Configure sync: `otp sync setup webdav <url> --user <name>`, then `otp sync now`
 
 ### Apple (macOS / iOS)
 
-Requires Xcode 15+ and XcodeGen (`brew install xcodegen`), plus iOS Rust targets:
+Requires **full Xcode 15+** (Command Line Tools alone cannot build the app or
+the XCFramework — check `xcode-select -p` points into Xcode.app) and XcodeGen
+(`brew install xcodegen`), plus iOS Rust targets:
 
 ```bash
 rustup target add aarch64-apple-ios aarch64-apple-ios-sim
@@ -106,6 +109,9 @@ dotnet build windows/OtpAuthenticator.App/OtpAuthenticator.App.csproj -p:Platfor
 ```
 
 To regenerate C# bindings after changing `otp-ffi`: `windows/scripts/generate-bindings.ps1`.
+
+Note: `.otpvault` double-click association registers only when the app is
+installed as an MSIX package — unpackaged debug runs won't register it.
 
 ## Multi-Device Setup
 
