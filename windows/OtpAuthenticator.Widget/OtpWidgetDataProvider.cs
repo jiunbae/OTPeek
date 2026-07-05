@@ -1,65 +1,69 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
-using OtpAuthenticator.Core.Models;
-using OtpAuthenticator.Core.Services;
-using OtpAuthenticator.Core.Services.Interfaces;
+using Uniffi.Otp;
 
 namespace OtpAuthenticator.Widget;
 
 /// <summary>
-/// 위젯 데이터 제공자
+/// 위젯 데이터 제공자.
+/// DPAPI로 보호된 VMK로 볼트를 열고(OtpClient.OpenWithKey), CodesAt로 모든 TOTP 코드를
+/// 조회합니다. 위젯 프로세스에서는 Argon2를 실행하지 않으며 마스터 비밀번호도 다루지 않습니다.
+/// (docs/ARCHITECTURE.md §5.1, §10.5)
 /// </summary>
 public class OtpWidgetDataProvider
 {
-    private readonly IOtpService _otpService;
-    private List<OtpAccount> _cachedAccounts = new();
+    // SecureStorageService와 동일해야 하는 상수
+    private static readonly byte[] VmkEntropy = Encoding.UTF8.GetBytes("OtpAuthenticator.Vmk.v2");
+
+    private List<AccountCode> _cachedCodes = new();
     private DateTime _lastRefresh = DateTime.MinValue;
     private static readonly TimeSpan CacheExpiry = TimeSpan.FromSeconds(5);
-
-    public OtpWidgetDataProvider()
-    {
-        _otpService = new OtpService();
-    }
 
     /// <summary>
     /// 위젯 데이터 JSON 반환
     /// </summary>
     public string GetWidgetData(int index = 0)
     {
-        RefreshAccountsIfNeeded();
+        RefreshIfNeeded();
 
-        if (_cachedAccounts.Count == 0)
-        {
+        if (_cachedCodes.Count == 0)
             return GetEmptyData();
-        }
 
-        // 인덱스 범위 조정
-        index = Math.Max(0, Math.Min(index, _cachedAccounts.Count - 1));
-        var account = _cachedAccounts[index];
+        index = Math.Max(0, Math.Min(index, _cachedCodes.Count - 1));
+        var entry = _cachedCodes[index];
 
         try
         {
-            var otpCode = _otpService.GenerateCode(account);
-            var remainingSeconds = _otpService.GetRemainingSeconds(account.Period);
-            var progress = (double)remainingSeconds / account.Period;
+            var account = entry.account;
+            var otp = entry.code;
 
-            // 코드 포맷팅 (3자리씩)
-            var formattedCode = account.Digits == 6
-                ? $"{otpCode[..3]} {otpCode[3..]}"
-                : $"{otpCode[..4]} {otpCode[4..]}";
+            string raw = otp.code;
+            string formattedCode = raw.Length == 6
+                ? $"{raw[..3]} {raw[3..]}"
+                : (raw.Length == 8 ? $"{raw[..4]} {raw[4..]}" : raw);
+
+            long nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            long periodMs = Math.Max(1, otp.validUntil - otp.validFrom);
+            double progress = Math.Clamp((double)(otp.validUntil - nowMs) / periodMs, 0.0, 1.0);
+            int remainingSeconds = (int)Math.Max(0, (otp.validUntil - nowMs) / 1000);
+
+            string issuer = string.IsNullOrEmpty(account.issuer) ? "OTP" : account.issuer!;
+            string initial = ComputeInitial(account);
 
             var data = new
             {
-                issuer = string.IsNullOrEmpty(account.Issuer) ? "OTP" : account.Issuer,
-                accountName = account.AccountName,
-                initial = account.Initial,
+                issuer,
+                accountName = account.accountName,
+                initial,
                 otpCode = formattedCode,
-                rawCode = otpCode,
+                rawCode = raw,
                 timeProgress = progress,
-                remainingSeconds = remainingSeconds,
+                remainingSeconds,
                 progressColor = progress > 0.3 ? "accent" : "attention",
-                accountCount = _cachedAccounts.Count,
+                accountCount = _cachedCodes.Count,
                 currentIndex = index + 1,
-                hasNext = index < _cachedAccounts.Count - 1,
+                hasNext = index < _cachedCodes.Count - 1,
                 hasPrev = index > 0
             };
 
@@ -71,9 +75,15 @@ public class OtpWidgetDataProvider
         }
     }
 
-    /// <summary>
-    /// 빈 데이터 반환
-    /// </summary>
+    private static string ComputeInitial(OtpAccount account)
+    {
+        if (!string.IsNullOrEmpty(account.issuer))
+            return account.issuer![..1].ToUpperInvariant();
+        if (!string.IsNullOrEmpty(account.accountName))
+            return account.accountName[..1].ToUpperInvariant();
+        return "?";
+    }
+
     private static string GetEmptyData()
     {
         var data = new
@@ -95,23 +105,28 @@ public class OtpWidgetDataProvider
         return JsonSerializer.Serialize(data);
     }
 
-    /// <summary>
-    /// 계정 목록 새로고침
-    /// </summary>
-    private void RefreshAccountsIfNeeded()
+    private void RefreshIfNeeded()
     {
         if (DateTime.UtcNow - _lastRefresh < CacheExpiry)
             return;
 
         try
         {
-            // 계정 파일에서 직접 로드 (서비스 의존성 최소화)
-            var accounts = LoadAccountsFromFile();
+            byte[]? vmk = LoadVaultKey();
+            if (vmk == null)
+            {
+                _cachedCodes = new List<AccountCode>();
+                _lastRefresh = DateTime.UtcNow;
+                return;
+            }
+
+            using var client = OtpClient.OpenWithKey(VaultPath, vmk);
+            long nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
             // 즐겨찾기 우선, 그 다음 정렬 순서
-            _cachedAccounts = accounts
-                .OrderByDescending(a => a.IsFavorite)
-                .ThenBy(a => a.SortOrder)
+            _cachedCodes = client.CodesAt(nowMs)
+                .OrderByDescending(c => c.account.isFavorite)
+                .ThenBy(c => c.account.sortOrder)
                 .ToList();
 
             _lastRefresh = DateTime.UtcNow;
@@ -122,185 +137,27 @@ public class OtpWidgetDataProvider
         }
     }
 
-    /// <summary>
-    /// 데이터 디렉토리 경로 가져오기 (MSIX 패키지 및 일반 실행 모두 지원)
-    /// </summary>
-    private static string GetDataDirectory()
-    {
-        // Environment.GetFolderPath는 MSIX 패키지에서 자동으로 가상화된 경로 반환
-        // (LocalCache\Local 폴더로 리다이렉트됨)
-        // Main App의 SecureStorageService와 동일한 위치 사용
-        var basePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        var dataDir = Path.Combine(basePath, "OtpAuthenticator");
+    private static string DataDirectory => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "OtpAuthenticator");
 
-        // 디버깅용 로그 (이벤트 로그에 기록)
-        try
-        {
-            System.Diagnostics.Debug.WriteLine($"[OtpWidget] Data directory: {dataDir}");
-            System.Diagnostics.Debug.WriteLine($"[OtpWidget] Directory exists: {Directory.Exists(dataDir)}");
-        }
-        catch { }
+    private static string VaultPath => Path.Combine(DataDirectory, "vault.otpvault");
 
-        return dataDir;
-    }
+    private static string VmkPath => Path.Combine(DataDirectory, "vmk.bin");
 
-    /// <summary>
-    /// 파일에서 계정 로드
-    /// </summary>
-    private List<OtpAccount> LoadAccountsFromFile()
+    private static byte[]? LoadVaultKey()
     {
         try
         {
-            var dataDir = GetDataDirectory();
-            var dataPath = Path.Combine(dataDir, "accounts.dat");
+            if (!File.Exists(VmkPath))
+                return null;
 
-            System.Diagnostics.Debug.WriteLine($"[OtpWidget] Loading accounts from: {dataPath}");
-
-            if (!File.Exists(dataPath))
-            {
-                System.Diagnostics.Debug.WriteLine($"[OtpWidget] accounts.dat not found");
-                return new List<OtpAccount>();
-            }
-
-            // DPAPI로 암호화된 파일 복호화
-            var encryptedBytes = File.ReadAllBytes(dataPath);
-            System.Diagnostics.Debug.WriteLine($"[OtpWidget] Read {encryptedBytes.Length} encrypted bytes");
-
-            var plainBytes = System.Security.Cryptography.ProtectedData.Unprotect(
-                encryptedBytes,
-                null,
-                System.Security.Cryptography.DataProtectionScope.CurrentUser);
-
-            var json = System.Text.Encoding.UTF8.GetString(plainBytes);
-            System.Diagnostics.Debug.WriteLine($"[OtpWidget] Decrypted JSON length: {json.Length}");
-
-            // AccountData 목록으로 역직렬화
-            var accountDataList = JsonSerializer.Deserialize<List<AccountDataDto>>(json);
-            if (accountDataList == null)
-            {
-                System.Diagnostics.Debug.WriteLine($"[OtpWidget] Deserialization returned null");
-                return new List<OtpAccount>();
-            }
-
-            System.Diagnostics.Debug.WriteLine($"[OtpWidget] Found {accountDataList.Count} accounts");
-
-            // OtpAccount로 변환하고 비밀 키 로드
-            var accounts = new List<OtpAccount>();
-            foreach (var data in accountDataList)
-            {
-                var account = data.ToAccount();
-
-                // 비밀 키 로드 시도
-                var secretKey = LoadSecretKey(account.Id);
-                if (!string.IsNullOrEmpty(secretKey))
-                {
-                    account.SecretKey = secretKey;
-                    accounts.Add(account);
-                    System.Diagnostics.Debug.WriteLine($"[OtpWidget] Loaded account: {account.Issuer} - {account.AccountName}");
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"[OtpWidget] Failed to load secret for: {account.Id}");
-                }
-            }
-
-            System.Diagnostics.Debug.WriteLine($"[OtpWidget] Total accounts with secrets: {accounts.Count}");
-            return accounts;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[OtpWidget] Error loading accounts: {ex.Message}");
-            return new List<OtpAccount>();
-        }
-    }
-
-    /// <summary>
-    /// 비밀 키 로드
-    /// </summary>
-    private string? LoadSecretKey(Guid accountId)
-    {
-        try
-        {
-            // PasswordVault에서 로드 시도
-            var vault = new Windows.Security.Credentials.PasswordVault();
-            var credential = vault.Retrieve("OtpAuthenticator", $"secret_{accountId}");
-            credential.RetrievePassword();
-            return credential.Password;
+            byte[] encrypted = File.ReadAllBytes(VmkPath);
+            return ProtectedData.Unprotect(encrypted, VmkEntropy, DataProtectionScope.CurrentUser);
         }
         catch
         {
-            // DPAPI 폴백
-            try
-            {
-                var key = $"secret_{accountId}";
-                var safeKey = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(key))
-                    .Replace('/', '_')
-                    .Replace('+', '-');
-
-                var filePath = Path.Combine(
-                    GetDataDirectory(),
-                    "secrets",
-                    $"{safeKey}.dat");
-
-                if (!File.Exists(filePath))
-                    return null;
-
-                var encryptedBytes = File.ReadAllBytes(filePath);
-                var plainBytes = System.Security.Cryptography.ProtectedData.Unprotect(
-                    encryptedBytes,
-                    System.Text.Encoding.UTF8.GetBytes(key),
-                    System.Security.Cryptography.DataProtectionScope.CurrentUser);
-
-                return System.Text.Encoding.UTF8.GetString(plainBytes);
-            }
-            catch
-            {
-                return null;
-            }
+            return null;
         }
-    }
-}
-
-/// <summary>
-/// 계정 데이터 DTO (파일 저장용)
-/// </summary>
-internal class AccountDataDto
-{
-    public Guid Id { get; set; }
-    public string Issuer { get; set; } = string.Empty;
-    public string AccountName { get; set; } = string.Empty;
-    public OtpType Type { get; set; }
-    public HashAlgorithmType Algorithm { get; set; }
-    public int Digits { get; set; }
-    public int Period { get; set; }
-    public long Counter { get; set; }
-    public string? IconPath { get; set; }
-    public string? Color { get; set; }
-    public int SortOrder { get; set; }
-    public bool IsFavorite { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime? LastUsedAt { get; set; }
-    public string? Notes { get; set; }
-
-    public OtpAccount ToAccount()
-    {
-        return new OtpAccount
-        {
-            Id = Id,
-            Issuer = Issuer,
-            AccountName = AccountName,
-            Type = Type,
-            Algorithm = Algorithm,
-            Digits = Digits,
-            Period = Period,
-            Counter = Counter,
-            IconPath = IconPath,
-            Color = Color,
-            SortOrder = SortOrder,
-            IsFavorite = IsFavorite,
-            CreatedAt = CreatedAt,
-            LastUsedAt = LastUsedAt,
-            Notes = Notes
-        };
     }
 }

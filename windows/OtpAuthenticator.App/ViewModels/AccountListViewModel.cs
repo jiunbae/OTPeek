@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using OtpAuthenticator.Core.Models;
+using Microsoft.UI.Dispatching;
 using OtpAuthenticator.Core.Services.Interfaces;
+using OtpAuthenticator.Core.Windows.Services;
+using Uniffi.Otp;
 
 namespace OtpAuthenticator.App.ViewModels;
 
@@ -11,10 +13,10 @@ namespace OtpAuthenticator.App.ViewModels;
 /// </summary>
 public partial class AccountListViewModel : BaseViewModel
 {
-    private readonly IAccountRepository _accountRepository;
-    private readonly IOtpService _otpService;
+    private readonly IOtpClientService _client;
     private readonly IClipboardService _clipboardService;
     private readonly ISettingsService _settingsService;
+    private readonly DispatcherQueue _dispatcherQueue;
 
     public ObservableCollection<AccountItemViewModel> Accounts { get; } = new();
 
@@ -27,41 +29,35 @@ public partial class AccountListViewModel : BaseViewModel
     [ObservableProperty]
     private bool _isEmpty = true;
 
-    /// <summary>
-    /// 필터: 특정 폴더 ID
-    /// </summary>
-    public Guid? FilterFolderId { get; set; }
+    /// <summary>필터: 특정 폴더 ID (코어 UUID 문자열)</summary>
+    public string? FilterFolderId { get; set; }
 
-    /// <summary>
-    /// 필터: 즐겨찾기만 표시
-    /// </summary>
+    /// <summary>필터: 즐겨찾기만 표시</summary>
     public bool ShowFavoritesOnly { get; set; }
 
-    /// <summary>
-    /// 필터: 미분류만 표시
-    /// </summary>
+    /// <summary>필터: 미분류만 표시</summary>
     public bool ShowUncategorizedOnly { get; set; }
 
-    /// <summary>
-    /// 계정 편집 요청 이벤트
-    /// </summary>
     public event EventHandler<OtpAccount>? EditRequested;
-
-    /// <summary>
-    /// 계정 추가 요청 이벤트
-    /// </summary>
     public event EventHandler? AddRequested;
 
     public AccountListViewModel(
-        IAccountRepository accountRepository,
-        IOtpService otpService,
+        IOtpClientService client,
         IClipboardService clipboardService,
         ISettingsService settingsService)
     {
-        _accountRepository = accountRepository;
-        _otpService = otpService;
+        _client = client;
         _clipboardService = clipboardService;
         _settingsService = settingsService;
+        _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+
+        // 볼트 변경 시(잠금 해제/동기화/외부 변경) 목록 새로고침
+        _client.VaultChanged += OnVaultChanged;
+    }
+
+    private void OnVaultChanged(object? sender, EventArgs e)
+    {
+        _dispatcherQueue.TryEnqueue(() => _ = LoadAccountsAsync());
     }
 
     /// <summary>
@@ -70,7 +66,7 @@ public partial class AccountListViewModel : BaseViewModel
     [RelayCommand]
     public async Task LoadAccountsAsync()
     {
-        await ExecuteAsync(async () =>
+        await ExecuteAsync(() =>
         {
             // 기존 ViewModel 정리
             foreach (var vm in Accounts)
@@ -80,113 +76,83 @@ public partial class AccountListViewModel : BaseViewModel
             }
             Accounts.Clear();
 
-            // 필터에 따라 계정 로드
-            IReadOnlyList<OtpAccount> accounts;
+            if (!_client.IsUnlocked)
+            {
+                IsEmpty = true;
+                return Task.CompletedTask;
+            }
+
+            IEnumerable<OtpAccount> accounts = _client.ListAccounts();
 
             if (ShowFavoritesOnly)
-            {
-                accounts = await _accountRepository.GetFavoritesAsync();
-            }
+                accounts = accounts.Where(a => a.isFavorite);
             else if (ShowUncategorizedOnly)
-            {
-                accounts = await _accountRepository.GetUncategorizedAsync();
-            }
-            else if (FilterFolderId.HasValue)
-            {
-                accounts = await _accountRepository.GetByFolderAsync(FilterFolderId.Value);
-            }
-            else
-            {
-                accounts = await _accountRepository.GetAllAsync();
-            }
+                accounts = accounts.Where(a => a.folderId == null);
+            else if (!string.IsNullOrEmpty(FilterFolderId))
+                accounts = accounts.Where(a => a.folderId == FilterFolderId);
 
             foreach (var account in accounts)
             {
-                var vm = new AccountItemViewModel(account, _otpService);
+                var vm = new AccountItemViewModel(account, _client);
                 vm.CopyRequested += OnCopyRequested;
                 Accounts.Add(vm);
             }
 
             IsEmpty = Accounts.Count == 0;
+            return Task.CompletedTask;
         });
     }
 
-    /// <summary>
-    /// 계정 추가
-    /// </summary>
     [RelayCommand]
     private void AddAccount()
     {
         AddRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>
-    /// 계정 편집
-    /// </summary>
     [RelayCommand]
     private void EditAccount(AccountItemViewModel? vm)
     {
         if (vm != null)
-        {
             EditRequested?.Invoke(this, vm.Account);
-        }
     }
 
-    /// <summary>
-    /// 계정 삭제
-    /// </summary>
     [RelayCommand]
     private async Task DeleteAccountAsync(AccountItemViewModel? vm)
     {
         if (vm == null) return;
 
-        await ExecuteAsync(async () =>
+        await ExecuteAsync(() =>
         {
-            await _accountRepository.DeleteAsync(vm.Account.Id);
-
-            vm.CopyRequested -= OnCopyRequested;
-            vm.Dispose();
-            Accounts.Remove(vm);
-
-            IsEmpty = Accounts.Count == 0;
+            _client.DeleteAccount(vm.Account.id);
+            // VaultChanged 이벤트가 목록을 새로고침합니다.
+            return Task.CompletedTask;
         });
     }
 
-    /// <summary>
-    /// 즐겨찾기 토글
-    /// </summary>
     [RelayCommand]
     private async Task ToggleFavoriteAsync(AccountItemViewModel? vm)
     {
         if (vm == null) return;
 
-        await ExecuteAsync(async () =>
+        await ExecuteAsync(() =>
         {
-            vm.Account.IsFavorite = !vm.Account.IsFavorite;
-            await _accountRepository.UpdateAsync(vm.Account);
+            var updated = vm.Account with { isFavorite = !vm.Account.isFavorite };
+            _client.UpdateAccount(updated);
+            return Task.CompletedTask;
         });
     }
 
-    /// <summary>
-    /// 검색
-    /// </summary>
     partial void OnSearchQueryChanged(string value)
     {
         // TODO: 필터링 구현
     }
 
-    /// <summary>
-    /// 코드 복사 처리
-    /// </summary>
     private async void OnCopyRequested(object? sender, string code)
     {
         var settings = _settingsService.Settings;
         await _clipboardService.CopyAsync(code, settings.ClipboardClearSeconds);
     }
 
-    /// <summary>
-    /// 리소스 정리
-    /// </summary>
     public void Cleanup()
     {
         foreach (var vm in Accounts)

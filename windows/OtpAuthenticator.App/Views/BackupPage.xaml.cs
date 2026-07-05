@@ -1,22 +1,24 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using OtpAuthenticator.Core.Services.Interfaces;
+using OtpAuthenticator.Core.Windows.Services;
 using Windows.Storage.Pickers;
+using Uniffi.Otp;
 
 namespace OtpAuthenticator.App.Views;
 
 /// <summary>
-/// 백업/복원 페이지
+/// 백업/복원 페이지. 백업 암복호화는 Rust 코어(v2 컨테이너)가 담당하며,
+/// 레거시 v1 .otpbackup 가져오기도 코어의 ImportBackupV1로 처리합니다.
 /// </summary>
 public sealed partial class BackupPage : Page
 {
-    private readonly IBackupService _backupService;
+    private readonly IOtpClientService _client;
 
     public BackupPage()
     {
         this.InitializeComponent();
-        _backupService = App.Services.GetRequiredService<IBackupService>();
+        _client = App.Services.GetRequiredService<IOtpClientService>();
 
         ExportButton.Click += OnExportClick;
         ImportButton.Click += OnImportClick;
@@ -25,20 +27,17 @@ public sealed partial class BackupPage : Page
 
     private async void OnExportClick(object sender, RoutedEventArgs e)
     {
-        // 비밀번호 입력 다이얼로그
         var password = await ShowPasswordDialogAsync("Create Backup Password",
             "Enter a password to encrypt your backup:");
 
         if (string.IsNullOrEmpty(password))
             return;
 
-        // 파일 저장 위치 선택
         var savePicker = new FileSavePicker();
         savePicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-        savePicker.FileTypeChoices.Add("OTP Backup", new[] { ".otpbackup" });
+        savePicker.FileTypeChoices.Add("OTP Vault Backup", new[] { ".otpvault" });
         savePicker.SuggestedFileName = $"otp_backup_{DateTime.Now:yyyyMMdd}";
 
-        // WinUI 3에서 picker 초기화
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
         WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
 
@@ -47,7 +46,8 @@ public sealed partial class BackupPage : Page
 
         try
         {
-            await _backupService.ExportAsync(file.Path, password, IncludeSettingsToggle.IsOn);
+            byte[] blob = _client.ExportBackup(password);
+            await File.WriteAllBytesAsync(file.Path, blob);
             await ShowMessageAsync("Success", "Backup exported successfully.");
         }
         catch (Exception ex)
@@ -58,9 +58,9 @@ public sealed partial class BackupPage : Page
 
     private async void OnImportClick(object sender, RoutedEventArgs e)
     {
-        // 파일 선택
         var openPicker = new FileOpenPicker();
         openPicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+        openPicker.FileTypeFilter.Add(".otpvault");
         openPicker.FileTypeFilter.Add(".otpbackup");
 
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
@@ -69,7 +69,6 @@ public sealed partial class BackupPage : Page
         var file = await openPicker.PickSingleFileAsync();
         if (file == null) return;
 
-        // 비밀번호 입력
         var password = await ShowPasswordDialogAsync("Enter Backup Password",
             "Enter the password used to encrypt this backup:");
 
@@ -78,13 +77,27 @@ public sealed partial class BackupPage : Page
 
         try
         {
-            int count = await _backupService.ImportAsync(file.Path, password, RestoreSettingsToggle.IsOn);
+            byte[] data = await File.ReadAllBytesAsync(file.Path);
+            bool merge = RestoreSettingsToggle.IsOn;
+
+            uint count;
+            try
+            {
+                // v2 컨테이너 우선
+                count = _client.ImportBackup(data, password, merge);
+            }
+            catch (OtpException.Corrupt)
+            {
+                // v2가 아니면 레거시 v1 .otpbackup으로 재시도
+                count = _client.ImportBackupV1(data, password, merge);
+            }
+
             ImportInfoBar.Severity = InfoBarSeverity.Success;
             ImportInfoBar.Title = "Import Successful";
-            ImportInfoBar.Message = $"{count} account(s) imported successfully.";
+            ImportInfoBar.Message = $"{count} entity/entities imported successfully.";
             ImportInfoBar.IsOpen = true;
         }
-        catch (System.Security.Cryptography.CryptographicException)
+        catch (OtpException.WrongPassword)
         {
             ImportInfoBar.Severity = InfoBarSeverity.Error;
             ImportInfoBar.Title = "Invalid Password";
@@ -102,7 +115,6 @@ public sealed partial class BackupPage : Page
 
     private async void OnExportQrClick(object sender, RoutedEventArgs e)
     {
-        // QR 코드 내보내기 (나중에 구현)
         await ShowMessageAsync("Coming Soon", "QR code export will be available in a future update.");
     }
 

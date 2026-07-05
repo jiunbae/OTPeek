@@ -1,8 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using OtpAuthenticator.Core.Models;
-using OtpAuthenticator.Core.Services.Interfaces;
+using OtpAuthenticator.Core.Windows;
+using OtpAuthenticator.Core.Windows.Services;
+using Uniffi.Otp;
 
 namespace OtpAuthenticator.App.Views;
 
@@ -11,7 +11,7 @@ namespace OtpAuthenticator.App.Views;
 /// </summary>
 public sealed partial class ManualAddDialog : ContentDialog
 {
-    private readonly IAccountRepository _accountRepository;
+    private readonly IOtpClientService _client;
 
     /// <summary>
     /// Added account (available after dialog closes)
@@ -22,7 +22,7 @@ public sealed partial class ManualAddDialog : ContentDialog
     {
         this.InitializeComponent();
 
-        _accountRepository = App.Services.GetRequiredService<IAccountRepository>();
+        _client = App.Services.GetRequiredService<IOtpClientService>();
 
         // Event handlers
         IssuerTextBox.TextChanged += OnTextChanged;
@@ -87,22 +87,23 @@ public sealed partial class ManualAddDialog : ContentDialog
             }
 
             // Algorithm
-            var algorithm = HashAlgorithmType.Sha1;
+            var algorithm = HashAlgorithm.Sha1;
             if (AlgorithmCombo.SelectedItem is ComboBoxItem algoItem && algoItem.Tag is string algoTag)
             {
                 algorithm = algoTag switch
                 {
-                    "SHA256" => HashAlgorithmType.Sha256,
-                    "SHA512" => HashAlgorithmType.Sha512,
-                    _ => HashAlgorithmType.Sha1
+                    "SHA256" => HashAlgorithm.Sha256,
+                    "SHA512" => HashAlgorithm.Sha512,
+                    _ => HashAlgorithm.Sha1
                 };
             }
 
             // Digits
-            int digits = 6;
-            if (DigitsCombo.SelectedItem is ComboBoxItem digitsItem && digitsItem.Tag is string digitsTag)
+            uint digits = 6;
+            if (DigitsCombo.SelectedItem is ComboBoxItem digitsItem && digitsItem.Tag is string digitsTag
+                && uint.TryParse(digitsTag, out var parsedDigits))
             {
-                digits = int.Parse(digitsTag);
+                digits = parsedDigits;
             }
 
             // Normalize Secret Key
@@ -111,26 +112,23 @@ public sealed partial class ManualAddDialog : ContentDialog
                 .Replace("-", "")
                 .ToUpperInvariant();
 
-            // Create account
-            var account = new OtpAccount
-            {
-                Id = Guid.NewGuid(),
-                Issuer = IssuerTextBox.Text.Trim(),
-                AccountName = string.IsNullOrWhiteSpace(AccountNameTextBox.Text)
-                    ? IssuerTextBox.Text.Trim()
-                    : AccountNameTextBox.Text.Trim(),
-                SecretKey = secretKey,
-                Type = otpType,
-                Algorithm = algorithm,
-                Digits = digits,
-                Period = otpType == OtpType.Totp ? (int)PeriodNumberBox.Value : 30,
-                Counter = otpType == OtpType.Hotp ? (long)PeriodNumberBox.Value : 0,
-                CreatedAt = DateTime.UtcNow
-            };
+            string issuer = IssuerTextBox.Text.Trim();
+            string accountName = string.IsNullOrWhiteSpace(AccountNameTextBox.Text)
+                ? issuer
+                : AccountNameTextBox.Text.Trim();
 
-            // Save
-            await _accountRepository.AddAsync(account);
-            AddedAccount = account;
+            var account = OtpAccountExtensions.NewAccount(
+                secret: secretKey,
+                type: otpType,
+                issuer: issuer,
+                accountName: accountName,
+                algorithm: algorithm,
+                digits: digits,
+                period: otpType == OtpType.Totp ? (uint)PeriodNumberBox.Value : 30,
+                counter: otpType == OtpType.Hotp ? (ulong)PeriodNumberBox.Value : 0);
+
+            // Save (코어가 id/타임스탬프 할당)
+            AddedAccount = _client.AddAccount(account);
 
             StatusInfoBar.Severity = InfoBarSeverity.Success;
             StatusInfoBar.Message = "Account added successfully!";

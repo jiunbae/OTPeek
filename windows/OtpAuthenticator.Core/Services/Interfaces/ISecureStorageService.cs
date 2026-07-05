@@ -1,54 +1,71 @@
 namespace OtpAuthenticator.Core.Services.Interfaces;
 
 /// <summary>
-/// 보안 저장소 서비스 인터페이스
+/// 보안 저장소 서비스 인터페이스.
+/// v2에서 계정/시크릿은 Rust 코어 볼트에 저장되므로, 이 서비스는
+/// (1) 볼트 마스터 키(VMK)의 DPAPI 보호 저장, (2) 앱 환경설정 파일의 DPAPI 저장,
+/// (3) 임의 문자열(WebDAV 비밀번호 등)의 DPAPI 보호만 담당합니다.
 /// </summary>
 public interface ISecureStorageService
 {
     /// <summary>
-    /// 비밀 값 저장 (PasswordVault)
+    /// 데이터 디렉토리 경로 (%LOCALAPPDATA%\OtpAuthenticator)
     /// </summary>
-    /// <param name="key">키</param>
-    /// <param name="value">값</param>
-    void StoreSecret(string key, string value);
+    string DataDirectory { get; }
 
     /// <summary>
-    /// 비밀 값 조회
+    /// 볼트 파일 경로 (%LOCALAPPDATA%\OtpAuthenticator\vault.otpvault)
     /// </summary>
-    /// <param name="key">키</param>
-    /// <returns>값 또는 null</returns>
-    string? RetrieveSecret(string key);
+    string VaultPath { get; }
+
+    // --- VMK (Vault Master Key) ---
 
     /// <summary>
-    /// 비밀 값 삭제
+    /// VMK(32바이트)를 DPAPI(CurrentUser)로 보호하여 vmk.bin에 저장
     /// </summary>
-    /// <param name="key">키</param>
-    void RemoveSecret(string key);
+    void SaveVaultKey(byte[] vmk);
 
     /// <summary>
-    /// 암호화된 데이터 저장 (DPAPI)
+    /// 저장된 VMK를 복호화하여 반환. 없거나 복호화 실패 시 null
     /// </summary>
-    /// <typeparam name="T">데이터 타입</typeparam>
-    /// <param name="filename">파일명</param>
-    /// <param name="data">데이터</param>
+    byte[]? LoadVaultKey();
+
+    /// <summary>
+    /// vmk.bin 존재 여부
+    /// </summary>
+    bool HasVaultKey();
+
+    /// <summary>
+    /// 저장된 VMK 삭제
+    /// </summary>
+    void DeleteVaultKey();
+
+    // --- 앱 환경설정 (평문 비밀 없음) ---
+
+    /// <summary>
+    /// 앱 환경설정 데이터를 DPAPI로 암호화하여 파일에 저장
+    /// </summary>
     Task SaveEncryptedDataAsync<T>(string filename, T data);
 
     /// <summary>
-    /// 암호화된 데이터 로드
+    /// DPAPI 암호화된 환경설정 데이터 로드. 없으면 default
     /// </summary>
-    /// <typeparam name="T">데이터 타입</typeparam>
-    /// <param name="filename">파일명</param>
-    /// <returns>데이터 또는 default</returns>
     Task<T?> LoadEncryptedDataAsync<T>(string filename);
 
     /// <summary>
-    /// 암호화된 데이터 파일 삭제
+    /// 환경설정 데이터 파일 삭제
     /// </summary>
-    /// <param name="filename">파일명</param>
     Task DeleteEncryptedDataAsync(string filename);
 
+    // --- 임의 문자열 보호 (WebDAV 비밀번호 등) ---
+
     /// <summary>
-    /// 데이터 디렉토리 경로
+    /// 문자열을 DPAPI(CurrentUser)로 보호하고 Base64 문자열로 반환
     /// </summary>
-    string DataDirectory { get; }
+    string ProtectString(string plaintext);
+
+    /// <summary>
+    /// <see cref="ProtectString"/>로 보호된 Base64 문자열을 복호화. 실패 시 null
+    /// </summary>
+    string? UnprotectString(string? protectedBase64);
 }

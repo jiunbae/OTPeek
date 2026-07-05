@@ -2,7 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using OtpAuthenticator.App.ViewModels;
-using OtpAuthenticator.Core.Models;
+using Uniffi.Otp;
 
 namespace OtpAuthenticator.App.Views;
 
@@ -120,7 +120,7 @@ public sealed partial class AccountEditView : UserControl
     {
         // ComboBox 값 업데이트
         ViewModel.SelectedType = TypeComboBox.SelectedIndex == 0 ? OtpType.Totp : OtpType.Hotp;
-        ViewModel.SelectedAlgorithm = (HashAlgorithmType)AlgorithmComboBox.SelectedIndex;
+        ViewModel.SelectedAlgorithm = (HashAlgorithm)AlgorithmComboBox.SelectedIndex;
         ViewModel.Digits = DigitsComboBox.SelectedIndex == 0 ? 6 : 8;
         ViewModel.Period = PeriodComboBox.SelectedIndex switch
         {

@@ -1,7 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using OtpAuthenticator.Core.Models;
-using OtpAuthenticator.Core.Services.Interfaces;
+using OtpAuthenticator.Core.Windows;
+using OtpAuthenticator.Core.Windows.Services;
+using Uniffi.Otp;
 
 namespace OtpAuthenticator.App.ViewModels;
 
@@ -10,8 +11,7 @@ namespace OtpAuthenticator.App.ViewModels;
 /// </summary>
 public partial class AccountEditViewModel : BaseViewModel
 {
-    private readonly IAccountRepository _accountRepository;
-    private readonly IOtpService _otpService;
+    private readonly IOtpClientService _client;
 
     private OtpAccount? _originalAccount;
 
@@ -31,7 +31,7 @@ public partial class AccountEditViewModel : BaseViewModel
     private OtpType _selectedType = OtpType.Totp;
 
     [ObservableProperty]
-    private HashAlgorithmType _selectedAlgorithm = HashAlgorithmType.Sha1;
+    private HashAlgorithm _selectedAlgorithm = HashAlgorithm.Sha1;
 
     [ObservableProperty]
     private int _digits = 6;
@@ -39,6 +39,9 @@ public partial class AccountEditViewModel : BaseViewModel
     [ObservableProperty]
     private int _period = 30;
 
+    /// <summary>
+    /// 메모 (참고: v2 볼트 모델에는 메모 필드가 없어 저장되지 않습니다. UI 호환을 위해 유지)
+    /// </summary>
     [ObservableProperty]
     private string? _notes;
 
@@ -48,32 +51,19 @@ public partial class AccountEditViewModel : BaseViewModel
     [ObservableProperty]
     private bool _isValid;
 
-    /// <summary>
-    /// 저장 완료 이벤트
-    /// </summary>
     public event EventHandler<OtpAccount>? Saved;
-
-    /// <summary>
-    /// 취소 이벤트
-    /// </summary>
     public event EventHandler? Cancelled;
 
     public IReadOnlyList<OtpType> OtpTypes { get; } = Enum.GetValues<OtpType>();
-    public IReadOnlyList<HashAlgorithmType> Algorithms { get; } = Enum.GetValues<HashAlgorithmType>();
+    public IReadOnlyList<HashAlgorithm> Algorithms { get; } = Enum.GetValues<HashAlgorithm>();
     public IReadOnlyList<int> DigitOptions { get; } = new[] { 6, 8 };
     public IReadOnlyList<int> PeriodOptions { get; } = new[] { 15, 30, 60 };
 
-    public AccountEditViewModel(
-        IAccountRepository accountRepository,
-        IOtpService otpService)
+    public AccountEditViewModel(IOtpClientService client)
     {
-        _accountRepository = accountRepository;
-        _otpService = otpService;
+        _client = client;
     }
 
-    /// <summary>
-    /// 새 계정 추가 모드로 초기화
-    /// </summary>
     public void InitializeForAdd()
     {
         IsEditMode = false;
@@ -83,7 +73,7 @@ public partial class AccountEditViewModel : BaseViewModel
         AccountName = string.Empty;
         SecretKey = string.Empty;
         SelectedType = OtpType.Totp;
-        SelectedAlgorithm = HashAlgorithmType.Sha1;
+        SelectedAlgorithm = HashAlgorithm.Sha1;
         Digits = 6;
         Period = 30;
         Notes = null;
@@ -91,56 +81,54 @@ public partial class AccountEditViewModel : BaseViewModel
         Validate();
     }
 
-    /// <summary>
-    /// 기존 계정 편집 모드로 초기화
-    /// </summary>
     public void InitializeForEdit(OtpAccount account)
     {
         IsEditMode = true;
         _originalAccount = account;
 
-        Issuer = account.Issuer;
-        AccountName = account.AccountName;
-        SecretKey = account.SecretKey;
-        SelectedType = account.Type;
-        SelectedAlgorithm = account.Algorithm;
-        Digits = account.Digits;
-        Period = account.Period;
-        Notes = account.Notes;
+        Issuer = account.issuer ?? string.Empty;
+        AccountName = account.accountName;
+        SecretKey = account.secret;
+        SelectedType = account.otpType;
+        SelectedAlgorithm = account.algorithm;
+        Digits = (int)account.digits;
+        Period = (int)account.period;
+        Notes = null;
 
         Validate();
     }
 
     /// <summary>
-    /// otpauth:// URI로 초기화
+    /// otpauth:// URI로 초기화 (미리보기 용도로 코어 파서를 사용)
     /// </summary>
     public bool InitializeFromUri(string uri)
     {
-        var account = _otpService.ParseOtpAuthUri(uri);
-        if (account == null)
+        OtpAccount account;
+        try
         {
-            ValidationError = "Invalid OTP URI format";
+            account = OtpMethods.ParseOtpauthUri(uri, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+        }
+        catch (OtpException ex)
+        {
+            ValidationError = $"Invalid OTP URI: {ex.Message}";
             return false;
         }
 
         IsEditMode = false;
         _originalAccount = null;
 
-        Issuer = account.Issuer;
-        AccountName = account.AccountName;
-        SecretKey = account.SecretKey;
-        SelectedType = account.Type;
-        SelectedAlgorithm = account.Algorithm;
-        Digits = account.Digits;
-        Period = account.Period;
+        Issuer = account.issuer ?? string.Empty;
+        AccountName = account.accountName;
+        SecretKey = account.secret;
+        SelectedType = account.otpType;
+        SelectedAlgorithm = account.algorithm;
+        Digits = (int)account.digits;
+        Period = (int)account.period;
 
         Validate();
         return true;
     }
 
-    /// <summary>
-    /// 유효성 검증
-    /// </summary>
     private void Validate()
     {
         ValidationError = null;
@@ -159,7 +147,7 @@ public partial class AccountEditViewModel : BaseViewModel
             return;
         }
 
-        if (!_otpService.ValidateSecretKey(SecretKey))
+        if (!OtpMethods.ValidateSecret(SecretKey))
         {
             ValidationError = "Invalid secret key format (must be Base32)";
             IsValid = false;
@@ -172,70 +160,56 @@ public partial class AccountEditViewModel : BaseViewModel
     partial void OnAccountNameChanged(string value) => Validate();
     partial void OnSecretKeyChanged(string value) => Validate();
 
-    /// <summary>
-    /// 저장
-    /// </summary>
     [RelayCommand(CanExecute = nameof(IsValid))]
     private async Task SaveAsync()
     {
         if (!IsValid) return;
 
-        await ExecuteAsync(async () =>
+        await ExecuteAsync(() =>
         {
-            OtpAccount account;
+            OtpAccount saved;
 
             if (IsEditMode && _originalAccount != null)
             {
-                // 기존 계정 업데이트
-                account = _originalAccount;
-                account.Issuer = Issuer;
-                account.AccountName = AccountName;
-                account.SecretKey = SecretKey;
-                account.Type = SelectedType;
-                account.Algorithm = SelectedAlgorithm;
-                account.Digits = Digits;
-                account.Period = Period;
-                account.Notes = Notes;
-
-                await _accountRepository.UpdateAsync(account);
+                var updated = _originalAccount with
+                {
+                    issuer = string.IsNullOrWhiteSpace(Issuer) ? null : Issuer,
+                    accountName = AccountName,
+                    secret = SecretKey,
+                    otpType = SelectedType,
+                    algorithm = SelectedAlgorithm,
+                    digits = (uint)Digits,
+                    period = (uint)Period
+                };
+                saved = _client.UpdateAccount(updated);
             }
             else
             {
-                // 새 계정 추가
-                account = new OtpAccount
-                {
-                    Issuer = Issuer,
-                    AccountName = AccountName,
-                    SecretKey = SecretKey,
-                    Type = SelectedType,
-                    Algorithm = SelectedAlgorithm,
-                    Digits = Digits,
-                    Period = Period,
-                    Notes = Notes
-                };
-
-                account = await _accountRepository.AddAsync(account);
+                var account = OtpAccountExtensions.NewAccount(
+                    secret: SecretKey,
+                    type: SelectedType,
+                    issuer: Issuer,
+                    accountName: AccountName,
+                    algorithm: SelectedAlgorithm,
+                    digits: (uint)Digits,
+                    period: (uint)Period);
+                saved = _client.AddAccount(account);
             }
 
-            Saved?.Invoke(this, account);
+            Saved?.Invoke(this, saved);
+            return Task.CompletedTask;
         });
     }
 
-    /// <summary>
-    /// 취소
-    /// </summary>
     [RelayCommand]
     private void Cancel()
     {
         Cancelled?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>
-    /// 랜덤 비밀 키 생성
-    /// </summary>
     [RelayCommand]
     private void GenerateRandomKey()
     {
-        SecretKey = _otpService.GenerateSecretKey();
+        SecretKey = SecretGenerator.RandomBase32();
     }
 }

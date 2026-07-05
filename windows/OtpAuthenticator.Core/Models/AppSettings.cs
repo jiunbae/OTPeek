@@ -1,7 +1,7 @@
 namespace OtpAuthenticator.Core.Models;
 
 /// <summary>
-/// 애플리케이션 설정
+/// 애플리케이션 설정 (계정/시크릿은 Rust 코어 볼트에 저장되며 여기에는 앱 환경설정만 보관)
 /// </summary>
 public class AppSettings
 {
@@ -61,9 +61,9 @@ public class AppSettings
     public bool ShowCopyNotification { get; set; } = true;
 
     /// <summary>
-    /// 클라우드 동기화 설정
+    /// WebDAV 동기화 설정 (Rust 코어의 SyncBackend로 연결)
     /// </summary>
-    public CloudSyncSettings CloudSync { get; set; } = new();
+    public WebDavSettings WebDav { get; set; } = new();
 
     /// <summary>
     /// 핫키 설정
@@ -72,9 +72,9 @@ public class AppSettings
 }
 
 /// <summary>
-/// 클라우드 동기화 설정
+/// WebDAV 동기화 설정. 비밀번호는 DPAPI로 보호되어 <see cref="ProtectedPassword"/>에 저장됩니다.
 /// </summary>
-public class CloudSyncSettings
+public class WebDavSettings
 {
     /// <summary>
     /// 동기화 활성화 여부
@@ -82,14 +82,19 @@ public class CloudSyncSettings
     public bool Enabled { get; set; } = false;
 
     /// <summary>
-    /// 클라우드 제공자
+    /// WebDAV 컬렉션(디렉터리) URL. 볼트 파일은 이 URL 하위의 otp-vault.otpvault로 저장됩니다.
     /// </summary>
-    public CloudProvider Provider { get; set; } = CloudProvider.None;
+    public string Url { get; set; } = string.Empty;
 
     /// <summary>
-    /// 마지막 동기화 시간
+    /// Basic 인증 사용자명
     /// </summary>
-    public DateTime? LastSyncTime { get; set; }
+    public string Username { get; set; } = string.Empty;
+
+    /// <summary>
+    /// DPAPI(CurrentUser)로 보호된 비밀번호의 Base64 문자열. 평문 비밀번호는 저장하지 않습니다.
+    /// </summary>
+    public string ProtectedPassword { get; set; } = string.Empty;
 
     /// <summary>
     /// 자동 동기화 활성화
@@ -100,16 +105,11 @@ public class CloudSyncSettings
     /// 동기화 주기 (분)
     /// </summary>
     public int SyncIntervalMinutes { get; set; } = 15;
-}
 
-/// <summary>
-/// 클라우드 제공자
-/// </summary>
-public enum CloudProvider
-{
-    None,
-    OneDrive,
-    GoogleDrive
+    /// <summary>
+    /// 마지막 동기화 시간
+    /// </summary>
+    public DateTime? LastSyncTime { get; set; }
 }
 
 /// <summary>

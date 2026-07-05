@@ -1,7 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using OtpAuthenticator.Core.Models;
 using OtpAuthenticator.Core.Services.Interfaces;
+using OtpAuthenticator.Core.Windows.Services;
+using Uniffi.Otp;
 
 namespace OtpAuthenticator.App.ViewModels;
 
@@ -11,6 +12,8 @@ namespace OtpAuthenticator.App.ViewModels;
 public partial class SettingsViewModel : BaseViewModel
 {
     private readonly ISettingsService _settingsService;
+    private readonly ISecureStorageService _secureStorage;
+    private readonly IOtpClientService _client;
 
     [ObservableProperty]
     private bool _startWithWindows;
@@ -36,31 +39,43 @@ public partial class SettingsViewModel : BaseViewModel
     [ObservableProperty]
     private bool _requireAuthentication;
 
-    [ObservableProperty]
-    private bool _cloudSyncEnabled;
+    // --- WebDAV 동기화 ---
 
     [ObservableProperty]
-    private CloudProvider _selectedCloudProvider;
+    private bool _webDavEnabled;
 
     [ObservableProperty]
-    private bool _autoSync;
+    private string _webDavUrl = string.Empty;
 
     [ObservableProperty]
-    private int _syncIntervalMinutes;
+    private string _webDavUsername = string.Empty;
+
+    [ObservableProperty]
+    private string _webDavPassword = string.Empty;
+
+    [ObservableProperty]
+    private bool _webDavAutoSync;
+
+    [ObservableProperty]
+    private int _webDavSyncIntervalMinutes;
+
+    [ObservableProperty]
+    private string? _syncStatus;
 
     public IReadOnlyList<string> ThemeOptions { get; } = new[] { "System", "Light", "Dark" };
     public IReadOnlyList<int> ClipboardClearOptions { get; } = new[] { 0, 15, 30, 60, 120 };
     public IReadOnlyList<int> SyncIntervalOptions { get; } = new[] { 5, 15, 30, 60 };
-    public IReadOnlyList<CloudProvider> CloudProviders { get; } = Enum.GetValues<CloudProvider>();
 
-    public SettingsViewModel(ISettingsService settingsService)
+    public SettingsViewModel(
+        ISettingsService settingsService,
+        ISecureStorageService secureStorage,
+        IOtpClientService client)
     {
         _settingsService = settingsService;
+        _secureStorage = secureStorage;
+        _client = client;
     }
 
-    /// <summary>
-    /// 설정 로드
-    /// </summary>
     [RelayCommand]
     public async Task LoadSettingsAsync()
     {
@@ -75,15 +90,15 @@ public partial class SettingsViewModel : BaseViewModel
         EnableWidgetProvider = settings.EnableWidgetProvider;
         SelectedTheme = settings.Theme;
         RequireAuthentication = settings.RequireAuthentication;
-        CloudSyncEnabled = settings.CloudSync.Enabled;
-        SelectedCloudProvider = settings.CloudSync.Provider;
-        AutoSync = settings.CloudSync.AutoSync;
-        SyncIntervalMinutes = settings.CloudSync.SyncIntervalMinutes;
+
+        WebDavEnabled = settings.WebDav.Enabled;
+        WebDavUrl = settings.WebDav.Url;
+        WebDavUsername = settings.WebDav.Username;
+        WebDavPassword = _secureStorage.UnprotectString(settings.WebDav.ProtectedPassword) ?? string.Empty;
+        WebDavAutoSync = settings.WebDav.AutoSync;
+        WebDavSyncIntervalMinutes = settings.WebDav.SyncIntervalMinutes;
     }
 
-    /// <summary>
-    /// 설정 저장
-    /// </summary>
     [RelayCommand]
     public async Task SaveSettingsAsync()
     {
@@ -99,49 +114,94 @@ public partial class SettingsViewModel : BaseViewModel
             settings.EnableWidgetProvider = EnableWidgetProvider;
             settings.Theme = SelectedTheme;
             settings.RequireAuthentication = RequireAuthentication;
-            settings.CloudSync.Enabled = CloudSyncEnabled;
-            settings.CloudSync.Provider = SelectedCloudProvider;
-            settings.CloudSync.AutoSync = AutoSync;
-            settings.CloudSync.SyncIntervalMinutes = SyncIntervalMinutes;
+
+            settings.WebDav.Enabled = WebDavEnabled;
+            settings.WebDav.Url = WebDavUrl;
+            settings.WebDav.Username = WebDavUsername;
+            settings.WebDav.ProtectedPassword = string.IsNullOrEmpty(WebDavPassword)
+                ? string.Empty
+                : _secureStorage.ProtectString(WebDavPassword);
+            settings.WebDav.AutoSync = WebDavAutoSync;
+            settings.WebDav.SyncIntervalMinutes = WebDavSyncIntervalMinutes;
 
             await _settingsService.SaveAsync();
 
-            // Windows 시작 프로그램 등록/해제
+            ApplyWebDavToClient();
             await UpdateStartupAsync();
         });
     }
 
     /// <summary>
-    /// 설정 초기화
+    /// 현재 WebDAV 설정을 코어 동기화 백엔드에 반영
     /// </summary>
+    private void ApplyWebDavToClient()
+    {
+        if (!_client.IsUnlocked)
+            return;
+
+        try
+        {
+            if (WebDavEnabled && !string.IsNullOrWhiteSpace(WebDavUrl))
+                _client.ConfigureWebDavSync(WebDavUrl, WebDavUsername, WebDavPassword);
+            else
+                _client.ClearSync();
+        }
+        catch
+        {
+            // 구성 실패는 무시 (SyncNow 시 오류 표시)
+        }
+    }
+
+    /// <summary>
+    /// 지금 동기화
+    /// </summary>
+    [RelayCommand]
+    public async Task SyncNowAsync()
+    {
+        await ExecuteAsync(() =>
+        {
+            if (!_client.IsUnlocked)
+            {
+                SyncStatus = "Vault is locked.";
+                return Task.CompletedTask;
+            }
+
+            try
+            {
+                ApplyWebDavToClient();
+                SyncOutcome outcome = _client.Sync();
+                _settingsService.Settings.WebDav.LastSyncTime = DateTime.UtcNow;
+                SyncStatus = $"Synced. pushed={outcome.pushed}, pulled={outcome.pulled}, changes={outcome.mergedChanges}";
+            }
+            catch (OtpException ex)
+            {
+                SyncStatus = $"Sync failed: {ex.Message}";
+            }
+            return Task.CompletedTask;
+        });
+    }
+
     [RelayCommand]
     public async Task ResetSettingsAsync()
     {
         await ExecuteAsync(async () =>
         {
+            _settingsService.Settings.WebDav.ProtectedPassword = string.Empty;
             await _settingsService.ResetAsync();
             await LoadSettingsAsync();
         });
     }
 
-    /// <summary>
-    /// Windows 시작 프로그램 등록/해제
-    /// </summary>
     private async Task UpdateStartupAsync()
     {
-        // StartupTask API 사용
         try
         {
-            var startupTask = await Windows.ApplicationModel.StartupTask.GetAsync("OtpAuthStartup");
+            var startupTask = await global::Windows.ApplicationModel.StartupTask.GetAsync("OtpAuthStartup");
 
             if (StartWithWindows)
-            {
                 await startupTask.RequestEnableAsync();
-            }
             else
-            {
                 startupTask.Disable();
-            }
         }
         catch
         {
@@ -149,7 +209,6 @@ public partial class SettingsViewModel : BaseViewModel
         }
     }
 
-    // 값 변경 시 자동 저장
     partial void OnStartWithWindowsChanged(bool value) => _ = SaveSettingsAsync();
     partial void OnStartMinimizedChanged(bool value) => _ = SaveSettingsAsync();
     partial void OnMinimizeToTrayChanged(bool value) => _ = SaveSettingsAsync();
@@ -161,9 +220,6 @@ public partial class SettingsViewModel : BaseViewModel
         _ = SaveSettingsAsync();
     }
 
-    /// <summary>
-    /// 테마 적용
-    /// </summary>
     public static void ApplyTheme(string theme)
     {
         if (App.MainWindow?.Content is Microsoft.UI.Xaml.FrameworkElement rootElement)

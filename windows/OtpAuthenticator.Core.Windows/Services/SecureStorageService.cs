@@ -6,15 +6,23 @@ using OtpAuthenticator.Core.Services.Interfaces;
 namespace OtpAuthenticator.Core.Windows.Services;
 
 /// <summary>
-/// Windows 보안 저장소 서비스 (PasswordVault + DPAPI)
+/// Windows 보안 저장소 서비스.
+/// v2에서는 계정/시크릿을 Rust 코어 볼트가 관리하므로, 이 서비스는
+/// 볼트 마스터 키(VMK)의 DPAPI 보호 저장과 앱 환경설정 파일 저장만 담당합니다.
 /// </summary>
 public class SecureStorageService : ISecureStorageService
 {
-    private const string ResourceName = "OtpAuthenticator";
+    private const string VmkFileName = "vmk.bin";
+    private const string VaultFileName = "vault.otpvault";
+
+    // DPAPI 부가 엔트로피 (VMK 보호용). 고정 값으로 사용해도 CurrentUser 스코프로 충분히 보호됨.
+    private static readonly byte[] VmkEntropy = Encoding.UTF8.GetBytes("OtpAuthenticator.Vmk.v2");
+
     private readonly string _dataDirectory;
-    private readonly Dictionary<string, string> _secretCache = new();
 
     public string DataDirectory => _dataDirectory;
+
+    public string VaultPath => Path.Combine(_dataDirectory, VaultFileName);
 
     public SecureStorageService()
     {
@@ -23,82 +31,57 @@ public class SecureStorageService : ISecureStorageService
             "OtpAuthenticator");
 
         Directory.CreateDirectory(_dataDirectory);
-        Directory.CreateDirectory(Path.Combine(_dataDirectory, "secrets"));
     }
 
-    public void StoreSecret(string key, string value)
+    private string VmkPath => Path.Combine(_dataDirectory, VmkFileName);
+
+    // --- VMK ---
+
+    public void SaveVaultKey(byte[] vmk)
     {
-        if (string.IsNullOrEmpty(key))
-            throw new ArgumentNullException(nameof(key));
+        if (vmk == null || vmk.Length == 0)
+            throw new ArgumentException("VMK must be non-empty", nameof(vmk));
+
+        byte[] encrypted = ProtectedData.Protect(vmk, VmkEntropy, DataProtectionScope.CurrentUser);
+        // 원자적 저장: temp 파일 작성 후 교체
+        string tmp = VmkPath + ".tmp";
+        File.WriteAllBytes(tmp, encrypted);
+        if (File.Exists(VmkPath))
+            File.Delete(VmkPath);
+        File.Move(tmp, VmkPath);
+    }
+
+    public byte[]? LoadVaultKey()
+    {
+        if (!File.Exists(VmkPath))
+            return null;
 
         try
         {
-            StoreInPasswordVault(key, value);
+            byte[] encrypted = File.ReadAllBytes(VmkPath);
+            return ProtectedData.Unprotect(encrypted, VmkEntropy, DataProtectionScope.CurrentUser);
         }
         catch
         {
-            StoreWithDpapi(key, value);
-        }
-
-        _secretCache[key] = value;
-    }
-
-    public string? RetrieveSecret(string key)
-    {
-        if (string.IsNullOrEmpty(key))
             return null;
-
-        if (_secretCache.TryGetValue(key, out var cached))
-            return cached;
-
-        try
-        {
-            var value = RetrieveFromPasswordVault(key);
-            if (value != null)
-            {
-                _secretCache[key] = value;
-                return value;
-            }
         }
-        catch { }
-
-        try
-        {
-            var value = RetrieveWithDpapi(key);
-            if (value != null)
-            {
-                _secretCache[key] = value;
-                return value;
-            }
-        }
-        catch { }
-
-        return null;
     }
 
-    public void RemoveSecret(string key)
+    public bool HasVaultKey() => File.Exists(VmkPath);
+
+    public void DeleteVaultKey()
     {
-        if (string.IsNullOrEmpty(key))
-            return;
-
-        _secretCache.Remove(key);
-
-        try { RemoveFromPasswordVault(key); } catch { }
-        try { RemoveWithDpapi(key); } catch { }
+        if (File.Exists(VmkPath))
+            File.Delete(VmkPath);
     }
+
+    // --- 앱 환경설정 (평문 비밀 없음) ---
 
     public async Task SaveEncryptedDataAsync<T>(string filename, T data)
     {
-        string json = JsonSerializer.Serialize(data, new JsonSerializerOptions
-        {
-            WriteIndented = false
-        });
-
+        string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = false });
         byte[] plainBytes = Encoding.UTF8.GetBytes(json);
-        byte[] encryptedBytes = ProtectedData.Protect(
-            plainBytes,
-            null,
-            DataProtectionScope.CurrentUser);
+        byte[] encryptedBytes = ProtectedData.Protect(plainBytes, null, DataProtectionScope.CurrentUser);
 
         string filePath = Path.Combine(_dataDirectory, filename);
         await File.WriteAllBytesAsync(filePath, encryptedBytes);
@@ -107,18 +90,13 @@ public class SecureStorageService : ISecureStorageService
     public async Task<T?> LoadEncryptedDataAsync<T>(string filename)
     {
         string filePath = Path.Combine(_dataDirectory, filename);
-
         if (!File.Exists(filePath))
             return default;
 
         try
         {
             byte[] encryptedBytes = await File.ReadAllBytesAsync(filePath);
-            byte[] plainBytes = ProtectedData.Unprotect(
-                encryptedBytes,
-                null,
-                DataProtectionScope.CurrentUser);
-
+            byte[] plainBytes = ProtectedData.Unprotect(encryptedBytes, null, DataProtectionScope.CurrentUser);
             string json = Encoding.UTF8.GetString(plainBytes);
             return JsonSerializer.Deserialize<T>(json);
         }
@@ -131,108 +109,34 @@ public class SecureStorageService : ISecureStorageService
     public Task DeleteEncryptedDataAsync(string filename)
     {
         string filePath = Path.Combine(_dataDirectory, filename);
-
         if (File.Exists(filePath))
             File.Delete(filePath);
-
         return Task.CompletedTask;
     }
 
-    #region PasswordVault Operations
+    // --- 임의 문자열 보호 ---
 
-    private void StoreInPasswordVault(string key, string value)
+    public string ProtectString(string plaintext)
     {
-        var vault = new global::Windows.Security.Credentials.PasswordVault();
-
-        try
-        {
-            var existing = vault.Retrieve(ResourceName, key);
-            vault.Remove(existing);
-        }
-        catch { }
-
-        var credential = new global::Windows.Security.Credentials.PasswordCredential(
-            ResourceName, key, value);
-        vault.Add(credential);
+        byte[] plainBytes = Encoding.UTF8.GetBytes(plaintext ?? string.Empty);
+        byte[] encrypted = ProtectedData.Protect(plainBytes, null, DataProtectionScope.CurrentUser);
+        return Convert.ToBase64String(encrypted);
     }
 
-    private string? RetrieveFromPasswordVault(string key)
+    public string? UnprotectString(string? protectedBase64)
     {
-        var vault = new global::Windows.Security.Credentials.PasswordVault();
+        if (string.IsNullOrEmpty(protectedBase64))
+            return null;
 
         try
         {
-            var credential = vault.Retrieve(ResourceName, key);
-            credential.RetrievePassword();
-            return credential.Password;
+            byte[] encrypted = Convert.FromBase64String(protectedBase64);
+            byte[] plainBytes = ProtectedData.Unprotect(encrypted, null, DataProtectionScope.CurrentUser);
+            return Encoding.UTF8.GetString(plainBytes);
         }
         catch
         {
             return null;
         }
     }
-
-    private void RemoveFromPasswordVault(string key)
-    {
-        var vault = new global::Windows.Security.Credentials.PasswordVault();
-
-        try
-        {
-            var credential = vault.Retrieve(ResourceName, key);
-            vault.Remove(credential);
-        }
-        catch { }
-    }
-
-    #endregion
-
-    #region DPAPI Fallback
-
-    private void StoreWithDpapi(string key, string value)
-    {
-        byte[] plainBytes = Encoding.UTF8.GetBytes(value);
-        byte[] encryptedBytes = ProtectedData.Protect(
-            plainBytes,
-            Encoding.UTF8.GetBytes(key),
-            DataProtectionScope.CurrentUser);
-
-        string filePath = GetSecretFilePath(key);
-        Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
-        File.WriteAllBytes(filePath, encryptedBytes);
-    }
-
-    private string? RetrieveWithDpapi(string key)
-    {
-        string filePath = GetSecretFilePath(key);
-
-        if (!File.Exists(filePath))
-            return null;
-
-        byte[] encryptedBytes = File.ReadAllBytes(filePath);
-        byte[] plainBytes = ProtectedData.Unprotect(
-            encryptedBytes,
-            Encoding.UTF8.GetBytes(key),
-            DataProtectionScope.CurrentUser);
-
-        return Encoding.UTF8.GetString(plainBytes);
-    }
-
-    private void RemoveWithDpapi(string key)
-    {
-        string filePath = GetSecretFilePath(key);
-
-        if (File.Exists(filePath))
-            File.Delete(filePath);
-    }
-
-    private string GetSecretFilePath(string key)
-    {
-        string safeKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(key))
-            .Replace('/', '_')
-            .Replace('+', '-');
-
-        return Path.Combine(_dataDirectory, "secrets", $"{safeKey}.dat");
-    }
-
-    #endregion
 }

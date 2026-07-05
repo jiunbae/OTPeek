@@ -86,33 +86,42 @@
                 </StackPanel>
             </Border>
 
-            <!-- Cloud Sync - Coming Soon -->
-            <!--
-            <TextBlock Text="Cloud Sync"
+            <!-- WebDAV Sync -->
+            <TextBlock Text="WebDAV Sync"
                        Style="{StaticResource SectionHeaderStyle}" />
 
             <Border Style="{StaticResource AccountCardStyle}">
                 <StackPanel Spacing="16">
-                    <ToggleSwitch x:Name="CloudSyncToggle"
-                                  Header="Enable cloud sync"
+                    <ToggleSwitch x:Name="WebDavEnabledToggle"
+                                  Header="Enable WebDAV sync"
                                   OffContent="Off"
                                   OnContent="On" />
 
-                    <ComboBox x:Name="CloudProviderCombo"
-                              Header="Cloud provider"
-                              HorizontalAlignment="Stretch"
-                              IsEnabled="False">
-                        <ComboBoxItem Content="None" Tag="None" />
-                        <ComboBoxItem Content="OneDrive" Tag="OneDrive" />
-                        <ComboBoxItem Content="Google Drive" Tag="GoogleDrive" />
-                    </ComboBox>
+                    <TextBox x:Name="WebDavUrlTextBox"
+                             Header="Server URL (collection)"
+                             PlaceholderText="https://dav.example.com/otp/"
+                             HorizontalAlignment="Stretch" />
 
-                    <Button x:Name="SyncNowButton"
-                            Content="Sync Now"
-                            IsEnabled="False" />
+                    <TextBox x:Name="WebDavUserTextBox"
+                             Header="Username"
+                             HorizontalAlignment="Stretch" />
+
+                    <PasswordBox x:Name="WebDavPasswordBox"
+                                 Header="Password"
+                                 HorizontalAlignment="Stretch" />
+
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Button x:Name="SaveWebDavButton"
+                                Content="Save" />
+                        <Button x:Name="SyncNowButton"
+                                Content="Sync now" />
+                    </StackPanel>
+
+                    <TextBlock x:Name="SyncStatusText"
+                               Opacity="0.7"
+                               TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
-            -->
 
             <!-- About -->
             <TextBlock Text="About"

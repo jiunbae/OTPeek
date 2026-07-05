@@ -1,4 +1,3 @@
-using OtpAuthenticator.Core.Models;
 using OtpAuthenticator.Core.Services.Interfaces;
 using ZXing;
 using ZXing.Common;
@@ -7,18 +6,17 @@ using ZXing.Windows.Compatibility;
 namespace OtpAuthenticator.Core.Windows.Services;
 
 /// <summary>
-/// Windows QR 코드 서비스 (ZXing.NET Windows)
+/// Windows QR 코드 서비스 (ZXing.NET Windows).
+/// QR에서 원본 텍스트(otpauth:// / otpauth-migration://)만 추출하며,
+/// OTP 파싱/추가는 호출부에서 OtpClient.AddFromUri로 처리합니다.
 /// </summary>
 public class QrCodeService : IQrCodeService
 {
-    private readonly IOtpService _otpService;
     private readonly BarcodeReaderGeneric _barcodeReader;
     private readonly BarcodeWriter<System.Drawing.Bitmap> _barcodeWriter;
 
-    public QrCodeService(IOtpService otpService)
+    public QrCodeService()
     {
-        _otpService = otpService;
-
         _barcodeReader = new BarcodeReaderGeneric
         {
             AutoRotate = true,
@@ -51,7 +49,6 @@ public class QrCodeService : IQrCodeService
             using var bitmap = CreateBitmapFromBgra(imageData, width, height);
             if (bitmap == null) return null;
 
-            // BitmapLuminanceSource를 사용하여 디코딩
             var luminanceSource = new BitmapLuminanceSource(bitmap);
             var result = _barcodeReader.Decode(luminanceSource);
             return result?.Text;
@@ -62,18 +59,19 @@ public class QrCodeService : IQrCodeService
         }
     }
 
-    public OtpAccount? DecodeOtpAccountFromImage(byte[] imageData, int width, int height)
+    public string? DecodeFromFile(string filePath)
     {
-        var text = DecodeFromImage(imageData, width, height);
-        if (string.IsNullOrEmpty(text)) return null;
-
-        return _otpService.ParseOtpAuthUri(text);
-    }
-
-    public byte[] GenerateQrCode(OtpAccount account, int size = 256)
-    {
-        var uri = _otpService.GenerateOtpAuthUri(account);
-        return GenerateQrCode(uri, size);
+        try
+        {
+            using var bitmap = new System.Drawing.Bitmap(filePath);
+            var luminanceSource = new BitmapLuminanceSource(bitmap);
+            var result = _barcodeReader.Decode(luminanceSource);
+            return result?.Text;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     public byte[] GenerateQrCode(string text, int size = 256)
@@ -93,29 +91,6 @@ public class QrCodeService : IQrCodeService
         {
             return Array.Empty<byte>();
         }
-    }
-
-    public string? DecodeFromFile(string filePath)
-    {
-        try
-        {
-            using var bitmap = new System.Drawing.Bitmap(filePath);
-            var luminanceSource = new BitmapLuminanceSource(bitmap);
-            var result = _barcodeReader.Decode(luminanceSource);
-            return result?.Text;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    public OtpAccount? DecodeOtpAccountFromFile(string filePath)
-    {
-        var text = DecodeFromFile(filePath);
-        if (string.IsNullOrEmpty(text)) return null;
-
-        return _otpService.ParseOtpAuthUri(text);
     }
 
     private static System.Drawing.Bitmap? CreateBitmapFromBgra(byte[] bgraData, int width, int height)

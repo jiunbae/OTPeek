@@ -26,6 +26,39 @@ public sealed partial class SettingsPage : Page
         EnableWidgetToggle.Toggled += (s, e) => ViewModel.EnableWidgetProvider = EnableWidgetToggle.IsOn;
         RequireAuthToggle.Toggled += (s, e) => ViewModel.RequireAuthentication = RequireAuthToggle.IsOn;
         ClipboardClearCombo.SelectionChanged += OnClipboardClearChanged;
+
+        // WebDAV 동기화
+        SaveWebDavButton.Click += OnSaveWebDavClick;
+        SyncNowButton.Click += OnSyncNowClick;
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ViewModel.SyncStatus))
+        {
+            SyncStatusText.Text = ViewModel.SyncStatus ?? string.Empty;
+        }
+    }
+
+    private async void OnSaveWebDavClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        ViewModel.WebDavEnabled = WebDavEnabledToggle.IsOn;
+        ViewModel.WebDavUrl = WebDavUrlTextBox.Text;
+        ViewModel.WebDavUsername = WebDavUserTextBox.Text;
+        ViewModel.WebDavPassword = WebDavPasswordBox.Password;
+        await ViewModel.SaveSettingsCommand.ExecuteAsync(null);
+    }
+
+    private async void OnSyncNowClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        // 최신 입력값을 먼저 저장한 뒤 동기화
+        ViewModel.WebDavEnabled = WebDavEnabledToggle.IsOn;
+        ViewModel.WebDavUrl = WebDavUrlTextBox.Text;
+        ViewModel.WebDavUsername = WebDavUserTextBox.Text;
+        ViewModel.WebDavPassword = WebDavPasswordBox.Password;
+        await ViewModel.SaveSettingsCommand.ExecuteAsync(null);
+        await ViewModel.SyncNowCommand.ExecuteAsync(null);
     }
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -46,6 +79,12 @@ public sealed partial class SettingsPage : Page
         // ComboBox 선택
         SelectComboBoxItem(ClipboardClearCombo, ViewModel.ClipboardClearSeconds.ToString());
         SelectComboBoxItem(ThemeCombo, ViewModel.SelectedTheme);
+
+        // WebDAV
+        WebDavEnabledToggle.IsOn = ViewModel.WebDavEnabled;
+        WebDavUrlTextBox.Text = ViewModel.WebDavUrl;
+        WebDavUserTextBox.Text = ViewModel.WebDavUsername;
+        WebDavPasswordBox.Password = ViewModel.WebDavPassword;
     }
 
     private void SelectComboBoxItem(ComboBox comboBox, string tag)

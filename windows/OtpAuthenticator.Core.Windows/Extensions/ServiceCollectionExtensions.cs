@@ -19,6 +19,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();
         services.AddSingleton<IQrCodeService, QrCodeService>();
 
+        // Rust 코어 볼트 래퍼 (앱 전역에서 단일 인스턴스로 공유)
+        services.AddSingleton<IOtpClientService, OtpClientService>();
+
+        // v1 → v2 마이그레이션
+        services.AddSingleton<ILegacyMigrationService, LegacyMigrationService>();
+
         return services;
     }
 }

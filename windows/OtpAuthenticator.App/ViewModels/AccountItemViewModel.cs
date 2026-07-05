@@ -1,22 +1,25 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Dispatching;
-using OtpAuthenticator.Core.Models;
-using OtpAuthenticator.Core.Services.Interfaces;
+using OtpAuthenticator.Core.Windows;
+using OtpAuthenticator.Core.Windows.Services;
+using Uniffi.Otp;
 
 namespace OtpAuthenticator.App.ViewModels;
 
 /// <summary>
-/// 계정 아이템 ViewModel (OTP 코드 표시용)
+/// 계정 아이템 ViewModel (OTP 코드 표시용).
+/// 코드 생성은 Rust 코어를 통해 수행합니다 (TOTP는 오프-볼트 free function,
+/// HOTP는 볼트를 통한 카운터 증가).
 /// </summary>
 public partial class AccountItemViewModel : ObservableObject, IDisposable
 {
-    private readonly IOtpService _otpService;
+    private readonly IOtpClientService _client;
     private readonly DispatcherQueueTimer _timer;
     private readonly DispatcherQueue _dispatcherQueue;
     private bool _disposed;
 
-    public OtpAccount Account { get; }
+    public OtpAccount Account { get; private set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(FormattedCode))]
@@ -31,35 +34,33 @@ public partial class AccountItemViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private bool _isCopied;
 
-    public string Issuer => Account.Issuer;
-    public string AccountName => Account.AccountName;
-    public string Initial => Account.Initial;
-    public bool IsFavorite => Account.IsFavorite;
-    public string? Color => Account.Color;
+    public string Issuer => string.IsNullOrEmpty(Account.issuer) ? string.Empty : Account.issuer!;
+    public string AccountName => Account.accountName;
+    public string Initial => Account.Initial();
+    public bool IsFavorite => Account.isFavorite;
+    public string? Color => Account.color;
+    public string Id => Account.id;
 
     /// <summary>
     /// 복사 요청 이벤트
     /// </summary>
     public event EventHandler<string>? CopyRequested;
 
-    public AccountItemViewModel(OtpAccount account, IOtpService otpService)
+    public AccountItemViewModel(OtpAccount account, IOtpClientService client)
     {
         Account = account;
-        _otpService = otpService;
+        _client = client;
 
-        // UI 스레드의 DispatcherQueue 가져오기
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
-        // DispatcherQueueTimer 사용 (UI 스레드에서 실행됨)
         _timer = _dispatcherQueue.CreateTimer();
         _timer.Interval = TimeSpan.FromSeconds(1);
         _timer.Tick += OnTimerTick;
 
-        // 초기 코드 생성
         UpdateCode();
 
         // TOTP인 경우 타이머 시작
-        if (account.Type == OtpType.Totp)
+        if (account.otpType == OtpType.Totp)
         {
             _timer.Start();
         }
@@ -74,9 +75,24 @@ public partial class AccountItemViewModel : ObservableObject, IDisposable
     {
         try
         {
-            CurrentCode = _otpService.GenerateCode(Account);
-            RemainingSeconds = _otpService.GetRemainingSeconds(Account.Period);
-            Progress = (double)RemainingSeconds / Account.Period;
+            if (Account.otpType == OtpType.Totp)
+            {
+                long nowSecs = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                CurrentCode = OtpMethods.GenerateTotpNow(
+                    Account.secret, Account.algorithm, Account.digits, Account.period, nowSecs);
+
+                int period = (int)Account.period;
+                RemainingSeconds = period - (int)(nowSecs % period);
+                Progress = period > 0 ? (double)RemainingSeconds / period : 0;
+            }
+            else
+            {
+                // HOTP: 현재 카운터 기준 peek (증가 없음)
+                var code = _client.Code(Account.id);
+                CurrentCode = code.code;
+                RemainingSeconds = 0;
+                Progress = 1.0;
+            }
         }
         catch
         {
@@ -100,10 +116,22 @@ public partial class AccountItemViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void GenerateNextCode()
     {
-        if (Account.Type == OtpType.Hotp)
+        if (Account.otpType != OtpType.Hotp)
+            return;
+
+        try
         {
-            _otpService.IncrementCounter(Account);
-            UpdateCode();
+            var code = _client.NextHotp(Account.id);
+            CurrentCode = code.code;
+
+            // 증가된 카운터를 반영한 최신 계정으로 갱신
+            var updated = _client.GetAccount(Account.id);
+            if (updated != null)
+                Account = updated;
+        }
+        catch
+        {
+            CurrentCode = "Error";
         }
     }
 
@@ -118,7 +146,7 @@ public partial class AccountItemViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// 코드 포맷팅 (3자리씩 분리)
+    /// 코드 포맷팅 (3~4자리씩 분리)
     /// </summary>
     public string FormattedCode
     {

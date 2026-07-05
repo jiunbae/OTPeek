@@ -2,8 +2,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using OtpAuthenticator.App.ViewModels;
-using OtpAuthenticator.Core.Models;
 using OtpAuthenticator.Core.Services.Interfaces;
+using OtpAuthenticator.Core.Windows;
+using OtpAuthenticator.Core.Windows.Services;
+using Uniffi.Otp;
 
 namespace OtpAuthenticator.App.Views;
 
@@ -13,7 +15,7 @@ namespace OtpAuthenticator.App.Views;
 public sealed partial class MainWindow : Window
 {
     public MainViewModel ViewModel { get; }
-    private readonly IAccountRepository _accountRepository;
+    private readonly IOtpClientService _client;
     private int _folderInsertIndex = -1;
 
     public MainWindow()
@@ -21,7 +23,7 @@ public sealed partial class MainWindow : Window
         this.InitializeComponent();
 
         ViewModel = App.Services.GetRequiredService<MainViewModel>();
-        _accountRepository = App.Services.GetRequiredService<IAccountRepository>();
+        _client = App.Services.GetRequiredService<IOtpClientService>();
 
         // 네비게이션 설정
         NavigationViewControl.SelectionChanged += OnNavigationSelectionChanged;
@@ -34,7 +36,7 @@ public sealed partial class MainWindow : Window
         _ = ViewModel.InitializeAsync();
 
         // 폴더 로드
-        _ = LoadFoldersAsync();
+        LoadFolders();
 
         // 편집 패널 바인딩
         ViewModel.PropertyChanged += (s, e) =>
@@ -51,9 +53,10 @@ public sealed partial class MainWindow : Window
         SetupWindow();
     }
 
-    private async Task LoadFoldersAsync()
+    private void LoadFolders()
     {
-        var folders = await _accountRepository.GetAllFoldersAsync();
+        if (!_client.IsUnlocked)
+            return;
 
         // Find the index after "Folders" header
         for (int i = 0; i < NavigationViewControl.MenuItems.Count; i++)
@@ -66,8 +69,7 @@ public sealed partial class MainWindow : Window
             }
         }
 
-        // Add folder items
-        foreach (var folder in folders)
+        foreach (var folder in _client.ListFolders())
         {
             AddFolderNavigationItem(folder);
         }
@@ -77,17 +79,16 @@ public sealed partial class MainWindow : Window
     {
         var navItem = new NavigationViewItem
         {
-            Content = folder.Name,
-            Tag = $"folder:{folder.Id}",
-            Icon = new FontIcon { Glyph = folder.Icon }
+            Content = folder.name,
+            Tag = $"folder:{folder.id}",
+            Icon = new FontIcon { Glyph = string.IsNullOrEmpty(folder.icon) ? "" : folder.icon }
         };
 
-        // Parse color and apply
-        if (!string.IsNullOrEmpty(folder.Color))
+        if (!string.IsNullOrEmpty(folder.color))
         {
             try
             {
-                var color = ParseHexColor(folder.Color);
+                var color = ParseHexColor(folder.color!);
                 ((FontIcon)navItem.Icon).Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(color);
             }
             catch { }
@@ -134,21 +135,14 @@ public sealed partial class MainWindow : Window
         var result = await dialog.ShowAsync();
         if (result == ContentDialogResult.Primary && !string.IsNullOrWhiteSpace(input.Text))
         {
-            var folder = new OtpFolder
-            {
-                Name = input.Text,
-                Icon = "\uE8B7", // Folder icon
-                Color = "#0078D4"
-            };
-
-            await _accountRepository.AddFolderAsync(folder);
-            AddFolderNavigationItem(folder);
+            var newFolder = OtpAccountExtensions.NewFolder(input.Text, icon: "", color: "#0078D4");
+            var saved = _client.AddFolder(newFolder);
+            AddFolderNavigationItem(saved);
         }
     }
 
     private void SetupWindow()
     {
-        // 창 크기 설정
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
         var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
         var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
@@ -156,7 +150,6 @@ public sealed partial class MainWindow : Window
         appWindow.Resize(new Windows.Graphics.SizeInt32(900, 650));
         appWindow.Title = "OTP Authenticator";
 
-        // 닫기 버튼 클릭 시 트레이로 최소화
         appWindow.Closing += OnWindowClosing;
     }
 
@@ -176,11 +169,9 @@ public sealed partial class MainWindow : Window
         if (string.IsNullOrEmpty(tag))
             return;
 
-        // Handle different navigation types
         if (tag.StartsWith("folder:"))
         {
-            // Navigate to folder view
-            var folderId = Guid.Parse(tag.Substring(7));
+            var folderId = tag.Substring(7);
             ContentFrame.Navigate(typeof(AccountListPage), new AccountListNavigationArgs { FolderId = folderId });
         }
         else
@@ -205,13 +196,9 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    /// <summary>
-    /// 창 닫기 처리
-    /// </summary>
     private void OnWindowClosing(object sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
     {
-        // 설정에 따라 트레이로 최소화
-        var settingsService = App.Services.GetRequiredService<Core.Services.Interfaces.ISettingsService>();
+        var settingsService = App.Services.GetRequiredService<ISettingsService>();
         if (settingsService.Settings.MinimizeToTray)
         {
             args.Cancel = true;
@@ -231,7 +218,6 @@ public sealed partial class MainWindow : Window
 
     public void Hide()
     {
-        // WinUI 3에서는 직접 숨기기 어려움, 최소화로 대체
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
         PInvoke.User32.ShowWindow(hwnd, PInvoke.User32.ShowWindowCommand.SW_HIDE);
     }
@@ -242,7 +228,8 @@ public sealed partial class MainWindow : Window
 /// </summary>
 public class AccountListNavigationArgs
 {
-    public Guid? FolderId { get; set; }
+    /// <summary>코어 폴더 UUID 문자열</summary>
+    public string? FolderId { get; set; }
     public bool ShowFavoritesOnly { get; set; }
     public bool ShowUncategorizedOnly { get; set; }
 }

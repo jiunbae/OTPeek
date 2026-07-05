@@ -34,6 +34,8 @@
   <ItemGroup>
     <ProjectReference Include="..\OtpAuthenticator.Core\OtpAuthenticator.Core.csproj" />
     <ProjectReference Include="..\OtpAuthenticator.Core.Windows\OtpAuthenticator.Core.Windows.csproj" />
+    <!-- Generated Rust core bindings + native otp_ffi.dll (flows to app output). -->
+    <ProjectReference Include="..\OtpAuthenticator.Interop\OtpAuthenticator.Interop.csproj" />
   </ItemGroup>
 
   <!-- Widget 출력 파일을 패키지에 복사 (Widget.exe만, DLL은 App과 공유) -->

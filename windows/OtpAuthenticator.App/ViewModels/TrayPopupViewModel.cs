@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OtpAuthenticator.Core.Services.Interfaces;
+using OtpAuthenticator.Core.Windows.Services;
 
 namespace OtpAuthenticator.App.ViewModels;
 
@@ -10,8 +11,7 @@ namespace OtpAuthenticator.App.ViewModels;
 /// </summary>
 public partial class TrayPopupViewModel : BaseViewModel
 {
-    private readonly IAccountRepository _accountRepository;
-    private readonly IOtpService _otpService;
+    private readonly IOtpClientService _client;
     private readonly IClipboardService _clipboardService;
     private readonly ISettingsService _settingsService;
 
@@ -20,34 +20,17 @@ public partial class TrayPopupViewModel : BaseViewModel
     [ObservableProperty]
     private bool _isEmpty = true;
 
-    /// <summary>
-    /// 메인 창 열기 요청
-    /// </summary>
     public event EventHandler? OpenMainWindowRequested;
-
-    /// <summary>
-    /// 설정 열기 요청
-    /// </summary>
     public event EventHandler? OpenSettingsRequested;
-
-    /// <summary>
-    /// QR 스캔 요청
-    /// </summary>
     public event EventHandler? ScanQrRequested;
-
-    /// <summary>
-    /// 팝업 닫기 요청
-    /// </summary>
     public event EventHandler? CloseRequested;
 
     public TrayPopupViewModel(
-        IAccountRepository accountRepository,
-        IOtpService otpService,
+        IOtpClientService client,
         IClipboardService clipboardService,
         ISettingsService settingsService)
     {
-        _accountRepository = accountRepository;
-        _otpService = otpService;
+        _client = client;
         _clipboardService = clipboardService;
         _settingsService = settingsService;
     }
@@ -58,9 +41,8 @@ public partial class TrayPopupViewModel : BaseViewModel
     [RelayCommand]
     public async Task LoadAccountsAsync()
     {
-        await ExecuteAsync(async () =>
+        await ExecuteAsync(() =>
         {
-            // 기존 정리
             foreach (var vm in Accounts)
             {
                 vm.CopyRequested -= OnCopyRequested;
@@ -68,27 +50,30 @@ public partial class TrayPopupViewModel : BaseViewModel
             }
             Accounts.Clear();
 
-            // 즐겨찾기 먼저, 그 다음 최근 사용 순
-            var allAccounts = await _accountRepository.GetAllAsync();
-            var sortedAccounts = allAccounts
-                .OrderByDescending(a => a.IsFavorite)
-                .ThenByDescending(a => a.LastUsedAt)
-                .Take(10); // 팝업에는 최대 10개만 표시
+            if (!_client.IsUnlocked)
+            {
+                IsEmpty = true;
+                return Task.CompletedTask;
+            }
+
+            // 즐겨찾기 우선, 그 다음 정렬 순서 (v2 모델에는 LastUsedAt이 없음)
+            var sortedAccounts = _client.ListAccounts()
+                .OrderByDescending(a => a.isFavorite)
+                .ThenBy(a => a.sortOrder)
+                .Take(10);
 
             foreach (var account in sortedAccounts)
             {
-                var vm = new AccountItemViewModel(account, _otpService);
+                var vm = new AccountItemViewModel(account, _client);
                 vm.CopyRequested += OnCopyRequested;
                 Accounts.Add(vm);
             }
 
             IsEmpty = Accounts.Count == 0;
+            return Task.CompletedTask;
         });
     }
 
-    /// <summary>
-    /// 코드 복사 및 팝업 닫기
-    /// </summary>
     [RelayCommand]
     private async Task CopyAndCloseAsync(AccountItemViewModel? vm)
     {
@@ -97,16 +82,9 @@ public partial class TrayPopupViewModel : BaseViewModel
         var settings = _settingsService.Settings;
         await _clipboardService.CopyAsync(vm.CurrentCode, settings.ClipboardClearSeconds);
 
-        // 마지막 사용 시간 업데이트
-        vm.Account.LastUsedAt = DateTime.UtcNow;
-        await _accountRepository.UpdateAsync(vm.Account);
-
         CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>
-    /// 메인 창 열기
-    /// </summary>
     [RelayCommand]
     private void OpenMainWindow()
     {
@@ -114,9 +92,6 @@ public partial class TrayPopupViewModel : BaseViewModel
         CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>
-    /// 설정 열기
-    /// </summary>
     [RelayCommand]
     private void OpenSettings()
     {
@@ -124,9 +99,6 @@ public partial class TrayPopupViewModel : BaseViewModel
         CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>
-    /// QR 스캔
-    /// </summary>
     [RelayCommand]
     private void ScanQr()
     {
@@ -138,17 +110,8 @@ public partial class TrayPopupViewModel : BaseViewModel
     {
         var settings = _settingsService.Settings;
         await _clipboardService.CopyAsync(code, settings.ClipboardClearSeconds);
-
-        if (sender is AccountItemViewModel vm)
-        {
-            vm.Account.LastUsedAt = DateTime.UtcNow;
-            await _accountRepository.UpdateAsync(vm.Account);
-        }
     }
 
-    /// <summary>
-    /// 리소스 정리
-    /// </summary>
     public void Cleanup()
     {
         foreach (var vm in Accounts)

@@ -1,0 +1,5 @@
+[bindings.csharp]
+# Make generated types public so App / Widget / Core projects can consume them.
+access_modifier = "public"
+# Stable namespace for the generated bindings (matches otp-ffi's uniffi namespace "otp").
+namespace = "Uniffi.Otp"

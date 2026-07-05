@@ -10,39 +10,14 @@ namespace OtpAuthenticator.Core.Extensions;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Core 서비스 등록 (플랫폼 독립적인 서비스만)
-    /// 플랫폼별 서비스는 각 플랫폼 확장에서 등록:
-    /// - Windows: OtpAuthenticator.Core.Windows.Extensions.AddWindowsPlatformServices()
-    /// - Apple: OtpAuthenticator.Core.Apple.Extensions.AddApplePlatformServices()
+    /// Core 서비스 등록 (플랫폼 독립적인 서비스만).
+    /// 계정/시크릿 관련 서비스는 Rust 코어를 감싸는 OtpClientService로 대체되었으며,
+    /// 이는 각 플랫폼 확장(예: AddWindowsPlatformServices)에서 등록합니다.
     /// </summary>
     public static IServiceCollection AddCoreServices(this IServiceCollection services)
     {
-        // 플랫폼 독립적 서비스
-        services.AddSingleton<IOtpService, OtpService>();
-        services.AddSingleton<IEncryptionService, EncryptionService>();
-        services.AddTransient<IBackupService, BackupService>();
-
-        return services;
-    }
-
-    /// <summary>
-    /// 플랫폼별 저장소 서비스를 사용하는 리포지토리 등록
-    /// ISecureStorageService가 먼저 등록되어 있어야 함
-    /// </summary>
-    public static IServiceCollection AddAccountRepository(this IServiceCollection services)
-    {
-        services.AddSingleton<IAccountRepository, AccountRepository>();
         services.AddSingleton<ISettingsService, SettingsService>();
 
         return services;
     }
-
-    // Cloud Sync is temporarily disabled - requires Azure AD / Google Cloud setup
-    // #if NET8_0_WINDOWS
-    //     public static IServiceCollection AddCloudSyncServices(this IServiceCollection services)
-    //     {
-    //         services.AddSingleton<ICloudSyncService, CloudSync.SyncManager>();
-    //         return services;
-    //     }
-    // #endif
 }

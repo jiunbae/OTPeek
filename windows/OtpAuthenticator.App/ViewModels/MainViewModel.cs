@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Uniffi.Otp;
 
 namespace OtpAuthenticator.App.ViewModels;
 
@@ -55,7 +56,7 @@ public partial class MainViewModel : BaseViewModel
     /// <summary>
     /// 계정 편집 요청
     /// </summary>
-    private void OnEditRequested(object? sender, Core.Models.OtpAccount account)
+    private void OnEditRequested(object? sender, OtpAccount account)
     {
         _accountEditViewModel.InitializeForEdit(account);
         IsAccountEditVisible = true;
@@ -64,7 +65,7 @@ public partial class MainViewModel : BaseViewModel
     /// <summary>
     /// 계정 저장 완료
     /// </summary>
-    private async void OnAccountSaved(object? sender, Core.Models.OtpAccount account)
+    private async void OnAccountSaved(object? sender, OtpAccount account)
     {
         IsAccountEditVisible = false;
         await _accountListViewModel.LoadAccountsAsync();

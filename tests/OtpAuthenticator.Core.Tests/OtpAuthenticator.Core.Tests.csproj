@@ -1,8 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!--
+      Override Directory.Build.props' Windows/WinUI target: these are pure unit tests for
+      the platform-independent Core (app-preference models + settings service). They do NOT
+      touch the native Rust library, so they run on any OS / CI without a Rust toolchain.
+      Integration tests that exercise the FFI (OtpClient) live in the Rust suite (otp-ffi /
+      otp-cli) and in the manual Windows verification checklist (see windows/README.md).
+    -->
+    <TargetFramework>net8.0</TargetFramework>
+    <Platforms>AnyCPU</Platforms>
+    <RuntimeIdentifiers />
     <OutputType>Library</OutputType>
     <RootNamespace>OtpAuthenticator.Core.Tests</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
@@ -19,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\OtpAuthenticator.Core\OtpAuthenticator.Core.csproj" />
+    <ProjectReference Include="..\..\windows\OtpAuthenticator.Core\OtpAuthenticator.Core.csproj" />
   </ItemGroup>
 
 </Project>

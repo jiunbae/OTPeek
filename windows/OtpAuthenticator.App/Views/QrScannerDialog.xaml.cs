@@ -2,9 +2,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using OtpAuthenticator.App.ViewModels;
-using OtpAuthenticator.Core.Models;
-using OtpAuthenticator.Core.Services.Interfaces;
+using OtpAuthenticator.Core.Windows;
 using Windows.Storage.Pickers;
+using Uniffi.Otp;
 
 namespace OtpAuthenticator.App.Views;
 
@@ -14,7 +14,6 @@ namespace OtpAuthenticator.App.Views;
 public sealed partial class QrScannerDialog : ContentDialog
 {
     public QrScannerViewModel ViewModel { get; }
-    private readonly IAccountRepository _accountRepository;
 
     /// <summary>
     /// Added account (available after dialog closes)
@@ -26,7 +25,6 @@ public sealed partial class QrScannerDialog : ContentDialog
         this.InitializeComponent();
 
         ViewModel = App.Services.GetRequiredService<QrScannerViewModel>();
-        _accountRepository = App.Services.GetRequiredService<IAccountRepository>();
         ViewModel.Reset();
 
         // Event handlers
@@ -69,24 +67,34 @@ public sealed partial class QrScannerDialog : ContentDialog
 
     private void UpdateAccountPreview()
     {
-        if (ViewModel.ScannedAccount != null && ViewModel.HasScannedAccount)
-        {
-            AccountPreview.Visibility = Visibility.Visible;
-            StatusInfoBar.Severity = InfoBarSeverity.Success;
-            StatusInfoBar.Message = "QR code scanned successfully!";
-
-            var account = ViewModel.ScannedAccount;
-            AccountInitial.Text = account.Initial;
-            AccountIssuer.Text = string.IsNullOrEmpty(account.Issuer) ? "Unknown" : account.Issuer;
-            AccountName.Text = account.AccountName;
-            AccountType.Text = account.Type.ToString().ToUpperInvariant();
-            AccountAlgorithm.Text = $"{account.Algorithm} • {account.Digits} digits";
-        }
-        else
+        if (!ViewModel.HasScannedAccount)
         {
             AccountPreview.Visibility = Visibility.Collapsed;
             StatusInfoBar.Severity = InfoBarSeverity.Informational;
             StatusInfoBar.Message = "Choose a scan method below";
+            return;
+        }
+
+        AccountPreview.Visibility = Visibility.Visible;
+        StatusInfoBar.Severity = InfoBarSeverity.Success;
+
+        var account = ViewModel.ScannedAccount;
+        if (account is OtpAccount a)
+        {
+            AccountInitial.Text = a.Initial();
+            AccountIssuer.Text = string.IsNullOrEmpty(a.issuer) ? "Unknown" : a.issuer!;
+            AccountName.Text = a.accountName;
+            AccountType.Text = a.otpType.ToString().ToUpperInvariant();
+            AccountAlgorithm.Text = $"{a.algorithm} • {a.digits} digits";
+        }
+        else
+        {
+            // Google Authenticator 마이그레이션 QR (여러 계정, 미리보기 불가)
+            AccountInitial.Text = "G";
+            AccountIssuer.Text = "Google Authenticator export";
+            AccountName.Text = "Multiple accounts";
+            AccountType.Text = "MIGRATION";
+            AccountAlgorithm.Text = string.Empty;
         }
     }
 

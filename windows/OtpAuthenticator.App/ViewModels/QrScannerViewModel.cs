@@ -1,18 +1,24 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using OtpAuthenticator.Core.Models;
 using OtpAuthenticator.Core.Services.Interfaces;
+using OtpAuthenticator.Core.Windows.Services;
+using Uniffi.Otp;
 
 namespace OtpAuthenticator.App.ViewModels;
 
 /// <summary>
-/// QR 코드 스캐너 ViewModel
+/// QR 코드 스캐너 ViewModel.
+/// QR에서 원본 URI를 추출한 뒤, 실제 추가는 OtpClient.AddFromUri(otpauth:// 또는
+/// otpauth-migration://)로 코어에 위임합니다.
 /// </summary>
 public partial class QrScannerViewModel : BaseViewModel
 {
     private readonly IQrCodeService _qrCodeService;
     private readonly IScreenCaptureService _screenCaptureService;
-    private readonly IAccountRepository _accountRepository;
+    private readonly IOtpClientService _client;
+
+    /// <summary>스캔/입력된 원본 URI (otpauth:// 또는 otpauth-migration://)</summary>
+    private string? _scannedUri;
 
     [ObservableProperty]
     private string _statusMessage = "Click 'Scan Screen' to capture QR code from your screen";
@@ -20,6 +26,7 @@ public partial class QrScannerViewModel : BaseViewModel
     [ObservableProperty]
     private bool _isScanning;
 
+    /// <summary>미리보기용 파싱된 계정 (단일 otpauth:// 인 경우). 마이그레이션 URI면 null.</summary>
     [ObservableProperty]
     private OtpAccount? _scannedAccount;
 
@@ -29,29 +36,19 @@ public partial class QrScannerViewModel : BaseViewModel
     [ObservableProperty]
     private string? _manualUri;
 
-    /// <summary>
-    /// 계정 추가 완료 이벤트
-    /// </summary>
     public event EventHandler<OtpAccount>? AccountAdded;
-
-    /// <summary>
-    /// 닫기 요청 이벤트
-    /// </summary>
     public event EventHandler? CloseRequested;
 
     public QrScannerViewModel(
         IQrCodeService qrCodeService,
         IScreenCaptureService screenCaptureService,
-        IAccountRepository accountRepository)
+        IOtpClientService client)
     {
         _qrCodeService = qrCodeService;
         _screenCaptureService = screenCaptureService;
-        _accountRepository = accountRepository;
+        _client = client;
     }
 
-    /// <summary>
-    /// 전체 화면에서 QR 코드 스캔
-    /// </summary>
     [RelayCommand]
     private async Task ScanScreenAsync()
     {
@@ -61,29 +58,17 @@ public partial class QrScannerViewModel : BaseViewModel
         {
             IsScanning = true;
             StatusMessage = "Scanning screen for QR codes...";
-            ScannedAccount = null;
-            HasScannedAccount = false;
+            ClearPreview();
 
-            // 모든 화면 캡처
             var captures = await _screenCaptureService.CaptureAllScreensAsync();
 
             foreach (var capture in captures)
             {
                 if (!capture.IsSuccess) continue;
 
-                // QR 코드 디코딩 시도
-                var account = _qrCodeService.DecodeOtpAccountFromImage(
-                    capture.PixelData,
-                    capture.Width,
-                    capture.Height);
-
-                if (account != null)
-                {
-                    ScannedAccount = account;
-                    HasScannedAccount = true;
-                    StatusMessage = $"Found: {account.DisplayName}";
+                var text = _qrCodeService.DecodeFromImage(capture.PixelData, capture.Width, capture.Height);
+                if (AcceptScannedText(text))
                     return;
-                }
             }
 
             StatusMessage = "No QR code found on screen. Try selecting a specific area.";
@@ -92,9 +77,6 @@ public partial class QrScannerViewModel : BaseViewModel
         IsScanning = false;
     }
 
-    /// <summary>
-    /// 영역 선택하여 스캔
-    /// </summary>
     [RelayCommand]
     private async Task ScanWithPickerAsync()
     {
@@ -104,66 +86,36 @@ public partial class QrScannerViewModel : BaseViewModel
         {
             IsScanning = true;
             StatusMessage = "Select a window or screen area...";
-            ScannedAccount = null;
-            HasScannedAccount = false;
+            ClearPreview();
 
             var capture = await _screenCaptureService.CaptureWithPickerAsync();
-
             if (capture == null || !capture.IsSuccess)
             {
                 StatusMessage = "Capture cancelled or failed";
                 return;
             }
 
-            var account = _qrCodeService.DecodeOtpAccountFromImage(
-                capture.PixelData,
-                capture.Width,
-                capture.Height);
-
-            if (account != null)
-            {
-                ScannedAccount = account;
-                HasScannedAccount = true;
-                StatusMessage = $"Found: {account.DisplayName}";
-            }
-            else
-            {
+            var text = _qrCodeService.DecodeFromImage(capture.PixelData, capture.Width, capture.Height);
+            if (!AcceptScannedText(text))
                 StatusMessage = "No QR code found in selected area";
-            }
         });
 
         IsScanning = false;
     }
 
-    /// <summary>
-    /// 파일에서 QR 코드 스캔
-    /// </summary>
     [RelayCommand]
     private void ScanFromFile(string filePath)
     {
         if (string.IsNullOrWhiteSpace(filePath)) return;
 
         StatusMessage = "Scanning QR code from image file...";
-        ScannedAccount = null;
-        HasScannedAccount = false;
+        ClearPreview();
 
-        var account = _qrCodeService.DecodeOtpAccountFromFile(filePath);
-
-        if (account != null)
-        {
-            ScannedAccount = account;
-            HasScannedAccount = true;
-            StatusMessage = $"Found: {account.DisplayName}";
-        }
-        else
-        {
+        var text = _qrCodeService.DecodeFromFile(filePath);
+        if (!AcceptScannedText(text))
             StatusMessage = "No QR code found in the image file";
-        }
     }
 
-    /// <summary>
-    /// 수동 URI 입력으로 추가
-    /// </summary>
     [RelayCommand]
     private void ParseManualUri()
     {
@@ -173,62 +125,86 @@ public partial class QrScannerViewModel : BaseViewModel
             return;
         }
 
-        // IOtpService를 사용하여 URI 파싱
-        var otpService = App.Services.GetService(typeof(IOtpService)) as IOtpService;
-        if (otpService == null) return;
-
-        var account = otpService.ParseOtpAuthUri(ManualUri);
-
-        if (account != null)
-        {
-            ScannedAccount = account;
-            HasScannedAccount = true;
-            StatusMessage = $"Parsed: {account.DisplayName}";
-        }
-        else
-        {
+        if (!AcceptScannedText(ManualUri))
             StatusMessage = "Invalid otpauth:// URI format";
-            HasScannedAccount = false;
-        }
     }
 
     /// <summary>
-    /// 스캔된 계정 저장
+    /// 스캔/입력된 텍스트가 유효한 OTP URI면 미리보기를 설정하고 true를 반환합니다.
     /// </summary>
+    private bool AcceptScannedText(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return false;
+
+        if (text.StartsWith("otpauth-migration://", StringComparison.OrdinalIgnoreCase))
+        {
+            _scannedUri = text;
+            ScannedAccount = null;
+            HasScannedAccount = true;
+            StatusMessage = "Google Authenticator export detected. It may contain multiple accounts.";
+            return true;
+        }
+
+        if (text.StartsWith("otpauth://", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var preview = OtpMethods.ParseOtpauthUri(text, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+                _scannedUri = text;
+                ScannedAccount = preview;
+                HasScannedAccount = true;
+                StatusMessage = "QR code scanned successfully!";
+                return true;
+            }
+            catch (OtpException)
+            {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    private void ClearPreview()
+    {
+        ScannedAccount = null;
+        HasScannedAccount = false;
+        _scannedUri = null;
+    }
+
     [RelayCommand]
     private async Task SaveAccountAsync()
     {
-        if (ScannedAccount == null) return;
+        if (string.IsNullOrEmpty(_scannedUri)) return;
 
-        await ExecuteAsync(async () =>
+        await ExecuteAsync(() =>
         {
-            var savedAccount = await _accountRepository.AddAsync(ScannedAccount);
-            AccountAdded?.Invoke(this, savedAccount);
-            StatusMessage = "Account added successfully!";
-
-            // 잠시 후 닫기
-            await Task.Delay(1000);
-            CloseRequested?.Invoke(this, EventArgs.Empty);
+            var added = _client.AddFromUri(_scannedUri!);
+            if (added.Count > 0)
+            {
+                AccountAdded?.Invoke(this, added[0]);
+                StatusMessage = added.Count == 1
+                    ? "Account added successfully!"
+                    : $"{added.Count} accounts added successfully!";
+            }
+            return Task.CompletedTask;
         });
+
+        await Task.Delay(1000);
+        CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>
-    /// 취소
-    /// </summary>
     [RelayCommand]
     private void Cancel()
     {
         CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>
-    /// 초기화
-    /// </summary>
     public void Reset()
     {
         StatusMessage = "Click 'Scan Screen' to capture QR code from your screen";
-        ScannedAccount = null;
-        HasScannedAccount = false;
+        ClearPreview();
         ManualUri = null;
         IsScanning = false;
     }
