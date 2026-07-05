@@ -15,6 +15,8 @@ settings:
     # 서명 팀. xcodegen generate 가 매번 프로젝트를 새로 만들므로 여기 고정해
     # Xcode 에서 팀을 다시 고르지 않아도 되게 한다(자동 서명과 함께 동작).
     DEVELOPMENT_TEAM: BU7DZ6PQ2D
+    # 공증(notarization) / App Store 배포에 필수. macOS 에만 적용되고 iOS 는 무시.
+    ENABLE_HARDENED_RUNTIME: YES
 
 configs:
   Debug: debug
