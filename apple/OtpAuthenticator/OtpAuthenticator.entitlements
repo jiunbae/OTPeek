@@ -18,7 +18,7 @@
     </array>
     <key>com.apple.developer.icloud-container-identifiers</key>
     <array>
-        <string>iCloud.com.otpauthenticator</string>
+        <string>iCloud.ai.callabo.otpauthenticator</string>
     </array>
 </dict>
 </plist>

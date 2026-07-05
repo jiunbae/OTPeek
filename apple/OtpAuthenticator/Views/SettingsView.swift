@@ -1,6 +1,7 @@
 import SwiftUI
 import WidgetKit
 import UniformTypeIdentifiers
+import CloudKit
 
 #if os(macOS)
 import AppKit
@@ -10,156 +11,351 @@ import UIKit
 
 struct SettingsView: View {
     @EnvironmentObject var appState: OtpStore
-    @AppStorage("autoClipboard") private var autoClipboard = false
+    @AppStorage("autoClipboard") private var autoClipboard = true
     @AppStorage("showInMenuBar") private var showInMenuBar = true
     @AppStorage("launchAtLogin") private var launchAtLogin = false
+    @AppStorage("showFavicons", store: UserDefaults.appGroup) private var showFavicons = true
     @State private var showingWidgetSettings = false
     @State private var showingQRImport = false
+
+    /// iCloud/CloudKit availability for this build+account. nil = still checking.
+    @State private var iCloudAvailable: Bool?
 
     // 백업 비밀번호 입력용
     @State private var showingExportPassword = false
     @State private var showingImportPassword = false
     @State private var backupPassword = ""
     @State private var pendingImportData: Data?
+    // iOS: 문서 선택기(.fileImporter) 표시 여부. macOS 는 NSOpenPanel 을 직접 띄운다.
+    @State private var showingImportPicker = false
+    // WrongKey(다른 VMK) 복구용 "Reset & Restore from iCloud" 확인 다이얼로그.
+    @State private var showingResetConfirm = false
 
     // 내보내기 대상: 파일로 저장할지 / 공유 시트(AirDrop 등)로 보낼지.
     private enum ExportDestination { case save, share }
     @State private var exportDestination: ExportDestination = .save
 
     var body: some View {
-        Form {
-            Section("General") {
-                Toggle("Copy code to clipboard on tap", isOn: $autoClipboard)
-
-                #if os(macOS)
-                Toggle("Show in menu bar", isOn: $showInMenuBar)
-                Toggle("Launch at login", isOn: $launchAtLogin)
-                #endif
+        content
+            .task { await checkICloudAvailability() }
+            .sheet(isPresented: $showingWidgetSettings) {
+                WidgetSettingsView().environmentObject(appState)
             }
-
-            Section("iCloud Sync") {
-                Toggle("Sync with iCloud", isOn: Binding(
-                    get: { appState.iCloudSyncEnabled },
-                    set: { appState.setICloudSync(enabled: $0) }
-                ))
-
-                if appState.iCloudSyncEnabled {
-                    Button {
-                        appState.syncNow()
-                    } label: {
-                        HStack {
-                            Label("Sync Now", systemImage: "arrow.triangle.2.circlepath")
-                            Spacer()
-                            if appState.isSyncing {
-                                ProgressView().controlSize(.small)
-                            }
-                        }
-                    }
-                    .disabled(appState.isSyncing)
-
-                    LabeledContent("Status", value: appState.lastSyncStatus)
-                        .font(.caption)
-                }
-            }
-
-            Section("Widgets") {
-                Button {
-                    showingWidgetSettings = true
-                } label: {
-                    HStack {
-                        Label("Widget Settings", systemImage: "square.grid.2x2")
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.secondary)
-                    }
-                }
-                .buttonStyle(.plain)
-
-                Button("Refresh All Widgets") {
-                    WidgetCenter.shared.reloadAllTimelines()
-                }
-            }
-
-            Section("Data") {
-                #if os(macOS)
-                Button {
-                    showingQRImport = true
-                } label: {
-                    Label("Import from QR Image", systemImage: "qrcode.viewfinder")
-                }
-                #endif
-
-                Button("Export Encrypted Backup") {
-                    exportDestination = .save
-                    backupPassword = ""
-                    showingExportPassword = true
-                }
-
-                Button {
-                    exportDestination = .share
-                    backupPassword = ""
-                    showingExportPassword = true
-                } label: {
-                    Label("Share Backup (AirDrop…)", systemImage: "square.and.arrow.up")
-                }
-
-                Button("Import Backup") {
-                    pickImportFile()
-                }
-            }
-
-            Section("About") {
-                LabeledContent("Version", value: "1.0.0")
-                LabeledContent("Accounts", value: "\(appState.accounts.count)")
-            }
-
-            #if DEBUG
-            Section("Debug") {
-                Button("Add Test Account") {
-                    let account = OtpAccount(
-                        issuer: "Test Service",
-                        accountName: "test@example.com",
-                        secretKey: "JBSWY3DPEHPK3PXP"
-                    )
-                    appState.addAccount(account)
-                }
-
-                Button("Clear All Accounts", role: .destructive) {
-                    for account in appState.accounts {
-                        appState.deleteAccount(account)
-                    }
-                }
+            #if os(macOS)
+            .sheet(isPresented: $showingQRImport) {
+                QRImageImportView().environmentObject(appState)
             }
             #endif
+            .alert("Backup Password", isPresented: $showingExportPassword) {
+                SecureField("Password", text: $backupPassword)
+                Button("Cancel", role: .cancel) {}
+                Button("Export") { exportBackup() }
+            } message: {
+                Text("Choose a password to encrypt the backup file.")
+            }
+            .alert("Backup Password", isPresented: $showingImportPassword) {
+                SecureField("Password", text: $backupPassword)
+                Button("Cancel", role: .cancel) { pendingImportData = nil }
+                Button("Import") { importBackup() }
+            } message: {
+                Text("Enter the password used to encrypt this backup.")
+            }
+            .alert("Reset & Restore from iCloud", isPresented: $showingResetConfirm) {
+                Button("Cancel", role: .cancel) {}
+                Button("Reset", role: .destructive) { appState.resetForRestore() }
+            } message: {
+                Text("This removes this device's local vault so you can restore it from iCloud with your master password, sharing the same key. Accounts that exist only on this device and haven't synced will be lost. Your iCloud copy is not affected.")
+            }
+            #if os(iOS)
+            .fileImporter(
+                isPresented: $showingImportPicker,
+                allowedContentTypes: [.data, .item],
+                allowsMultipleSelection: false
+            ) { result in
+                guard case .success(let urls) = result, let url = urls.first else { return }
+                let didAccess = url.startAccessingSecurityScopedResource()
+                defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
+                guard let data = try? Data(contentsOf: url) else { return }
+                pendingImportData = data
+                backupPassword = ""
+                showingImportPassword = true
+            }
+            #endif
+    }
+
+    // MARK: - Platform shell
+
+    @ViewBuilder
+    private var content: some View {
+        #if os(macOS)
+        TabView {
+            Form { generalSection }.formStyle(.grouped)
+                .tabItem { Label("General", systemImage: "gearshape") }
+            Form { syncSection }.formStyle(.grouped)
+                .tabItem { Label("Sync", systemImage: "icloud") }
+            Form { backupSection }.formStyle(.grouped)
+                .tabItem { Label("Backup", systemImage: "externaldrive") }
+            Form { aboutSection }.formStyle(.grouped)
+                .tabItem { Label("About", systemImage: "info.circle") }
+        }
+        .frame(width: 500, height: 420)
+        .scenePadding([.top, .horizontal])
+        #else
+        Form {
+            generalSection
+            syncSection
+            backupSection
+            aboutSection
         }
         .formStyle(.grouped)
-        #if os(macOS)
-        .frame(width: 400)
-        .padding()
+        .navigationTitle("Settings")
         #endif
-        .sheet(isPresented: $showingWidgetSettings) {
-            WidgetSettingsView()
-                .environmentObject(appState)
+    }
+
+    // MARK: - General
+
+    @ViewBuilder
+    private var generalSection: some View {
+        Section {
+            Toggle(isOn: $autoClipboard) {
+                settingLabel("Copy code to clipboard on tap", "doc.on.doc",
+                             detail: "Tapping a code also copies it.")
+            }
+            Toggle(isOn: $showFavicons) {
+                settingLabel("Show website icons", "globe",
+                             detail: "Fetches service favicons (cached locally).")
+            }
+            #if os(macOS)
+            Toggle(isOn: $showInMenuBar) {
+                settingLabel("Show in menu bar", "menubar.arrow.up.rectangle")
+            }
+            Toggle(isOn: $launchAtLogin) {
+                settingLabel("Launch at login", "power")
+            }
+            #endif
+        } header: {
+            Text("General")
         }
-        #if os(macOS)
-        .sheet(isPresented: $showingQRImport) {
-            QRImageImportView()
-                .environmentObject(appState)
+
+        Section {
+            Button { showingWidgetSettings = true } label: {
+                navRow("Widget Settings", "square.grid.2x2")
+            }
+            .buttonStyle(.plain)
+
+            Button { WidgetCenter.shared.reloadAllTimelines() } label: {
+                actionRow("Refresh All Widgets", "arrow.clockwise")
+            }
+            .buttonStyle(.plain)
+        } header: {
+            Text("Widgets")
+        }
+    }
+
+    // MARK: - Sync
+
+    @ViewBuilder
+    private var syncSection: some View {
+        Section {
+            switch iCloudAvailable {
+            case nil:
+                HStack {
+                    settingLabel("Sync with iCloud", "arrow.triangle.2.circlepath")
+                    Spacer()
+                    ProgressView().controlSize(.small)
+                }
+
+            case .some(true):
+                Toggle(isOn: Binding(
+                    get: { appState.iCloudSyncEnabled },
+                    set: { appState.setICloudSync(enabled: $0) }
+                )) {
+                    settingLabel("Sync with iCloud", "arrow.triangle.2.circlepath",
+                                 detail: "Encrypted vault syncs across your devices.")
+                }
+                .tint(.green)
+
+                if appState.iCloudSyncEnabled {
+                    Button { appState.syncNow() } label: {
+                        HStack {
+                            actionRow("Sync Now", "arrow.triangle.2.circlepath")
+                            Spacer()
+                            if appState.isSyncing { ProgressView().controlSize(.small) }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(appState.isSyncing)
+
+                    LabeledContent("Status") {
+                        Text(appState.lastSyncStatus)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    .font(.caption)
+
+                    Button(role: .destructive) { showingResetConfirm = true } label: {
+                        actionRow("Reset & Restore from iCloud", "arrow.triangle.2.circlepath.icloud",
+                                  tint: .red)
+                    }
+                    .buttonStyle(.plain)
+                }
+
+            case .some(false):
+                Toggle(isOn: .constant(false)) {
+                    settingLabel("Sync with iCloud", "arrow.triangle.2.circlepath")
+                }
+                .tint(.green)
+                .disabled(true)
+
+                Label {
+                    Text("iCloud isn't available for this app. Sign in to iCloud, or rebuild with the iCloud capability and a CloudKit container enabled.")
+                } icon: {
+                    Image(systemName: "exclamationmark.icloud").foregroundColor(.orange)
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
+            }
+        } header: {
+            Text("iCloud Sync")
+        } footer: {
+            Text("Only encrypted data leaves your device — codes and secrets are never uploaded in the clear.")
+        }
+    }
+
+    // MARK: - Backup
+
+    @ViewBuilder
+    private var backupSection: some View {
+        Section {
+            #if os(macOS)
+            Button { showingQRImport = true } label: {
+                actionRow("Import from QR Image", "qrcode.viewfinder")
+            }
+            .buttonStyle(.plain)
+            #endif
+
+            Button { pickImportFile() } label: {
+                actionRow("Import Backup File", "square.and.arrow.down")
+            }
+            .buttonStyle(.plain)
+        } header: {
+            Text("Import")
+        }
+
+        Section {
+            Button {
+                exportDestination = .save
+                backupPassword = ""
+                showingExportPassword = true
+            } label: {
+                actionRow("Export Encrypted Backup", "square.and.arrow.up")
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                exportDestination = .share
+                backupPassword = ""
+                showingExportPassword = true
+            } label: {
+                actionRow("Share Backup (AirDrop…)", "paperplane")
+            }
+            .buttonStyle(.plain)
+        } header: {
+            Text("Export")
+        } footer: {
+            Text("Backups are AES-256 encrypted with a password you choose. Keep it somewhere safe — it can't be recovered.")
+        }
+    }
+
+    // MARK: - About
+
+    @ViewBuilder
+    private var aboutSection: some View {
+        Section {
+            LabeledContent("Version", value: "1.0.0")
+            LabeledContent("Accounts", value: "\(appState.accounts.count)")
+            LabeledContent("Folders", value: "\(appState.folders.count)")
+        } header: {
+            Text("About")
+        }
+
+        #if DEBUG
+        Section {
+            Button {
+                appState.addAccount(OtpAccount(
+                    issuer: "Test Service",
+                    accountName: "test@example.com",
+                    secretKey: "JBSWY3DPEHPK3PXP"
+                ))
+            } label: {
+                actionRow("Add Test Account", "plus.circle")
+            }
+            .buttonStyle(.plain)
+
+            Button(role: .destructive) {
+                for account in appState.accounts { appState.deleteAccount(account) }
+            } label: {
+                actionRow("Clear All Accounts", "trash", tint: .red)
+            }
+            .buttonStyle(.plain)
+        } header: {
+            Text("Debug")
         }
         #endif
-        .alert("Backup Password", isPresented: $showingExportPassword) {
-            SecureField("Password", text: $backupPassword)
-            Button("Cancel", role: .cancel) {}
-            Button("Export") { exportBackup() }
-        } message: {
-            Text("Choose a password to encrypt the backup file.")
+    }
+
+    // MARK: - Row builders (consistent alignment)
+
+    /// A toggle/label row: icon + title, with an optional secondary detail line.
+    private func settingLabel(_ title: String, _ icon: String, detail: String? = nil) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 13))
+                .foregroundStyle(.tint)
+                .frame(width: 20)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                if let detail {
+                    Text(detail).font(.caption).foregroundColor(.secondary)
+                }
+            }
         }
-        .alert("Backup Password", isPresented: $showingImportPassword) {
-            SecureField("Password", text: $backupPassword)
-            Button("Cancel", role: .cancel) { pendingImportData = nil }
-            Button("Import") { importBackup() }
-        } message: {
-            Text("Enter the password used to encrypt this backup.")
+    }
+
+    /// A tappable action row: icon + title, accent-tinted, full width.
+    private func actionRow(_ title: String, _ icon: String, tint: Color = .accentColor) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon).font(.system(size: 13)).frame(width: 20)
+            Text(title)
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(tint)
+        .contentShape(Rectangle())
+    }
+
+    /// A navigation-style row (opens a sheet): title + trailing chevron.
+    private func navRow(_ title: String, _ icon: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon).font(.system(size: 13)).foregroundStyle(.tint).frame(width: 20)
+            Text(title).foregroundStyle(.primary)
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right").font(.caption).foregroundColor(.secondary)
+        }
+        .contentShape(Rectangle())
+    }
+
+    // MARK: - iCloud availability
+
+    /// Probes CloudKit for this build+account. Reports unavailable (rather than
+    /// showing a dead toggle) when the app lacks the iCloud entitlement/container
+    /// or the user isn't signed into iCloud.
+    private func checkICloudAvailability() async {
+        let container = CKContainer(identifier: CloudKitSyncBackend.containerIdentifier)
+        do {
+            let status = try await container.accountStatus()
+            iCloudAvailable = (status == .available)
+        } catch {
+            iCloudAvailable = false
         }
     }
 
@@ -214,7 +410,6 @@ struct SettingsView: View {
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let window = windowScene.windows.first,
            let rootVC = window.rootViewController {
-            // iPad: 팝오버 앵커가 없으면 크래시하므로 화면 중앙에 앵커.
             activityVC.popoverPresentationController?.sourceView = rootVC.view
             activityVC.popoverPresentationController?.sourceRect = CGRect(
                 x: rootVC.view.bounds.midX, y: rootVC.view.bounds.midY, width: 0, height: 0)
@@ -235,8 +430,7 @@ struct SettingsView: View {
             showingImportPassword = true
         }
         #else
-        // iOS: document picker integration is left to the host; backup import
-        // is primarily driven from the onboarding "Restore" flow.
+        showingImportPicker = true
         #endif
     }
 

@@ -49,7 +49,6 @@ public final class OtpStore: ObservableObject {
     // MARK: - Private
 
     private var client: OtpClient?
-    private var timer: Timer?
 
     private let legacyAccountsKey = "otp_accounts"
     private let legacyFoldersKey = "otp_folders"
@@ -65,10 +64,7 @@ public final class OtpStore: ObservableObject {
         vaultExists = VaultAccess.vaultExists
         detectLegacyData()
         openIfPossible()
-        startTimer()
     }
-
-    deinit { timer?.invalidate() }
 
     // MARK: - 볼트 열기 / 온보딩
 
@@ -144,6 +140,64 @@ public final class OtpStore: ObservableObject {
         } catch {
             lastError = describe(error)
         }
+    }
+
+    /// iCloud(CloudKit)에서 원격 볼트를 가져와 이 기기로 복원한다(새 기기 부트스트랩).
+    ///
+    /// 멀티 기기 설정의 정석 경로다. 새 기기에서 "볼트 새로 생성"을 하면 이 기기만의
+    /// 랜덤 VMK 가 생겨, 첫 기기가 올린 원격(다른 VMK 로 암호화)을 열 때 `WrongKey` 로
+    /// 동기화가 깨진다. 여기서는 원격 blob 을 비밀번호로 열어(open_with_password) 첫 기기의
+    /// VMK 를 그대로 복구·저장하므로, 이후 두 기기가 같은 VMK 를 공유해 동기화가 성립한다.
+    ///
+    /// CloudKit fetch 는 블로킹이므로 메인 스레드 밖에서 수행하고, 복원(상태 변경)만 메인에서 한다.
+    public func restoreFromICloud(password: String) {
+        guard VaultAccess.vaultPath != nil else {
+            lastError = "App Group container unavailable"
+            return
+        }
+        lastError = nil
+        isSyncing = true
+        lastSyncStatus = "Fetching from iCloud…"
+        Task.detached { [weak self] in
+            let backend = CloudKitSyncBackend()
+            let fetched: Result<RemoteBlob?, Error> = Result { try backend.fetch() }
+            await MainActor.run {
+                guard let self else { return }
+                self.isSyncing = false
+                switch fetched {
+                case .failure(let error):
+                    self.lastError = self.describe(error)
+                case .success(nil):
+                    self.lastError = "No iCloud vault found yet. Enable iCloud Sync on your first device, then try again."
+                case .success(.some(let blob)):
+                    self.restore(blob: blob.data, password: password)
+                    // 복원 성공 시 이 기기에서도 동기화를 켜 둔다(원격 VMK 를 공유하므로 안전).
+                    if self.isReady { self.setICloudSync(enabled: true) }
+                }
+            }
+        }
+    }
+
+    /// 로컬 볼트와 캐시된 VMK 를 지우고 온보딩(복원 가능 상태)으로 되돌린다.
+    ///
+    /// `WrongKey` 로 동기화가 막힌 기기(원격과 다른 VMK 로 생성됨)를 iCloud 에서 다시
+    /// 복원하기 위한 복구 경로다. 원격(iCloud)은 건드리지 않는다.
+    /// 주의: 이 기기에만 있고 아직 동기화되지 않은 계정은 사라진다.
+    public func resetForRestore() {
+        client?.clearSyncBackend()
+        client = nil
+        isReady = false
+        accounts = []
+        folders = []
+        iCloudSyncEnabled = false
+        legacyDefaults?.set(false, forKey: syncEnabledKey)
+        KeychainHelper.shared.deleteVMK()
+        if let path = VaultAccess.vaultPath {
+            try? FileManager.default.removeItem(atPath: path)
+        }
+        vaultExists = false
+        lastError = nil
+        lastSyncStatus = "Never synced"
     }
 
     // MARK: - 새로고침
@@ -290,15 +344,23 @@ public final class OtpStore: ObservableObject {
         Task.detached { [weak self] in
             let now = Int64(Date().timeIntervalSince1970 * 1000)
             let result: String
+            var wrongKey = false
             do {
                 let outcome = try client.sync(unixTimeMs: now)
                 result = "Synced (pushed: \(outcome.pushed), pulled: \(outcome.pulled), changes: \(outcome.mergedChanges))"
+            } catch OtpError.WrongKey {
+                // 이 기기의 볼트가 원격과 다른 VMK 로 만들어졌다(대개 다른 기기에서 각각 "새로
+                // 생성"한 경우). 원격을 이 기기의 키로 열 수 없다. 정석 해법은 이 기기를 iCloud 에서
+                // 다시 복원해 원격 VMK 를 공유하는 것이다(설정 → "Reset & Restore from iCloud").
+                wrongKey = true
+                result = "Sync failed: this device's vault uses a different key than iCloud. Reset and restore this device from iCloud to share the same key."
             } catch {
                 result = "Sync failed: \(await self?.describe(error) ?? "error")"
             }
             await MainActor.run {
                 self?.isSyncing = false
                 self?.lastSyncStatus = result
+                if wrongKey { self?.lastError = result }
                 self?.reloadFromDisk()
             }
         }
@@ -339,12 +401,6 @@ public final class OtpStore: ObservableObject {
             VaultAccess.notifyChange()
         } catch {
             lastError = describe(error)
-        }
-    }
-
-    private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.objectWillChange.send() }
         }
     }
 

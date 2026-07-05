@@ -145,34 +145,47 @@ struct OnboardingView: View {
 
     private var restoreSheet: some View {
         VStack(spacing: 20) {
-            Text("Restore from Backup")
+            Text("Restore Vault")
                 .font(.title2).fontWeight(.semibold)
 
-            Text("Select a vault/backup file and enter its master password.")
+            Text("Restore from iCloud (if you enabled Sync on another device) or from a backup file. Enter the master password you used there.")
                 .font(.callout)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-
-            Button {
-                showingRestoreImporter = true
-            } label: {
-                Label(restoreData == nil ? "Choose File…" : "File Selected ✓",
-                      systemImage: "doc")
-            }
 
             SecureField("Master Password", text: $restorePassword)
                 .textFieldStyle(.roundedBorder)
                 .frame(maxWidth: 300)
 
+            // iCloud 복원: 파일 없이 비밀번호만으로 원격 볼트를 가져와 VMK 를 공유한다.
+            Button {
+                store.restoreFromICloud(password: restorePassword)
+                showingRestore = false
+            } label: {
+                Label("Restore from iCloud", systemImage: "icloud.and.arrow.down")
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(restorePassword.isEmpty)
+
+            Divider().frame(maxWidth: 300)
+
+            // 파일(백업 .otpvault) 복원.
+            Button {
+                showingRestoreImporter = true
+            } label: {
+                Label(restoreData == nil ? "Choose Backup File…" : "File Selected ✓",
+                      systemImage: "doc")
+            }
+
             HStack(spacing: 16) {
                 Button("Cancel") { showingRestore = false }
-                Button("Restore") {
+                Button("Restore from File") {
                     if let data = restoreData {
                         store.restore(blob: data, password: restorePassword)
                         showingRestore = false
                     }
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.bordered)
                 .disabled(restoreData == nil || restorePassword.isEmpty)
             }
         }
