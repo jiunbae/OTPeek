@@ -63,6 +63,17 @@
           </uap:Protocol>
         </uap:Extension>
 
+        <!-- File Type Association (.otpvault backup/restore) -->
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="otpvault">
+            <uap:DisplayName>OTP Vault Backup</uap:DisplayName>
+            <uap:Logo>Assets\Logo\Square44x44Logo.png</uap:Logo>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.otpvault</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+
         <!-- COM Server for Widget Provider -->
         <com:Extension Category="windows.comServer">
           <com:ComServer>
