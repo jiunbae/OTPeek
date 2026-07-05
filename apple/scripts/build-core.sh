@@ -31,6 +31,7 @@ LIB_NAME="libotp_ffi.a"
 PROFILE="release"
 
 MACOS_TARGET="aarch64-apple-darwin"
+MACOS_X86_TARGET="x86_64-apple-darwin"
 IOS_TARGET="aarch64-apple-ios"
 IOS_SIM_TARGET="aarch64-apple-ios-sim"
 
@@ -62,14 +63,33 @@ if ! build_slice "${MACOS_TARGET}"; then
     exit 1
 fi
 
+# x86_64 macOS slice → universal macOS lib (needed for a Mac App Store build
+# that runs on Intel Macs too). Best-effort: arm64-only still builds locally.
+HAVE_MACOS_X86=0
+build_slice "${MACOS_X86_TARGET}" && HAVE_MACOS_X86=1 || true
+
 # iOS slices are best-effort; the script stays correct if they are missing.
 HAVE_IOS=0
 HAVE_IOS_SIM=0
 build_slice "${IOS_TARGET}"      && HAVE_IOS=1      || true
 build_slice "${IOS_SIM_TARGET}"  && HAVE_IOS_SIM=1  || true
 
-MACOS_LIB="${CORE_DIR}/target/${MACOS_TARGET}/${PROFILE}/${LIB_NAME}"
+MACOS_ARM_LIB="${CORE_DIR}/target/${MACOS_TARGET}/${PROFILE}/${LIB_NAME}"
 MACOS_DYLIB="${CORE_DIR}/target/${MACOS_TARGET}/${PROFILE}/libotp_ffi.dylib"
+
+# Fuse arm64 + x86_64 into one universal static lib for the xcframework's
+# macOS slice; fall back to arm64-only when the x86_64 slice is unavailable.
+if [ "${HAVE_MACOS_X86}" -eq 1 ]; then
+    MACOS_LIB="${CORE_DIR}/target/libotp_ffi-macos-universal.a"
+    echo "==> lipo -create macOS universal (arm64 + x86_64)"
+    lipo -create \
+        "${MACOS_ARM_LIB}" \
+        "${CORE_DIR}/target/${MACOS_X86_TARGET}/${PROFILE}/${LIB_NAME}" \
+        -output "${MACOS_LIB}"
+else
+    echo "==> NOTE: x86_64 macOS slice missing — macOS lib is arm64-only." >&2
+    MACOS_LIB="${MACOS_ARM_LIB}"
+fi
 
 # --- regenerate Swift bindings from the freshly built host library ---------
 echo "==> generating Swift bindings"
