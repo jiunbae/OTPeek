@@ -1,157 +1,133 @@
 # OTP Authenticator
 
-A cross-platform OTP (One-Time Password) authenticator application supporting TOTP and HOTP protocols. Available for **Windows**, **macOS**, and **iOS**.
+A cross-platform OTP (One-Time Password) authenticator supporting TOTP and HOTP.
+All logic lives in a **shared Rust core**; each platform keeps a native shell:
+SwiftUI + WidgetKit on Apple, WinUI 3 on Windows, and a standalone `otp` CLI for
+Linux/macOS.
 
 ## Features
 
-- **TOTP/HOTP Support**: RFC 6238 (TOTP) and RFC 4226 (HOTP) compliant
-- **Multiple Hash Algorithms**: SHA1, SHA256, SHA512
-- **QR Code Import**: Scan from screen, select area, or import from image file
-- **Folder Organization**: Organize accounts into custom folders
-- **Favorites**: Mark frequently used accounts for quick access
-- **Click to Copy**: Click OTP code to copy with visual feedback
-- **Secure Storage**: Platform-native secure storage (Keychain on Apple, DPAPI on Windows)
-- **System Tray/Menu Bar**: Quick access without opening the main app
-- **Backup & Restore**: Export and import accounts with encryption
+- **TOTP/HOTP**: RFC 6238 / RFC 4226 compliant (SHA1, SHA256, SHA512; 6–8 digits)
+- **End-to-end-encrypted vault**: single canonical store — AES-256-GCM payload,
+  Argon2id-wrapped master key; platform keystores (Keychain / DPAPI / Secret
+  Service) hold only the vault key, never the secrets
+- **Sync**: encrypted-blob sync with pluggable backends — **iCloud (CloudKit)**
+  on Apple, **WebDAV** everywhere (Nextcloud etc.); LWW merge with tombstones
+- **QR Import**: camera scan, screen capture, image files, plus Google
+  Authenticator migration QR (`otpauth-migration://`)
+- **Folders & Favorites**, click-to-copy, system tray / menu bar, widgets
+- **Backup & Restore**: portable encrypted `.otpvault` containers (legacy v1
+  `.otpbackup` import supported)
 
 ## Platforms
 
-| Platform | Status | Min Version |
-|----------|--------|-------------|
-| Windows | ✅ | Windows 10 1809+ |
-| macOS | ✅ | macOS 14.0+ |
-| iOS | ✅ | iOS 17.0+ |
-
----
+| Platform | Shell | Status | Min Version |
+|----------|-------|--------|-------------|
+| Windows | WinUI 3 | ✅ | Windows 10 1809+ |
+| macOS | SwiftUI + menu bar + widget | ✅ | macOS 14.0+ |
+| iOS | SwiftUI + widget | ✅ | iOS 17.0+ |
+| Linux / macOS CLI | `otp` binary | ✅ | — |
 
 ## Project Structure
 
 ```
 OTPWidget/
-├── apple/                      # Apple platforms (Native Swift)
-│   ├── project.yml            # XcodeGen configuration
-│   ├── OtpAuthenticator/      # macOS/iOS app source
-│   ├── OtpWidgetExtension/    # Widget extension
-│   └── Shared/                # Shared Swift code
+├── core/                       # Rust workspace — ALL logic lives here
+│   └── crates/
+│       ├── otp-core/          # TOTP/HOTP, otpauth:// URIs, GA migration
+│       ├── otp-vault/         # encrypted vault container v2, v1 import
+│       ├── otp-sync/          # sync engine, merge rules, WebDAV backend
+│       ├── otp-ffi/           # UniFFI facade (Swift / C# bindings)
+│       └── otp-cli/           # `otp` command-line client
 │
-├── windows/                    # Windows platform (.NET)
-│   ├── OtpAuthenticator.App/  # WinUI 3 application
-│   ├── OtpAuthenticator.Core/ # Core library
-│   ├── OtpAuthenticator.Core.Windows/  # Windows services
-│   └── OtpAuthenticator.Widget/        # Windows widget
+├── apple/                      # SwiftUI shells (macOS/iOS) + widget
+│   ├── scripts/build-core.sh  # builds XCFramework + Swift bindings
+│   └── Generated/             # uniffi-generated Swift (build output)
 │
-├── docs/                       # Shared specifications
-│   ├── SPEC.md                # OTP algorithm spec
-│   ├── DATA_FORMAT.md         # Data format spec
-│   └── BACKUP_FORMAT.md       # Backup format spec
+├── windows/                    # WinUI 3 shell + widget
+│   ├── OtpAuthenticator.Interop/  # uniffi-generated C# + native lib packaging
+│   └── scripts/generate-bindings.ps1
 │
-├── shared/                     # Shared resources
-│   └── (icons, localization)
-│
-├── tests/                      # Unit tests
-│
-└── OtpAuthenticator.Windows.sln  # Windows solution
+└── docs/
+    ├── ARCHITECTURE.md        # v2 architecture & API contract (start here)
+    ├── SPEC.md                # OTP algorithm spec + RFC test vectors
+    ├── DATA_FORMAT.md         # data model semantics
+    └── BACKUP_FORMAT.md       # legacy v1 backup format (import-only)
 ```
-
----
 
 ## Build Instructions
 
-### Prerequisites
+### Prerequisites (all platforms)
 
-#### For Apple (macOS/iOS)
-- **Xcode 15.0+** with Command Line Tools
-- **XcodeGen** (for project generation)
-  ```bash
-  brew install xcodegen
-  ```
+- **Rust** (stable) — https://rustup.rs
 
-#### For Windows
-- **Visual Studio 2022** with:
-  - .NET Desktop Development
-  - Windows App SDK (C# Templates)
-- **.NET 8.0 SDK**
-- **Windows 10 SDK (10.0.19041.0+)**
+### Rust core & CLI
 
----
+```bash
+cd core
+cargo test --workspace          # full test suite (RFC vectors, vault, sync, CLI)
+cargo build -p otp-cli --release
+./target/release/otp init       # create a vault
+./target/release/otp add 'otpauth://totp/GitHub:me?secret=JBSWY3DPEHPK3PXP&issuer=GitHub'
+./target/release/otp code github --copy
+```
+
+Vault: `~/.local/share/otp-auth/vault.otpvault` (override with `$OTP_VAULT`).
+The vault key is kept in the OS keystore; headless environments can use
+`$OTP_VAULT_PASSWORD` (and `$OTP_BACKUP_PASSWORD` for export/import).
+Configure sync: `otp sync setup webdav <url> --user <name>`, then `otp sync now`.
 
 ### Apple (macOS / iOS)
 
+Requires Xcode 15+ and XcodeGen (`brew install xcodegen`), plus iOS Rust targets:
+
 ```bash
-# Navigate to Apple project
-cd apple
-
-# Generate Xcode project
-xcodegen generate
-
-# Open in Xcode
-open OtpAuthenticator.xcodeproj
+rustup target add aarch64-apple-ios aarch64-apple-ios-sim
+apple/scripts/build-core.sh     # Rust → XCFramework + Swift bindings
+cd apple && xcodegen generate && open OtpAuthenticator.xcodeproj
 ```
 
-**Build:**
-- macOS: Select `OtpAuthenticator-macOS` scheme → My Mac → Cmd+R
-- iOS: Select `OtpAuthenticator-iOS` scheme → Simulator → Cmd+R
+- macOS: `OtpAuthenticator-macOS` scheme → My Mac → Cmd+R
+- iOS: `OtpAuthenticator-iOS` scheme → Simulator → Cmd+R
 
----
+iCloud sync requires the `iCloud.com.otpauthenticator` CloudKit container on
+your signing team.
 
 ### Windows
 
-```bash
-# Open solution in Visual Studio
-start OtpAuthenticator.Windows.sln
+Requires Visual Studio 2022 (.NET Desktop + Windows App SDK), .NET 8 SDK, and
+Rust with the MSVC target:
 
-# Or build via CLI
+```powershell
+rustup target add x86_64-pc-windows-msvc
+# Interop project builds the Rust core automatically via MSBuild targets
 dotnet restore OtpAuthenticator.Windows.sln
 dotnet build windows/OtpAuthenticator.App/OtpAuthenticator.App.csproj -p:Platform=x64
 ```
 
-**Run:**
-```bash
-# After building
-windows\OtpAuthenticator.App\bin\x64\Debug\net8.0-windows10.0.22621.0\OtpAuthenticator.exe
-```
+To regenerate C# bindings after changing `otp-ffi`: `windows/scripts/generate-bindings.ps1`.
 
----
+## Security Model
 
-## Key Technologies
-
-### Apple
-- **SwiftUI** - Declarative UI
-- **Vision** - QR code detection
-- **WidgetKit** - Home screen widgets
-- **Keychain** - Secure storage
-
-### Windows
-- **WinUI 3** - Modern Windows UI
-- **CommunityToolkit.Mvvm** - MVVM pattern
-- **ZXing.NET** - QR code handling
-- **H.NotifyIcon** - System tray
-
----
+- Account secrets exist only inside the encrypted vault (AES-256-GCM, random
+  256-bit vault master key) and in process memory of an unlocked client.
+- The vault master key is wrapped by Argon2id(master password) — 64 MiB, t=3 —
+  for sync/recovery, and stored in the platform keystore for password-less
+  local unlock. Widgets never run the KDF.
+- Sync backends only ever see encrypted bytes.
+- See `docs/ARCHITECTURE.md` §14 for the full notes and tradeoffs (e.g. widget
+  code visibility, clipboard).
 
 ## Documentation
 
+- [Architecture & API contract](docs/ARCHITECTURE.md)
 - [OTP Algorithm Specification](docs/SPEC.md)
 - [Data Format Specification](docs/DATA_FORMAT.md)
-- [Backup Format Specification](docs/BACKUP_FORMAT.md)
-
----
-
-## Security
-
-- Secrets stored in platform-native secure storage:
-  - **Apple**: Keychain Services
-  - **Windows**: Windows PasswordVault / DPAPI
-- Backup files encrypted with AES-256-GCM
-- Clipboard auto-clear after configurable timeout
-
----
+- [Legacy Backup Format (v1, import-only)](docs/BACKUP_FORMAT.md)
 
 ## License
 
 MIT License - See [LICENSE](LICENSE) for details.
-
----
 
 ## Contributing
 
