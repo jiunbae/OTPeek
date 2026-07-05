@@ -160,8 +160,8 @@ struct SidebarView: View {
                         AccountListView(folderId: folder.id)
                     } label: {
                         HStack(spacing: 8) {
-                            Image(systemName: folder.icon)
-                                .foregroundColor(Color(hex: folder.color) ?? .blue)
+                            Image(systemName: folder.iconName)
+                                .foregroundColor(Color(hex: folder.displayColor) ?? .blue)
                                 .frame(width: 20)
 
                             Text(folder.name)
@@ -224,11 +224,8 @@ struct SidebarView: View {
     }
 
     private func pasteOtpUri() {
-        guard let string = NSPasteboard.general.string(forType: .string),
-              let account = OtpAccount.parse(uri: string) else {
-            return
-        }
-        appState.addAccount(account)
+        guard let string = NSPasteboard.general.string(forType: .string) else { return }
+        appState.addFromUri(string)
     }
 }
 #endif
@@ -369,8 +366,8 @@ struct EditFolderView: View {
     init(folder: OtpFolder) {
         self.folder = folder
         _name = State(initialValue: folder.name)
-        _selectedIcon = State(initialValue: folder.icon)
-        _selectedColor = State(initialValue: folder.color)
+        _selectedIcon = State(initialValue: folder.iconName)
+        _selectedColor = State(initialValue: folder.displayColor)
     }
 
     var body: some View {

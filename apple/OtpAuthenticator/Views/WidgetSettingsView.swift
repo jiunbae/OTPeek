@@ -39,12 +39,12 @@ struct WidgetSettingsView: View {
                 Section("Available Accounts") {
                     ForEach(availableAccounts) { account in
                         HStack {
-                            InitialCircle(initial: account.initial, color: account.color, size: 32)
+                            InitialCircle(initial: account.initial, color: account.displayColor, size: 32)
 
                             VStack(alignment: .leading) {
-                                Text(account.issuer.isEmpty ? account.accountName : account.issuer)
+                                Text(account.issuerText.isEmpty ? account.accountName : account.issuerText)
                                     .font(.headline)
-                                if !account.issuer.isEmpty {
+                                if !account.issuerText.isEmpty {
                                     Text(account.accountName)
                                         .font(.caption)
                                         .foregroundColor(.secondary)
@@ -136,7 +136,7 @@ struct WidgetSettingsView: View {
 
     private func updateSortOrder() {
         for (index, var account) in widgetAccounts.enumerated() {
-            account.sortOrder = index
+            account.sortOrder = Int32(index)
             appState.updateAccount(account)
         }
     }
@@ -144,7 +144,7 @@ struct WidgetSettingsView: View {
     private func resetWidgetOrder() {
         widgetAccounts = appState.accounts
         for (index, var account) in widgetAccounts.enumerated() {
-            account.sortOrder = index
+            account.sortOrder = Int32(index)
             account.isFavorite = false
             appState.updateAccount(account)
         }
@@ -165,11 +165,11 @@ struct WidgetAccountRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            InitialCircle(initial: account.initial, color: account.color, size: 36)
+            InitialCircle(initial: account.initial, color: account.displayColor, size: 36)
 
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
-                    Text(account.issuer.isEmpty ? account.accountName : account.issuer)
+                    Text(account.issuerText.isEmpty ? account.accountName : account.issuerText)
                         .font(.headline)
 
                     if account.isFavorite {
@@ -179,7 +179,7 @@ struct WidgetAccountRow: View {
                     }
                 }
 
-                if !account.issuer.isEmpty {
+                if !account.issuerText.isEmpty {
                     Text(account.accountName)
                         .font(.caption)
                         .foregroundColor(.secondary)

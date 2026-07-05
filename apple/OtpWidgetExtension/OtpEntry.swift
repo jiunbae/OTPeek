@@ -14,7 +14,7 @@ struct OtpEntry: TimelineEntry {
     }
 
     var displayIssuer: String {
-        return account?.issuer ?? "No Account"
+        return account?.issuerText ?? "No Account"
     }
 
     var displayAccountName: String {
@@ -30,7 +30,7 @@ struct OtpEntry: TimelineEntry {
     }
 
     var color: String {
-        return account?.color ?? "#512BD4"
+        return account?.displayColor ?? "#512BD4"
     }
 
     /// 코드 포맷팅 (3자리씩 공백 구분)

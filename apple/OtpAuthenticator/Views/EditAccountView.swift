@@ -17,10 +17,10 @@ struct EditAccountView: View {
 
     init(account: OtpAccount) {
         self.account = account
-        _issuer = State(initialValue: account.issuer)
+        _issuer = State(initialValue: account.issuerText)
         _accountName = State(initialValue: account.accountName)
         _isFavorite = State(initialValue: account.isFavorite)
-        _color = State(initialValue: account.color)
+        _color = State(initialValue: account.displayColor)
     }
 
     var body: some View {
@@ -94,7 +94,8 @@ struct EditAccountView: View {
 
     private func saveChanges() {
         var updated = account
-        updated.issuer = issuer.trimmingCharacters(in: .whitespaces)
+        let trimmedIssuer = issuer.trimmingCharacters(in: .whitespaces)
+        updated.issuer = trimmedIssuer.isEmpty ? nil : trimmedIssuer
         updated.accountName = accountName.trimmingCharacters(in: .whitespaces)
         updated.isFavorite = isFavorite
         updated.color = color

@@ -178,10 +178,10 @@ struct QRImageImportView: View {
                 Label("QR Code Detected", systemImage: "checkmark.circle.fill")
                     .foregroundColor(.green)
 
-                if let account = OtpAccount.parse(uri: code) {
+                if let account = try? parseOtpauthUri(uri: code, nowMs: Int64(Date().timeIntervalSince1970 * 1000)) {
                     HStack {
                         VStack(alignment: .leading) {
-                            Text(account.issuer.isEmpty ? "Unknown" : account.issuer)
+                            Text(account.issuerText.isEmpty ? "Unknown" : account.issuerText)
                                 .font(.headline)
                             Text(account.accountName)
                                 .font(.subheadline)
@@ -191,7 +191,7 @@ struct QRImageImportView: View {
                         Spacer()
 
                         Button("Add Account") {
-                            appState.addAccount(account)
+                            appState.addFromUri(code)
                             dismiss()
                         }
                         .buttonStyle(.borderedProminent)

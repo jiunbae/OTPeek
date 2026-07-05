@@ -7,8 +7,8 @@ struct AddAccountView: View {
     @State private var issuer = ""
     @State private var accountName = ""
     @State private var secretKey = ""
-    @State private var otpType: OtpGenerator.OtpType = .totp
-    @State private var algorithm: OtpGenerator.Algorithm = .sha1
+    @State private var otpType: OtpType = .totp
+    @State private var algorithm: HashAlgorithm = .sha1
     @State private var digits = 6
     @State private var period = 30
     @State private var showingError = false
@@ -29,14 +29,14 @@ struct AddAccountView: View {
 
                 Section("Advanced Options") {
                     Picker("Type", selection: $otpType) {
-                        Text("TOTP (Time-based)").tag(OtpGenerator.OtpType.totp)
-                        Text("HOTP (Counter-based)").tag(OtpGenerator.OtpType.hotp)
+                        Text("TOTP (Time-based)").tag(OtpType.totp)
+                        Text("HOTP (Counter-based)").tag(OtpType.hotp)
                     }
 
                     Picker("Algorithm", selection: $algorithm) {
-                        Text("SHA1").tag(OtpGenerator.Algorithm.sha1)
-                        Text("SHA256").tag(OtpGenerator.Algorithm.sha256)
-                        Text("SHA512").tag(OtpGenerator.Algorithm.sha512)
+                        Text("SHA1").tag(HashAlgorithm.sha1)
+                        Text("SHA256").tag(HashAlgorithm.sha256)
+                        Text("SHA512").tag(HashAlgorithm.sha512)
                     }
 
                     Picker("Digits", selection: $digits) {

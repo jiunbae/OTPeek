@@ -13,7 +13,7 @@ struct AccountCardView: View {
     @State private var showingDeleteAlert = false
 
     private var currentCode: String {
-        account.generateCode() ?? "------"
+        appState.code(for: account) ?? "------"
     }
 
     private var formattedCode: String {
@@ -35,14 +35,14 @@ struct AccountCardView: View {
             // Initial Circle
             InitialCircle(
                 initial: account.initial,
-                color: account.color,
+                color: account.displayColor,
                 size: 48
             )
 
             // Account Info
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(account.issuer.isEmpty ? account.accountName : account.issuer)
+                    Text(account.issuerText.isEmpty ? account.accountName : account.issuerText)
                         .font(.headline)
 
                     if account.isFavorite {
@@ -52,7 +52,7 @@ struct AccountCardView: View {
                     }
                 }
 
-                if !account.issuer.isEmpty {
+                if !account.issuerText.isEmpty {
                     Text(account.accountName)
                         .font(.subheadline)
                         .foregroundColor(.secondary)

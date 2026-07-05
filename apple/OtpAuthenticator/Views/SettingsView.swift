@@ -1,13 +1,26 @@
 import SwiftUI
 import WidgetKit
+import UniformTypeIdentifiers
+
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
 
 struct SettingsView: View {
-    @EnvironmentObject var appState: AppState
+    @EnvironmentObject var appState: OtpStore
     @AppStorage("autoClipboard") private var autoClipboard = false
     @AppStorage("showInMenuBar") private var showInMenuBar = true
     @AppStorage("launchAtLogin") private var launchAtLogin = false
     @State private var showingWidgetSettings = false
     @State private var showingQRImport = false
+
+    // 백업 비밀번호 입력용
+    @State private var showingExportPassword = false
+    @State private var showingImportPassword = false
+    @State private var backupPassword = ""
+    @State private var pendingImportData: Data?
 
     var body: some View {
         Form {
@@ -18,6 +31,31 @@ struct SettingsView: View {
                 Toggle("Show in menu bar", isOn: $showInMenuBar)
                 Toggle("Launch at login", isOn: $launchAtLogin)
                 #endif
+            }
+
+            Section("iCloud Sync") {
+                Toggle("Sync with iCloud", isOn: Binding(
+                    get: { appState.iCloudSyncEnabled },
+                    set: { appState.setICloudSync(enabled: $0) }
+                ))
+
+                if appState.iCloudSyncEnabled {
+                    Button {
+                        appState.syncNow()
+                    } label: {
+                        HStack {
+                            Label("Sync Now", systemImage: "arrow.triangle.2.circlepath")
+                            Spacer()
+                            if appState.isSyncing {
+                                ProgressView().controlSize(.small)
+                            }
+                        }
+                    }
+                    .disabled(appState.isSyncing)
+
+                    LabeledContent("Status", value: appState.lastSyncStatus)
+                        .font(.caption)
+                }
             }
 
             Section("Widgets") {
@@ -47,12 +85,13 @@ struct SettingsView: View {
                 }
                 #endif
 
-                Button("Export Accounts") {
-                    exportAccounts()
+                Button("Export Encrypted Backup") {
+                    backupPassword = ""
+                    showingExportPassword = true
                 }
 
-                Button("Import Accounts") {
-                    importAccounts()
+                Button("Import Backup") {
+                    pickImportFile()
                 }
             }
 
@@ -87,31 +126,43 @@ struct SettingsView: View {
         #endif
         .sheet(isPresented: $showingWidgetSettings) {
             WidgetSettingsView()
+                .environmentObject(appState)
         }
         #if os(macOS)
         .sheet(isPresented: $showingQRImport) {
             QRImageImportView()
+                .environmentObject(appState)
         }
         #endif
+        .alert("Backup Password", isPresented: $showingExportPassword) {
+            SecureField("Password", text: $backupPassword)
+            Button("Cancel", role: .cancel) {}
+            Button("Export") { exportBackup() }
+        } message: {
+            Text("Choose a password to encrypt the backup file.")
+        }
+        .alert("Backup Password", isPresented: $showingImportPassword) {
+            SecureField("Password", text: $backupPassword)
+            Button("Cancel", role: .cancel) { pendingImportData = nil }
+            Button("Import") { importBackup() }
+        } message: {
+            Text("Enter the password used to encrypt this backup.")
+        }
     }
 
-    private func exportAccounts() {
-        guard let data = AccountStore.shared.exportAccounts() else { return }
+    // MARK: - Backup export/import (v2 encrypted container)
+
+    private func exportBackup() {
+        guard let data = appState.exportBackup(password: backupPassword) else { return }
 
         #if os(macOS)
         let panel = NSSavePanel()
-        panel.allowedContentTypes = [.json]
-        panel.nameFieldStringValue = "otp_backup.json"
-
+        panel.nameFieldStringValue = "otp_backup.otpvault"
         if panel.runModal() == .OK, let url = panel.url {
             try? data.write(to: url)
         }
         #else
-        // iOS: Share sheet
-        let activityVC = UIActivityViewController(
-            activityItems: [data],
-            applicationActivities: nil
-        )
+        let activityVC = UIActivityViewController(activityItems: [data], applicationActivities: nil)
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let window = windowScene.windows.first,
            let rootVC = window.rootViewController {
@@ -120,32 +171,33 @@ struct SettingsView: View {
         #endif
     }
 
-    private func importAccounts() {
+    private func pickImportFile() {
         #if os(macOS)
         let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.json]
         panel.allowsMultipleSelection = false
-
+        panel.canChooseDirectories = false
         if panel.runModal() == .OK, let url = panel.url,
            let data = try? Data(contentsOf: url) {
-            _ = AccountStore.shared.importAccounts(from: data)
-            appState.loadAccounts()
+            pendingImportData = data
+            backupPassword = ""
+            showingImportPassword = true
         }
         #else
-        // iOS: Document picker would be implemented here
+        // iOS: document picker integration is left to the host; backup import
+        // is primarily driven from the onboarding "Restore" flow.
         #endif
     }
-}
 
-#if os(macOS)
-import AppKit
-#else
-import UIKit
-#endif
+    private func importBackup() {
+        guard let data = pendingImportData else { return }
+        _ = appState.importBackup(data: data, password: backupPassword, merge: true)
+        pendingImportData = nil
+    }
+}
 
 // MARK: - Preview
 
 #Preview {
     SettingsView()
-        .environmentObject(AppState())
+        .environmentObject(OtpStore())
 }

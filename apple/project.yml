@@ -17,6 +17,33 @@ configs:
   Debug: debug
   Release: release
 
+# ---------------------------------------------------------------------------
+# Shared building blocks (reused by every target via YAML anchors)
+# ---------------------------------------------------------------------------
+
+# otp-ffi 로 생성된 Swift 바인딩. include/ 는 C 헤더/모듈맵이므로 소스 컴파일에서 제외
+# (xcframework 가 otpFFI 모듈을 제공한다).
+generatedSources: &generatedSources
+  path: Generated
+  excludes:
+    - "include/**"
+    - "**/.DS_Store"
+
+# Rust 코어 xcframework (정적 라이브러리 + otpFFI 모듈). embed 하지 않는다.
+coreFramework: &coreFramework
+  framework: Frameworks/OtpCore.xcframework
+  embed: false
+
+# 빌드 전에 xcframework 가 없으면 build-core.sh 로 생성한다(멱등).
+buildCoreScript: &buildCoreScript
+  name: Build Rust Core (otp-ffi)
+  basedOnDependencyAnalysis: false
+  script: |
+    set -e
+    if [ ! -d "${PROJECT_DIR}/Frameworks/OtpCore.xcframework" ]; then
+      "${PROJECT_DIR}/scripts/build-core.sh"
+    fi
+
 targets:
   # iOS App
   OtpAuthenticator-iOS:
@@ -29,6 +56,13 @@ targets:
       - path: Shared
         excludes:
           - "**/.DS_Store"
+      - *generatedSources
+    preBuildScripts:
+      - *buildCoreScript
+    dependencies:
+      - *coreFramework
+      - target: OtpWidgetExtension-iOS
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.otpauthenticator.app
@@ -40,9 +74,6 @@ targets:
         CURRENT_PROJECT_VERSION: "1"
         CODE_SIGN_STYLE: Automatic
         ENABLE_DEBUG_DYLIB: NO
-    dependencies:
-      - target: OtpWidgetExtension-iOS
-        embed: true
 
   # macOS App
   OtpAuthenticator-macOS:
@@ -55,6 +86,13 @@ targets:
       - path: Shared
         excludes:
           - "**/.DS_Store"
+      - *generatedSources
+    preBuildScripts:
+      - *buildCoreScript
+    dependencies:
+      - *coreFramework
+      - target: OtpWidgetExtension-macOS
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.otpauthenticator.app
@@ -66,9 +104,6 @@ targets:
         CURRENT_PROJECT_VERSION: "1"
         CODE_SIGN_STYLE: Automatic
         ENABLE_DEBUG_DYLIB: NO
-    dependencies:
-      - target: OtpWidgetExtension-macOS
-        embed: true
 
   # iOS Widget Extension
   OtpWidgetExtension-iOS:
@@ -81,6 +116,11 @@ targets:
       - path: Shared
         excludes:
           - "**/.DS_Store"
+      - *generatedSources
+    preBuildScripts:
+      - *buildCoreScript
+    dependencies:
+      - *coreFramework
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.otpauthenticator.app.widget
@@ -103,6 +143,11 @@ targets:
       - path: Shared
         excludes:
           - "**/.DS_Store"
+      - *generatedSources
+    preBuildScripts:
+      - *buildCoreScript
+    dependencies:
+      - *coreFramework
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.otpauthenticator.app.widget

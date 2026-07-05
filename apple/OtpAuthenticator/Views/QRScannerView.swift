@@ -82,12 +82,13 @@ struct QRScannerView: View {
     }
 
     private func processScannedCode(_ code: String) {
-        if let account = OtpAccount.parse(uri: code) {
-            appState.addAccount(account)
-            dismiss()
-        } else {
+        appState.lastError = nil
+        appState.addFromUri(code)
+        if appState.lastError != nil {
             errorMessage = "Invalid OTP QR code. Please scan a valid authenticator QR code."
             showingError = true
+        } else {
+            dismiss()
         }
     }
 }

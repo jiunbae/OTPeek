@@ -21,7 +21,7 @@ struct AccountEntity: AppEntity {
 
     init(from account: OtpAccount) {
         self.id = account.id
-        self.issuer = account.issuer
+        self.issuer = account.issuerText
         self.accountName = account.accountName
     }
 
@@ -36,19 +36,20 @@ struct AccountEntity: AppEntity {
 
 struct AccountQuery: EntityQuery {
     func entities(for identifiers: [String]) async throws -> [AccountEntity] {
-        let accounts = AccountStore.shared.getAllAccounts()
+        let accounts = WidgetVault.openClient()?.listAccounts() ?? []
         return accounts
             .filter { identifiers.contains($0.id) }
             .map { AccountEntity(from: $0) }
     }
 
     func suggestedEntities() async throws -> [AccountEntity] {
-        let accounts = AccountStore.shared.getAllAccounts()
+        let accounts = WidgetVault.openClient()?.listAccounts() ?? []
         return accounts.map { AccountEntity(from: $0) }
     }
 
     func defaultResult() async -> AccountEntity? {
-        guard let account = AccountStore.shared.getFirstAccount() else {
+        guard let client = WidgetVault.openClient(),
+              let account = WidgetVault.firstAccount(from: client) else {
             return nil
         }
         return AccountEntity(from: account)
@@ -118,7 +119,7 @@ struct ConfigurableOtpEntry: TimelineEntry {
     let configuration: SelectAccountIntent
 
     var displayIssuer: String {
-        account?.issuer ?? "No Account"
+        account?.issuerText ?? "No Account"
     }
 
     var displayAccountName: String {
@@ -136,7 +137,7 @@ struct ConfigurableOtpEntry: TimelineEntry {
     }
 
     var color: String {
-        account?.color ?? "#512BD4"
+        account?.displayColor ?? "#512BD4"
     }
 }
 
@@ -179,10 +180,11 @@ struct ConfigurableOtpTimelineProvider: AppIntentTimelineProvider {
     }
 
     private func getAccount(for configuration: SelectAccountIntent) -> OtpAccount? {
+        guard let client = WidgetVault.openClient() else { return nil }
         if let accountEntity = configuration.account {
-            return AccountStore.shared.getAccount(id: accountEntity.id)
+            return client.getAccount(id: accountEntity.id)
         }
-        return AccountStore.shared.getFirstAccount()
+        return WidgetVault.firstAccount(from: client)
     }
 
     private func createEntry(for date: Date, account: OtpAccount?, configuration: SelectAccountIntent) -> ConfigurableOtpEntry {

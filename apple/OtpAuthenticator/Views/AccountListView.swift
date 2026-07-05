@@ -25,7 +25,7 @@ struct AccountListView: View {
         // 검색 필터
         if !appState.searchText.isEmpty {
             accounts = accounts.filter { account in
-                account.issuer.localizedCaseInsensitiveContains(appState.searchText) ||
+                account.issuerText.localizedCaseInsensitiveContains(appState.searchText) ||
                 account.accountName.localizedCaseInsensitiveContains(appState.searchText)
             }
         }
@@ -146,7 +146,7 @@ struct AccountListView: View {
                 Button {
                     appState.moveAccount(account, toFolder: folder.id)
                 } label: {
-                    Label(folder.name, systemImage: folder.icon)
+                    Label(folder.name, systemImage: folder.iconName)
                 }
             }
         } label: {

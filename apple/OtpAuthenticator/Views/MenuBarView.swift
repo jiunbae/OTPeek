@@ -11,7 +11,7 @@ struct MenuBarView: View {
             return appState.accounts
         }
         return appState.accounts.filter {
-            $0.issuer.localizedCaseInsensitiveContains(searchText) ||
+            $0.issuerText.localizedCaseInsensitiveContains(searchText) ||
             $0.accountName.localizedCaseInsensitiveContains(searchText)
         }
     }
@@ -84,7 +84,7 @@ struct MenuBarView: View {
     }
 
     private func copyCode(for account: OtpAccount) {
-        if let code = account.generateCode() {
+        if let code = appState.code(for: account) {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(code, forType: .string)
 
@@ -128,17 +128,17 @@ struct MenuBarAccountRow: View {
             // Icon
             InitialCircle(
                 initial: account.initial,
-                color: account.color,
+                color: account.displayColor,
                 size: 32
             )
 
             // Account Info
             VStack(alignment: .leading, spacing: 2) {
-                Text(account.issuer.isEmpty ? account.accountName : account.issuer)
+                Text(account.issuerText.isEmpty ? account.accountName : account.issuerText)
                     .font(.system(size: 13, weight: .medium))
                     .lineLimit(1)
 
-                if !account.issuer.isEmpty {
+                if !account.issuerText.isEmpty {
                     Text(account.accountName)
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
