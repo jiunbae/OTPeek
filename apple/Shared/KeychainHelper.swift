@@ -12,7 +12,7 @@ public final class KeychainHelper {
     public static let shared = KeychainHelper()
 
     private let service = "com.otpeek"
-    private let accessGroup = "group.com.otpeek"
+    private let accessGroup = "group.com.otpeek.app"
     private let vmkAccount = "vmk"
     // 마이그레이션 시 기존 계정 비밀키를 읽기 위한 legacy 키 접두사
     private let legacySecretPrefix = "secret_"

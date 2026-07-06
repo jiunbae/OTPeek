@@ -64,7 +64,7 @@ Requires **full Xcode 15+** and the iOS Rust targets
       against the [Apple required-reason API list](https://developer.apple.com/documentation/bundleresources/privacy_manifest_files)
       if you add dependencies. A matching manifest should also cover the widget extension.
 - [ ] Entitlements: App Sandbox + Hardened Runtime are on; keychain group, app group
-      `group.com.otpeek`, and the `iCloud.com.otpeek` CloudKit container exist on the team.
+      `group.com.otpeek.app`, and the `iCloud.com.otpeek.app` CloudKit container exist on the team.
 - [ ] `ITSAppUsesNonExemptEncryption = false` is set (it is) — standard crypto only.
 - [ ] Screenshots for every required device class.
 
