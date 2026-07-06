@@ -27,6 +27,7 @@ public partial class App : Application
     /// 잠금 해제 흐름이 끝난 뒤 가져오기/복원 다이얼로그에서 소비됩니다.
     /// </summary>
     private string? _pendingImportPath;
+    private string? _pendingAddUri;
 
     public static IServiceProvider Services { get; private set; } = null!;
 
@@ -90,6 +91,9 @@ public partial class App : Application
         // 파일 연결로 실행되었고 볼트가 열려 있으면 가져오기 다이얼로그 표시
         await HandlePendingFileAsync();
 
+        // otpeek:// 딥링크로 실행되었으면 계정 추가 처리
+        await HandlePendingAddUriAsync();
+
         // 설정에 따라 시작 모드 결정
         if (settingsService.Settings.StartMinimized)
         {
@@ -108,6 +112,7 @@ public partial class App : Application
             CapturePendingFile(activationArgs);
             ShowMainWindow();
             await HandlePendingFileAsync();
+            await HandlePendingAddUriAsync();
         });
     }
 
@@ -116,14 +121,86 @@ public partial class App : Application
     /// </summary>
     private void CapturePendingFile(AppActivationArguments activationArgs)
     {
-        if (activationArgs.Kind != ExtendedActivationKind.File)
+        switch (activationArgs.Kind)
+        {
+            // .otpvault 파일 연결
+            case ExtendedActivationKind.File
+                when activationArgs.Data is Windows.ApplicationModel.Activation.IFileActivatedEventArgs fileArgs:
+            {
+                var file = fileArgs.Files.FirstOrDefault();
+                if (file != null && !string.IsNullOrEmpty(file.Path))
+                    _pendingImportPath = file.Path;
+                break;
+            }
+
+            // otpeek:// 앱 딥링크
+            case ExtendedActivationKind.Protocol
+                when activationArgs.Data is Windows.ApplicationModel.Activation.IProtocolActivatedEventArgs protoArgs:
+            {
+                var uri = ParseOtpeekDeepLink(protoArgs.Uri);
+                if (uri != null)
+                    _pendingAddUri = uri;
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// otpeek:// 딥링크를 otpauth:// URI 로 해석합니다. 해석 불가면 null.
+    ///   otpeek://totp/… · otpeek://hotp/…       → 스킴만 otpauth 로 교체
+    ///   otpeek://add?uri=&lt;url-encoded otpauth&gt; → 감싼 URI 추출
+    /// (표준 otpauth:// 는 별도 프로토콜로 그대로 처리됩니다.)
+    /// </summary>
+    private static string? ParseOtpeekDeepLink(Uri uri)
+    {
+        if (!string.Equals(uri.Scheme, "otpeek", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var host = uri.Host.ToLowerInvariant();
+        if (host is "totp" or "hotp")
+            return "otpauth://" + uri.OriginalString.Substring("otpeek://".Length);
+
+        if (host == "add")
+        {
+            foreach (var pair in uri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var kv = pair.Split('=', 2);
+                if (kv.Length == 2 && kv[0].Equals("uri", StringComparison.OrdinalIgnoreCase))
+                {
+                    var inner = Uri.UnescapeDataString(kv[1]);
+                    return string.IsNullOrEmpty(inner) ? null : inner;
+                }
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// otpeek:// 딥링크로 들어온 otpauth URI 를, 볼트가 열려 있으면 계정으로 추가합니다.
+    /// AddFromUri 가 VaultChanged 를 발생시키므로 계정 목록은 자동으로 새로고침됩니다.
+    /// </summary>
+    private async Task HandlePendingAddUriAsync()
+    {
+        if (_pendingAddUri == null)
             return;
 
-        if (activationArgs.Data is Windows.ApplicationModel.Activation.IFileActivatedEventArgs fileArgs)
+        var client = Services.GetRequiredService<IOtpClientService>();
+        if (!client.IsUnlocked)
+            return; // 볼트를 열지 못했으면 다음 활성화까지 대기
+
+        string uri = _pendingAddUri;
+        _pendingAddUri = null; // 소비
+
+        try
         {
-            var file = fileArgs.Files.FirstOrDefault();
-            if (file != null && !string.IsNullOrEmpty(file.Path))
-                _pendingImportPath = file.Path;
+            client.AddFromUri(uri); // VaultChanged → 목록 자동 갱신
+            ShowMainWindow();
+        }
+        catch (OtpException ex)
+        {
+            var xamlRoot = MainWindow?.Content?.XamlRoot;
+            if (xamlRoot != null)
+                await ShowMessageAsync(xamlRoot, "Could not add account", ex.Message);
         }
     }
 

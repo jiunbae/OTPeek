@@ -84,14 +84,41 @@ final class IncomingVaultFile: ObservableObject {
     /// 아직 처리되지 않은, 방금 열린 볼트 파일의 내용.
     @Published var pendingData: Data?
 
+    /// `otpeek://` 딥링크로 넘어온, 아직 추가되지 않은 otpauth URI.
+    @Published var pendingAddURI: String?
+
     private init() {}
 
     func load(from url: URL) {
+        // otpeek:// 앱 딥링크는 파일이 아니라 URI 명령이므로 별도로 라우팅한다.
+        if url.scheme?.lowercased() == "otpeek" {
+            handleDeepLink(url)
+            return
+        }
         // iOS 등 샌드박스에서 넘어온 URL 은 읽기 전에 보안 스코프 접근을 시작해야 한다.
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
         if let data = try? Data(contentsOf: url) {
             pendingData = data
+        }
+    }
+
+    /// `otpeek://` 딥링크를 해석해 추가할 otpauth URI 를 대기열에 올린다.
+    /// - `otpeek://totp/…` / `otpeek://hotp/…` → 스킴만 otpauth 로 바꿔 그대로 파싱
+    /// - `otpeek://add?uri=<url-encoded otpauth>` → 감싼 otpauth URI 추출
+    /// - `otpeek://` (그 외) → 동작 없음(앱만 전면으로)
+    private func handleDeepLink(_ url: URL) {
+        let host = url.host?.lowercased()
+        if host == "totp" || host == "hotp" {
+            let tail = url.absoluteString.dropFirst("otpeek://".count)
+            pendingAddURI = "otpauth://" + tail
+            return
+        }
+        if host == "add",
+           let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
+           let uri = comps.queryItems?.first(where: { $0.name == "uri" })?.value,
+           !uri.isEmpty {
+            pendingAddURI = uri
         }
     }
 }
@@ -138,6 +165,20 @@ struct RootView: View {
             @unknown default:                 break
             }
         }
+        // otpeek:// 딥링크로 들어온 계정 추가를 적절한 시점(볼트 열림 + 잠금 해제)에 적용.
+        .onChange(of: incoming.pendingAddURI) { _, _ in applyPendingAdd() }
+        .onChange(of: appState.isReady) { _, _ in applyPendingAdd() }
+        .onChange(of: appLock.isLocked) { _, _ in applyPendingAdd() }
+        .task { applyPendingAdd() }
+    }
+
+    /// otpeek:// 딥링크로 대기 중인 otpauth URI 를, 볼트가 열리고 잠금이 풀린 뒤 추가한다.
+    private func applyPendingAdd() {
+        guard appState.isReady,
+              !(appLock.isEnabled && appLock.isLocked),
+              let uri = incoming.pendingAddURI else { return }
+        incoming.pendingAddURI = nil
+        appState.addFromUri(uri)
     }
 
     private var importSheetBinding: Binding<Bool> {

@@ -180,7 +180,7 @@ public sealed class QuickOtpCodeProvider
         uint period = (uint)(account.Period <= 0 ? 30 : account.Period);
         try
         {
-            string code = OtpMethods.GenerateTotpNow(secret, algorithm, digits, period, nowSecs);
+            string code = OtpeekMethods.GenerateTotpNow(secret, algorithm, digits, period, nowSecs);
             int remainingSeconds = (int)(period - (nowSecs % period));
             double progress = period > 0 ? (double)remainingSeconds / period : 1.0;
             return (code, remainingSeconds, progress);

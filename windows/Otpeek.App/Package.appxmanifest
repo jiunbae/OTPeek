@@ -56,10 +56,17 @@
             DisplayName="OTPeek" />
         </uap5:Extension>
 
-        <!-- Protocol Handler (otpauth://) -->
+        <!-- Protocol Handler (otpauth://) — industry-standard Key URI scheme -->
         <uap:Extension Category="windows.protocol">
           <uap:Protocol Name="otpauth">
             <uap:DisplayName>OTP Auth Protocol</uap:DisplayName>
+          </uap:Protocol>
+        </uap:Extension>
+
+        <!-- App deep-link scheme (otpeek://add?uri=... / otpeek://totp/...) -->
+        <uap:Extension Category="windows.protocol">
+          <uap:Protocol Name="otpeek">
+            <uap:DisplayName>OTPeek Deep Link</uap:DisplayName>
           </uap:Protocol>
         </uap:Extension>
 

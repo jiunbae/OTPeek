@@ -78,7 +78,7 @@ public partial class AccountItemViewModel : ObservableObject, IDisposable
             if (Account.otpType == OtpType.Totp)
             {
                 long nowSecs = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                CurrentCode = OtpMethods.GenerateTotpNow(
+                CurrentCode = OtpeekMethods.GenerateTotpNow(
                     Account.secret, Account.algorithm, Account.digits, Account.period, nowSecs);
 
                 int period = (int)Account.period;

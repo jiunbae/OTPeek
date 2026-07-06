@@ -150,7 +150,7 @@ public partial class QrScannerViewModel : BaseViewModel
         {
             try
             {
-                var preview = OtpMethods.ParseOtpauthUri(text, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+                var preview = OtpeekMethods.ParseOtpauthUri(text, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
                 _scannedUri = text;
                 ScannedAccount = preview;
                 HasScannedAccount = true;

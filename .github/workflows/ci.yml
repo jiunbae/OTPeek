@@ -1,0 +1,127 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Rust workspace (lives in core/, no root Cargo.toml).
+  # ---------------------------------------------------------------------------
+  rust:
+    name: Rust (core)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: core
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      # The CLI links keyring (Secret Service → libdbus) and arboard (clipboard → xcb).
+      - name: Install Linux system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config libdbus-1-dev \
+            libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core
+
+      - name: Test workspace
+        run: cargo test --workspace
+
+      - name: Build CLI (release)
+        run: cargo build -p otpeek-cli --release
+
+  # ---------------------------------------------------------------------------
+  # Windows app. The Otpeek.Interop MSBuild target shells out to `cargo build
+  # -p otpeek-ffi` to produce otpeek_ffi.dll, so Rust + the MSVC target must be
+  # on PATH. WinUI / Windows App SDK arrives via NuGet (dotnet restore).
+  # ---------------------------------------------------------------------------
+  windows:
+    name: Windows (Otpeek.App)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust (stable + msvc target)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore solution
+        run: dotnet restore Otpeek.Windows.sln
+
+      - name: Build Otpeek.App (Release x64)
+        run: dotnet build windows/Otpeek.App/Otpeek.App.csproj -c Release -p:Platform=x64 --no-restore
+
+  # ---------------------------------------------------------------------------
+  # Apple app. Builds the Rust xcframework + Swift bindings, generates the
+  # Xcode project with XcodeGen, then builds the macOS scheme unsigned.
+  # macos-latest's default Xcode (15+) is fine.
+  # ---------------------------------------------------------------------------
+  apple:
+    name: Apple (Otpeek-macOS)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust (stable + apple targets)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin,aarch64-apple-ios,aarch64-apple-ios-sim
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build Rust core (xcframework + Swift bindings)
+        run: apple/scripts/build-core.sh
+
+      - name: Generate Xcode project
+        working-directory: apple
+        run: xcodegen generate
+
+      - name: Build macOS app (unsigned)
+        run: xcodebuild -project apple/Otpeek.xcodeproj -scheme Otpeek-macOS -configuration Debug build CODE_SIGNING_ALLOWED=NO

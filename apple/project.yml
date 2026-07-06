@@ -67,6 +67,17 @@ otpvaultDocumentTypes: &otpvaultDocumentTypes
     LSItemContentTypes:
       - com.otpeek.otpvault
 
+# Custom URL scheme for app deep links, e.g.
+#   otpeek://totp/GitHub:me?secret=...&issuer=GitHub   (== an otpauth:// URI)
+#   otpeek://add?uri=<url-encoded otpauth:// URI>
+#   otpeek://                                           (just open the app)
+# NOTE: the standard otpauth:// scheme is intentionally NOT claimed here — it is
+# the industry Key-URI format and must keep working with every other app.
+deepLinkUrlTypes: &deepLinkUrlTypes
+  - CFBundleURLName: com.otpeek.deeplink
+    CFBundleURLSchemes:
+      - otpeek
+
 targets:
   # iOS App
   Otpeek-iOS:
@@ -114,6 +125,7 @@ targets:
         LSSupportsOpeningDocumentsInPlace: false
         UTExportedTypeDeclarations: *otpvaultExportedTypes
         CFBundleDocumentTypes: *otpvaultDocumentTypes
+        CFBundleURLTypes: *deepLinkUrlTypes
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.otpeek.app
@@ -159,6 +171,7 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         UTExportedTypeDeclarations: *otpvaultExportedTypes
         CFBundleDocumentTypes: *otpvaultDocumentTypes
+        CFBundleURLTypes: *deepLinkUrlTypes
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.otpeek.app
