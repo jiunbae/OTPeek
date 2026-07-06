@@ -13,13 +13,18 @@ APP_IDENTIFIER = "com.otpeek.app"
 APP_NAME       = "OTPeek"
 XCODEPROJ      = "Otpeek.xcodeproj"
 
-# Build the App Store Connect API key object from the environment.
+# Build the App Store Connect API key object AND export the SPACESHIP_CONNECT_API_*
+# env vars, so both api_key-aware actions (build/upload) and the legacy `produce`
+# action authenticate via the API key (no interactive 2FA).
 def asc_api_key
   key_id = ENV.fetch("ASC_KEY_ID") { UI.user_error!("Set ASC_KEY_ID (see fastlane/.env.example)") }
   issuer = ENV.fetch("ASC_ISSUER_ID") { UI.user_error!("Set ASC_ISSUER_ID (see fastlane/.env.example)") }
   path   = ENV["ASC_KEY_FILEPATH"] ||
            File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{key_id}.p8")
   UI.user_error!("API key not found at #{path}") unless File.exist?(path)
+  ENV["SPACESHIP_CONNECT_API_KEY_ID"]       = key_id
+  ENV["SPACESHIP_CONNECT_API_ISSUER_ID"]    = issuer
+  ENV["SPACESHIP_CONNECT_API_KEY_FILEPATH"] = path
   app_store_connect_api_key(key_id: key_id, issuer_id: issuer, key_filepath: path)
 end
 
@@ -35,17 +40,15 @@ end
 
 platform :ios do
   desc "One-time: create the App Store Connect record for OTPeek"
+  # NOTE: App Store Connect does NOT allow creating the app *record* via an API
+  # key — `produce` falls back to Apple-ID + 2FA login. The bundle IDs are already
+  # registered via the ASC API; the app record is a one-time manual step below.
   lane :create_app do
-    produce(
-      api_key: asc_api_key,
-      app_identifier: APP_IDENTIFIER,
-      app_name: APP_NAME,
-      language: "English",
-      app_version: "1.0.0",
-      sku: "otpeek-#{Time.now.to_i}",
-      platforms: ["ios", "osx"]
-    )
-    UI.success("App record created. Widget/extension bundle IDs are registered automatically during the first signed build (-allowProvisioningUpdates).")
+    UI.important("Bundle IDs are registered: #{APP_IDENTIFIER} + #{APP_IDENTIFIER}.widget")
+    UI.important("Create the app record once (needs your interactive 2FA login):")
+    UI.important("  https://appstoreconnect.apple.com → Apps → + → New App")
+    UI.important("  Platforms: iOS + macOS · Name: #{APP_NAME} · Bundle ID: #{APP_IDENTIFIER} · SKU: otpeek-ios-macos")
+    UI.important("Then: fastlane mac release  /  fastlane ios release")
   end
 
   desc "Build, sign, and upload the iOS build to App Store Connect / TestFlight"

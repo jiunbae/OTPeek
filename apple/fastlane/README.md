@@ -1,38 +1,53 @@
-# OTPeek — App Store submission (fastlane)
+fastlane documentation
+----
 
-Automates build → sign → upload for the macOS and iOS App Store using an
-**App Store Connect API key** (no interactive Apple ID / 2FA).
+# Installation
 
-## One-time setup
+Make sure you have the latest version of the Xcode command line tools installed:
 
-1. Generate (or reuse) an App Store Connect API key:
-   App Store Connect → **Users and Access → Integrations → App Store Connect API** →
-   generate a key with **App Manager** role. Two `.p8` keys already exist on this
-   machine under `~/.appstoreconnect/private_keys/`.
-2. `cp apple/fastlane/.env.example apple/fastlane/.env` and fill in `ASC_KEY_ID`
-   and `ASC_ISSUER_ID`. **Do not commit `.env` or the `.p8`.**
-3. Create the App Store Connect record:
-   ```bash
-   cd apple && fastlane ios create_app
-   ```
-
-## Release
-
-```bash
-cd apple
-fastlane mac release      # macOS: build, sign (team 728FW73BS8), upload
-fastlane ios release      # iOS:   build, sign, upload to TestFlight
+```sh
+xcode-select --install
 ```
 
-Signing is automatic (`-allowProvisioningUpdates` uses the API key to create the
-distribution profiles, including the widget extension `com.otpeek.app.widget`).
+For _fastlane_ installation instructions, see [Installing _fastlane_](https://docs.fastlane.tools/#installing-fastlane)
 
-`submit_for_review` is **off** by default — the build lands in App Store Connect /
-TestFlight. Finish the human-only steps there (screenshots, privacy answers, age
-rating, pricing, export compliance), then submit for review. See `../../docs/RELEASE.md`
-for the listing copy and the pre-submission checklist.
+# Available Actions
 
-## Notes
-- First run may take a while — it builds the Rust core xcframework for all Apple slices.
-- macOS App Store distribution requires the app to stay sandboxed + hardened-runtime
-  (already configured in `project.yml`).
+## iOS
+
+### ios create_app
+
+```sh
+[bundle exec] fastlane ios create_app
+```
+
+One-time: create the App Store Connect record for OTPeek
+
+### ios release
+
+```sh
+[bundle exec] fastlane ios release
+```
+
+Build, sign, and upload the iOS build to App Store Connect / TestFlight
+
+----
+
+
+## Mac
+
+### mac release
+
+```sh
+[bundle exec] fastlane mac release
+```
+
+Build, sign, and upload the macOS build to App Store Connect
+
+----
+
+This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
+
+More information about _fastlane_ can be found on [fastlane.tools](https://fastlane.tools).
+
+The documentation of _fastlane_ can be found on [docs.fastlane.tools](https://docs.fastlane.tools).
