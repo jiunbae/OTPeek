@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- App Title -->
+  <data name="AppTitle" xml:space="preserve">
+    <value>OTPeek</value>
+  </data>
+  <data name="AppDescription" xml:space="preserve">
+    <value>Secure two-factor authentication for Windows</value>
+  </data>
+
+  <!-- Navigation -->
+  <data name="Nav_Accounts" xml:space="preserve">
+    <value>Accounts</value>
+  </data>
+  <data name="Nav_Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Nav_Backup" xml:space="preserve">
+    <value>Backup</value>
+  </data>
+
+  <!-- Account List -->
+  <data name="AccountList_Title" xml:space="preserve">
+    <value>Accounts</value>
+  </data>
+  <data name="AccountList_Empty" xml:space="preserve">
+    <value>No accounts yet</value>
+  </data>
+  <data name="AccountList_EmptyDescription" xml:space="preserve">
+    <value>Add your first account by scanning a QR code or entering manually</value>
+  </data>
+  <data name="AccountList_Add" xml:space="preserve">
+    <value>Add Account</value>
+  </data>
+  <data name="AccountList_ScanQR" xml:space="preserve">
+    <value>Scan QR Code</value>
+  </data>
+  <data name="AccountList_CopiedToClipboard" xml:space="preserve">
+    <value>Code copied to clipboard</value>
+  </data>
+
+  <!-- Account Edit -->
+  <data name="AccountEdit_AddTitle" xml:space="preserve">
+    <value>Add Account</value>
+  </data>
+  <data name="AccountEdit_EditTitle" xml:space="preserve">
+    <value>Edit Account</value>
+  </data>
+  <data name="AccountEdit_Issuer" xml:space="preserve">
+    <value>Service Name</value>
+  </data>
+  <data name="AccountEdit_IssuerPlaceholder" xml:space="preserve">
+    <value>e.g., Google, GitHub, Microsoft</value>
+  </data>
+  <data name="AccountEdit_AccountName" xml:space="preserve">
+    <value>Account Name</value>
+  </data>
+  <data name="AccountEdit_AccountNamePlaceholder" xml:space="preserve">
+    <value>e.g., user@example.com</value>
+  </data>
+  <data name="AccountEdit_SecretKey" xml:space="preserve">
+    <value>Secret Key</value>
+  </data>
+  <data name="AccountEdit_SecretKeyPlaceholder" xml:space="preserve">
+    <value>Base32 encoded secret key</value>
+  </data>
+  <data name="AccountEdit_Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="AccountEdit_TypeTOTP" xml:space="preserve">
+    <value>Time-based (TOTP)</value>
+  </data>
+  <data name="AccountEdit_TypeHOTP" xml:space="preserve">
+    <value>Counter-based (HOTP)</value>
+  </data>
+  <data name="AccountEdit_Algorithm" xml:space="preserve">
+    <value>Algorithm</value>
+  </data>
+  <data name="AccountEdit_Digits" xml:space="preserve">
+    <value>Digits</value>
+  </data>
+  <data name="AccountEdit_Period" xml:space="preserve">
+    <value>Period (seconds)</value>
+  </data>
+  <data name="AccountEdit_Counter" xml:space="preserve">
+    <value>Counter</value>
+  </data>
+  <data name="AccountEdit_Favorite" xml:space="preserve">
+    <value>Favorite</value>
+  </data>
+  <data name="AccountEdit_Notes" xml:space="preserve">
+    <value>Notes</value>
+  </data>
+  <data name="AccountEdit_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="AccountEdit_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="AccountEdit_Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+
+  <!-- QR Scanner -->
+  <data name="QrScanner_Title" xml:space="preserve">
+    <value>Scan QR Code</value>
+  </data>
+  <data name="QrScanner_Instructions" xml:space="preserve">
+    <value>Select an area of the screen containing the QR code</value>
+  </data>
+  <data name="QrScanner_Capture" xml:space="preserve">
+    <value>Capture Screen</value>
+  </data>
+  <data name="QrScanner_NotFound" xml:space="preserve">
+    <value>No QR code found in the selected area</value>
+  </data>
+  <data name="QrScanner_InvalidCode" xml:space="preserve">
+    <value>Invalid OTP QR code</value>
+  </data>
+  <data name="QrScanner_Success" xml:space="preserve">
+    <value>Account added successfully</value>
+  </data>
+
+  <!-- Settings -->
+  <data name="Settings_Title" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Settings_General" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="Settings_StartMinimized" xml:space="preserve">
+    <value>Start minimized to tray</value>
+  </data>
+  <data name="Settings_StartWithWindows" xml:space="preserve">
+    <value>Start with Windows</value>
+  </data>
+  <data name="Settings_AutoCopy" xml:space="preserve">
+    <value>Auto-copy code when clicked</value>
+  </data>
+  <data name="Settings_ClearClipboard" xml:space="preserve">
+    <value>Clear clipboard after</value>
+  </data>
+  <data name="Settings_Seconds" xml:space="preserve">
+    <value>seconds</value>
+  </data>
+  <data name="Settings_Theme" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="Settings_ThemeSystem" xml:space="preserve">
+    <value>System default</value>
+  </data>
+  <data name="Settings_ThemeLight" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="Settings_ThemeDark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="Settings_CloudSync" xml:space="preserve">
+    <value>Cloud Sync</value>
+  </data>
+  <data name="Settings_CloudSyncEnabled" xml:space="preserve">
+    <value>Enable cloud sync</value>
+  </data>
+  <data name="Settings_CloudSyncProvider" xml:space="preserve">
+    <value>Cloud Provider</value>
+  </data>
+  <data name="Settings_OneDrive" xml:space="preserve">
+    <value>OneDrive</value>
+  </data>
+  <data name="Settings_GoogleDrive" xml:space="preserve">
+    <value>Google Drive</value>
+  </data>
+  <data name="Settings_SyncNow" xml:space="preserve">
+    <value>Sync Now</value>
+  </data>
+  <data name="Settings_LastSync" xml:space="preserve">
+    <value>Last synced</value>
+  </data>
+  <data name="Settings_Never" xml:space="preserve">
+    <value>Never</value>
+  </data>
+  <data name="Settings_Security" xml:space="preserve">
+    <value>Security</value>
+  </data>
+  <data name="Settings_About" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="Settings_Version" xml:space="preserve">
+    <value>Version</value>
+  </data>
+
+  <!-- Backup -->
+  <data name="Backup_Title" xml:space="preserve">
+    <value>Backup &amp; Restore</value>
+  </data>
+  <data name="Backup_Export" xml:space="preserve">
+    <value>Export Backup</value>
+  </data>
+  <data name="Backup_ExportDescription" xml:space="preserve">
+    <value>Export all accounts to an encrypted backup file</value>
+  </data>
+  <data name="Backup_Import" xml:space="preserve">
+    <value>Import Backup</value>
+  </data>
+  <data name="Backup_ImportDescription" xml:space="preserve">
+    <value>Restore accounts from a backup file</value>
+  </data>
+  <data name="Backup_Password" xml:space="preserve">
+    <value>Encryption Password</value>
+  </data>
+  <data name="Backup_PasswordHint" xml:space="preserve">
+    <value>Choose a strong password to protect your backup</value>
+  </data>
+  <data name="Backup_ExportSuccess" xml:space="preserve">
+    <value>Backup exported successfully</value>
+  </data>
+  <data name="Backup_ImportSuccess" xml:space="preserve">
+    <value>Backup imported successfully</value>
+  </data>
+  <data name="Backup_InvalidPassword" xml:space="preserve">
+    <value>Invalid password or corrupted backup file</value>
+  </data>
+
+  <!-- Tray Popup -->
+  <data name="Tray_OpenApp" xml:space="preserve">
+    <value>Open OTPeek</value>
+  </data>
+  <data name="Tray_Exit" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+
+  <!-- Common -->
+  <data name="Common_OK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Common_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Common_Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Common_Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Common_Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Common_Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Common_Error" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="Common_Success" xml:space="preserve">
+    <value>Success</value>
+  </data>
+  <data name="Common_Warning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+
+  <!-- Delete Confirmation -->
+  <data name="Delete_Title" xml:space="preserve">
+    <value>Delete Account</value>
+  </data>
+  <data name="Delete_Message" xml:space="preserve">
+    <value>Are you sure you want to delete this account? This action cannot be undone.</value>
+  </data>
+
+  <!-- Widget -->
+  <data name="Widget_Name" xml:space="preserve">
+    <value>OTP Code</value>
+  </data>
+  <data name="Widget_Description" xml:space="preserve">
+    <value>Display your OTP codes in a widget</value>
+  </data>
+</root>

@@ -49,7 +49,7 @@ public final class AppLock: ObservableObject {
         }
 
         context.evaluatePolicy(.deviceOwnerAuthentication,
-                               localizedReason: "Unlock OTP Authenticator") { [weak self] success, err in
+                               localizedReason: "Unlock OTPeek") { [weak self] success, err in
             Task { @MainActor in
                 guard let self else { return }
                 if success {

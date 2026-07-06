@@ -1,4 +1,4 @@
-# Diagnose OtpAuthenticator App Issues
+# Diagnose Otpeek App Issues
 
 Write-Host "=== Package Info ===" -ForegroundColor Cyan
 Get-AppxPackage -Name '*OtpAuth*' | Format-List Name, Version, Status, InstallLocation
@@ -19,13 +19,13 @@ if ($pkg) {
 
 Write-Host "`n=== Recent App Errors ===" -ForegroundColor Cyan
 Get-WinEvent -LogName 'Application' -MaxEvents 50 |
-    Where-Object { $_.Message -match 'OtpAuth|OtpAuthenticator' } |
+    Where-Object { $_.Message -match 'OtpAuth|Otpeek' } |
     Select-Object TimeCreated, LevelDisplayName, Message |
     Format-List
 
 Write-Host "`n=== Try Launch App ===" -ForegroundColor Cyan
 try {
-    Start-Process "shell:AppsFolder\OtpAuthenticator_akbja7an2c1qp!App" -ErrorAction Stop
+    Start-Process "shell:AppsFolder\Otpeek_akbja7an2c1qp!App" -ErrorAction Stop
     Write-Host "App launch command sent"
 } catch {
     Write-Host "Launch Error: $_" -ForegroundColor Red
@@ -33,7 +33,7 @@ try {
 
 Write-Host "`nWait 3 seconds and check for process..."
 Start-Sleep -Seconds 3
-$proc = Get-Process -Name 'OtpAuthenticator' -ErrorAction SilentlyContinue
+$proc = Get-Process -Name 'Otpeek' -ErrorAction SilentlyContinue
 if ($proc) {
     Write-Host "App is running! PID: $($proc.Id)" -ForegroundColor Green
 } else {

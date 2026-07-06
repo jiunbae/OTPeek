@@ -1,11 +1,11 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/otp-core",
-    "crates/otp-vault",
-    "crates/otp-sync",
-    "crates/otp-ffi",
-    "crates/otp-cli",
+    "crates/otpeek-core",
+    "crates/otpeek-vault",
+    "crates/otpeek-sync",
+    "crates/otpeek-ffi",
+    "crates/otpeek-cli",
 ]
 
 [workspace.package]

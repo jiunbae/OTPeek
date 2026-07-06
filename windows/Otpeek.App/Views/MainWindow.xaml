@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="Otpeek.App.Views.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Otpeek.App.Views"
+    xmlns:vm="using:Otpeek.App.ViewModels"
+    Title="OTPeek">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Title Bar -->
+        <Grid Grid.Row="0" Height="48" Background="{ThemeResource LayerFillColorDefaultBrush}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="16,0">
+                <FontIcon Glyph="&#xE8D7;" FontSize="20" Margin="0,0,12,0" />
+                <TextBlock Text="OTPeek"
+                           VerticalAlignment="Center"
+                           Style="{StaticResource SubtitleTextBlockStyle}" />
+            </StackPanel>
+
+            <!-- Search Box -->
+            <AutoSuggestBox Grid.Column="1"
+                            PlaceholderText="Search accounts..."
+                            QueryIcon="Find"
+                            Width="300"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" />
+        </Grid>
+
+        <!-- Main Content -->
+        <NavigationView Grid.Row="1"
+                        x:Name="NavigationViewControl"
+                        IsBackButtonVisible="Collapsed"
+                        IsSettingsVisible="True"
+                        PaneDisplayMode="Left"
+                        OpenPaneLength="240">
+
+            <NavigationView.MenuItems>
+                <!-- Library Section -->
+                <NavigationViewItemHeader Content="Library" />
+                <NavigationViewItem Content="All Accounts" Tag="accounts">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE77B;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Favorites" Tag="favorites">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE734;" Foreground="Gold" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Uncategorized" Tag="uncategorized">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE8B7;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
+                <NavigationViewItemSeparator />
+
+                <!-- Folders Section -->
+                <NavigationViewItemHeader Content="Folders" />
+
+                <!-- Folder items will be added dynamically -->
+
+                <NavigationViewItemSeparator />
+
+                <!-- Tools Section -->
+                <NavigationViewItemHeader Content="Tools" />
+                <NavigationViewItem Content="Backup" Tag="backup">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE74E;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.MenuItems>
+
+            <NavigationView.FooterMenuItems>
+                <NavigationViewItem x:Name="AddFolderNavItem" Content="Add Folder" SelectsOnInvoked="False">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE8F4;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.FooterMenuItems>
+
+            <NavigationView.Content>
+                <Frame x:Name="ContentFrame" />
+            </NavigationView.Content>
+        </NavigationView>
+
+        <!-- Account Edit Panel (Overlay) -->
+        <Grid x:Name="EditOverlay"
+              Grid.RowSpan="2"
+              Visibility="Collapsed"
+              Background="{ThemeResource LayerOnAcrylicFillColorDefaultBrush}">
+            <local:AccountEditView x:Name="AccountEditView"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Width="450" />
+        </Grid>
+    </Grid>
+</Window>

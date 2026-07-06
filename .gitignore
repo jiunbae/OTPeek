@@ -2,8 +2,8 @@
 bin/
 obj/
 out/
-!core/crates/otp-ffi/src/bin/
-!core/crates/otp-ffi/src/bin/*.rs
+!core/crates/otpeek-ffi/src/bin/
+!core/crates/otpeek-ffi/src/bin/*.rs
 
 # IDE
 .vs/

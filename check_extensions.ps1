@@ -2,7 +2,7 @@
 Write-Host "=== Checking Widget Extensions ===" -ForegroundColor Green
 
 # Get our package
-$pkg = Get-AppxPackage -Name "OtpAuthenticator"
+$pkg = Get-AppxPackage -Name "Otpeek"
 if ($pkg) {
     Write-Host "Package: $($pkg.PackageFullName)"
 

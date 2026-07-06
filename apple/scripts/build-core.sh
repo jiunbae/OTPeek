@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # build-core.sh — builds the otp-ffi Rust staticlib for Apple platforms,
-# assembles apple/Frameworks/OtpCore.xcframework, and regenerates the Swift
+# assembles apple/Frameworks/OtpeekCore.xcframework, and regenerates the Swift
 # bindings into apple/Generated/.
 #
 # Idempotent and runnable from any working directory. Safe to re-run: it wipes
@@ -23,11 +23,11 @@ CORE_DIR="${REPO_ROOT}/core"
 
 FRAMEWORKS_DIR="${APPLE_DIR}/Frameworks"
 GENERATED_DIR="${APPLE_DIR}/Generated"
-XCFRAMEWORK="${FRAMEWORKS_DIR}/OtpCore.xcframework"
+XCFRAMEWORK="${FRAMEWORKS_DIR}/OtpeekCore.xcframework"
 HEADERS_DIR="${GENERATED_DIR}/include"
 
-CRATE="otp-ffi"
-LIB_NAME="libotp_ffi.a"
+CRATE="otpeek-ffi"
+LIB_NAME="libotpeek_ffi.a"
 PROFILE="release"
 
 MACOS_TARGET="aarch64-apple-darwin"
@@ -75,12 +75,12 @@ build_slice "${IOS_TARGET}"      && HAVE_IOS=1      || true
 build_slice "${IOS_SIM_TARGET}"  && HAVE_IOS_SIM=1  || true
 
 MACOS_ARM_LIB="${CORE_DIR}/target/${MACOS_TARGET}/${PROFILE}/${LIB_NAME}"
-MACOS_DYLIB="${CORE_DIR}/target/${MACOS_TARGET}/${PROFILE}/libotp_ffi.dylib"
+MACOS_DYLIB="${CORE_DIR}/target/${MACOS_TARGET}/${PROFILE}/libotpeek_ffi.dylib"
 
 # Fuse arm64 + x86_64 into one universal static lib for the xcframework's
 # macOS slice; fall back to arm64-only when the x86_64 slice is unavailable.
 if [ "${HAVE_MACOS_X86}" -eq 1 ]; then
-    MACOS_LIB="${CORE_DIR}/target/libotp_ffi-macos-universal.a"
+    MACOS_LIB="${CORE_DIR}/target/libotpeek_ffi-macos-universal.a"
     echo "==> lipo -create macOS universal (arm64 + x86_64)"
     lipo -create \
         "${MACOS_ARM_LIB}" \
@@ -108,7 +108,7 @@ mv "${GENERATED_DIR}"/*FFI.h "${HEADERS_DIR}/"
 for mm in "${GENERATED_DIR}"/*.modulemap; do
     mv "${mm}" "${HEADERS_DIR}/module.modulemap"
 done
-echo "    -> ${GENERATED_DIR}/otp.swift"
+echo "    -> ${GENERATED_DIR}/otpeek.swift"
 echo "    -> ${HEADERS_DIR}/ (header + module.modulemap)"
 
 # --- assemble the xcframework ----------------------------------------------
@@ -117,11 +117,11 @@ echo "    -> ${HEADERS_DIR}/ (header + module.modulemap)"
 # re-run this script once Xcode is selected (xcode-select -s /Applications/Xcode.app).
 if ! command -v xcodebuild >/dev/null 2>&1 || ! xcodebuild -version >/dev/null 2>&1; then
     echo "!! xcodebuild unavailable (full Xcode not selected) — skipping xcframework assembly." >&2
-    echo "   Bindings + macOS staticlib are ready. Select Xcode and re-run to build OtpCore.xcframework." >&2
+    echo "   Bindings + macOS staticlib are ready. Select Xcode and re-run to build OtpeekCore.xcframework." >&2
     exit 0
 fi
 
-echo "==> assembling OtpCore.xcframework"
+echo "==> assembling OtpeekCore.xcframework"
 mkdir -p "${FRAMEWORKS_DIR}"
 rm -rf "${XCFRAMEWORK}"
 

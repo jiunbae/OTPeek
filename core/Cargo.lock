@@ -1218,7 +1218,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 
 [[package]]
-name = "otp-cli"
+name = "otpeek-cli"
 version = "2.0.0"
 dependencies = [
  "anyhow",
@@ -1228,9 +1228,9 @@ dependencies = [
  "comfy-table",
  "dirs",
  "keyring",
- "otp-core",
- "otp-sync",
- "otp-vault",
+ "otpeek-core",
+ "otpeek-sync",
+ "otpeek-vault",
  "predicates",
  "qrcode",
  "rpassword",
@@ -1243,7 +1243,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "otp-core"
+name = "otpeek-core"
 version = "2.0.0"
 dependencies = [
  "data-encoding",
@@ -1258,24 +1258,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "otp-ffi"
+name = "otpeek-ffi"
 version = "2.0.0"
 dependencies = [
- "otp-core",
- "otp-sync",
- "otp-vault",
+ "otpeek-core",
+ "otpeek-sync",
+ "otpeek-vault",
  "thiserror 2.0.18",
  "uniffi",
  "uuid",
 ]
 
 [[package]]
-name = "otp-sync"
+name = "otpeek-sync"
 version = "2.0.0"
 dependencies = [
  "base64",
- "otp-core",
- "otp-vault",
+ "otpeek-core",
+ "otpeek-vault",
  "serde",
  "serde_json",
  "thiserror 2.0.18",
@@ -1283,7 +1283,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "otp-vault"
+name = "otpeek-vault"
 version = "2.0.0"
 dependencies = [
  "aes-gcm",
@@ -1291,7 +1291,7 @@ dependencies = [
  "base64",
  "chrono",
  "fd-lock",
- "otp-core",
+ "otpeek-core",
  "pbkdf2",
  "rand",
  "serde",

@@ -6,11 +6,11 @@ param(
 $ErrorActionPreference = 'Stop'
 
 # 1. Export certificate from Current User store
-$cert = Get-ChildItem -Path 'Cert:\CurrentUser\My' | Where-Object { $_.Subject -eq 'CN=OtpAuthenticator' } | Select-Object -First 1
+$cert = Get-ChildItem -Path 'Cert:\CurrentUser\My' | Where-Object { $_.Subject -eq 'CN=Otpeek' } | Select-Object -First 1
 if ($cert) {
     Write-Host "Found certificate: $($cert.Thumbprint)"
-    Export-Certificate -Cert $cert -FilePath "$PSScriptRoot\OtpAuthenticator.cer" -Type CERT
-    Write-Host "Certificate exported to OtpAuthenticator.cer"
+    Export-Certificate -Cert $cert -FilePath "$PSScriptRoot\Otpeek.cer" -Type CERT
+    Write-Host "Certificate exported to Otpeek.cer"
 } else {
     Write-Host "Certificate not found!"
     exit 1
@@ -18,7 +18,7 @@ if ($cert) {
 
 # 2. Import certificate to Trusted Root (requires admin)
 Write-Host "Importing certificate to Trusted Root..."
-Import-Certificate -FilePath "$PSScriptRoot\OtpAuthenticator.cer" -CertStoreLocation 'Cert:\LocalMachine\Root' | Out-Null
+Import-Certificate -FilePath "$PSScriptRoot\Otpeek.cer" -CertStoreLocation 'Cert:\LocalMachine\Root' | Out-Null
 
 function Get-SignToolPath {
     $command = Get-Command signtool.exe -ErrorAction SilentlyContinue
@@ -67,11 +67,11 @@ function Ensure-PackageSigned {
 }
 
 # 3. Install the app package. Files under MsixContent\MSIX are WinAppRuntime dependencies.
-$packageRoot = Join-Path $PSScriptRoot 'windows\OtpAuthenticator.App'
+$packageRoot = Join-Path $PSScriptRoot 'windows\Otpeek.App'
 $packageExtensions = @('.msixbundle', '.msix', '.appxbundle', '.appx')
 $packages = Get-ChildItem -LiteralPath $packageRoot -Recurse -File |
     Where-Object { $_.Extension -in $packageExtensions } |
-    Where-Object { $_.Name -like 'OtpAuthenticator.App_*' } |
+    Where-Object { $_.Name -like 'Otpeek.App_*' } |
     Where-Object { $_.FullName -notmatch '\\MsixContent\\MSIX\\' } |
     Sort-Object @{ Expression = 'LastWriteTime'; Descending = $true }, @{ Expression = { if ($_.Extension -in @('.msix', '.appx')) { 0 } else { 1 } }; Ascending = $true }
 
@@ -98,7 +98,7 @@ $appDataBackupPath = $null
 $appDataRestorePath = $null
 
 if ($Reinstall) {
-    $existingPackage = Get-AppxPackage -Name 'OtpAuthenticator' -ErrorAction SilentlyContinue
+    $existingPackage = Get-AppxPackage -Name 'Otpeek' -ErrorAction SilentlyContinue
     if ($existingPackage) {
         $appDataPath = Join-Path $env:LOCALAPPDATA "Packages\$($existingPackage.PackageFamilyName)"
         if (Test-Path -LiteralPath $appDataPath) {

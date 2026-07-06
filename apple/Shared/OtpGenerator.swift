@@ -1,6 +1,6 @@
 import Foundation
 
-/// OTP 코드 생성 로직은 Rust 코어(otp-ffi)로 이전되었다.
+/// OTP 코드 생성 로직은 Rust 코어(otpeek-ffi)로 이전되었다.
 /// 이 타입은 카운트다운/진행률 UI 계산을 위한 순수 시간 헬퍼만 남긴다.
 /// (암호/HMAC/Base32 로직은 더 이상 여기에 없다.)
 public enum OtpGenerator {

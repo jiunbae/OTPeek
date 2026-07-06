@@ -1,6 +1,6 @@
 # Run Widget.exe and check for errors
-$widgetPath = "F:\workspace\OTPWidget\src\OtpAuthenticator.App\bin\x64\Release\net8.0-windows10.0.22621.0\OtpAuthenticator.Widget.exe"
-$logPath = Join-Path $env:LOCALAPPDATA "OtpAuthenticator\widget.log"
+$widgetPath = "F:\workspace\OTPeek\src\Otpeek.App\bin\x64\Release\net8.0-windows10.0.22621.0\Otpeek.Widget.exe"
+$logPath = Join-Path $env:LOCALAPPDATA "Otpeek\widget.log"
 
 Write-Host "Starting Widget.exe..."
 Write-Host "Path: $widgetPath"

@@ -32,7 +32,7 @@ Translation files in JSON format:
 
 ```json
 {
-  "app_name": "OTP Authenticator",
+  "app_name": "OTPeek",
   "add_account": "Add Account",
   "scan_qr": "Scan QR Code",
   ...

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Otpeek.App.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Otpeek.App.Views">
+
+    <ScrollViewer Padding="24" VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="800" Spacing="4" Padding="0,0,0,48">
+            <TextBlock Text="Settings"
+                       Style="{StaticResource TitleTextBlockStyle}"
+                       Margin="0,0,0,24" />
+
+            <!-- General -->
+            <TextBlock Text="General"
+                       Style="{StaticResource SectionHeaderStyle}" />
+
+            <Border Style="{StaticResource AccountCardStyle}">
+                <StackPanel Spacing="16">
+                    <ToggleSwitch x:Name="StartWithWindowsToggle"
+                                  Header="Start with Windows"
+                                  OffContent="Off"
+                                  OnContent="On" />
+
+                    <ToggleSwitch x:Name="StartMinimizedToggle"
+                                  Header="Start minimized"
+                                  OffContent="Off"
+                                  OnContent="On" />
+
+                    <ToggleSwitch x:Name="MinimizeToTrayToggle"
+                                  Header="Minimize to system tray"
+                                  OffContent="Off"
+                                  OnContent="On" />
+                </StackPanel>
+            </Border>
+
+            <!-- Clipboard -->
+            <TextBlock Text="Clipboard"
+                       Style="{StaticResource SectionHeaderStyle}" />
+
+            <Border Style="{StaticResource AccountCardStyle}">
+                <StackPanel Spacing="16">
+                    <ComboBox x:Name="ClipboardClearCombo"
+                              Header="Clear clipboard after"
+                              HorizontalAlignment="Stretch">
+                        <ComboBoxItem Content="Never" Tag="0" />
+                        <ComboBoxItem Content="15 seconds" Tag="15" />
+                        <ComboBoxItem Content="30 seconds" Tag="30" />
+                        <ComboBoxItem Content="1 minute" Tag="60" />
+                        <ComboBoxItem Content="2 minutes" Tag="120" />
+                    </ComboBox>
+                </StackPanel>
+            </Border>
+
+            <!-- Appearance -->
+            <TextBlock Text="Appearance"
+                       Style="{StaticResource SectionHeaderStyle}" />
+
+            <Border Style="{StaticResource AccountCardStyle}">
+                <StackPanel Spacing="16">
+                    <ComboBox x:Name="ThemeCombo"
+                              Header="Theme"
+                              HorizontalAlignment="Stretch">
+                        <ComboBoxItem Content="System default" Tag="System" />
+                        <ComboBoxItem Content="Light" Tag="Light" />
+                        <ComboBoxItem Content="Dark" Tag="Dark" />
+                    </ComboBox>
+
+                    <ToggleSwitch x:Name="EnableWidgetToggle"
+                                  Header="Enable Windows 11 Widget"
+                                  OffContent="Off"
+                                  OnContent="On" />
+                </StackPanel>
+            </Border>
+
+            <!-- Security -->
+            <TextBlock Text="Security"
+                       Style="{StaticResource SectionHeaderStyle}" />
+
+            <Border Style="{StaticResource AccountCardStyle}">
+                <StackPanel Spacing="16">
+                    <ToggleSwitch x:Name="RequireAuthToggle"
+                                  Header="Require Windows Hello on startup"
+                                  OffContent="Off"
+                                  OnContent="On" />
+                </StackPanel>
+            </Border>
+
+            <!-- WebDAV Sync -->
+            <TextBlock Text="WebDAV Sync"
+                       Style="{StaticResource SectionHeaderStyle}" />
+
+            <Border Style="{StaticResource AccountCardStyle}">
+                <StackPanel Spacing="16">
+                    <ToggleSwitch x:Name="WebDavEnabledToggle"
+                                  Header="Enable WebDAV sync"
+                                  OffContent="Off"
+                                  OnContent="On" />
+
+                    <TextBox x:Name="WebDavUrlTextBox"
+                             Header="Server URL (collection)"
+                             PlaceholderText="https://dav.example.com/otp/"
+                             HorizontalAlignment="Stretch" />
+
+                    <TextBox x:Name="WebDavUserTextBox"
+                             Header="Username"
+                             HorizontalAlignment="Stretch" />
+
+                    <PasswordBox x:Name="WebDavPasswordBox"
+                                 Header="Password"
+                                 HorizontalAlignment="Stretch" />
+
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Button x:Name="SaveWebDavButton"
+                                Content="Save" />
+                        <Button x:Name="SyncNowButton"
+                                Content="Sync now" />
+                    </StackPanel>
+
+                    <TextBlock x:Name="SyncStatusText"
+                               Opacity="0.7"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <!-- About -->
+            <TextBlock Text="About"
+                       Style="{StaticResource SectionHeaderStyle}" />
+
+            <Border Style="{StaticResource AccountCardStyle}">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="OTPeek"
+                               FontWeight="SemiBold" />
+                    <TextBlock Text="Version 1.0.0"
+                               Opacity="0.7" />
+                    <HyperlinkButton Content="View on GitHub"
+                                     NavigateUri="https://github.com" />
+                </StackPanel>
+            </Border>
+
+            <!-- Reset -->
+            <Border Style="{StaticResource AccountCardStyle}"
+                    Margin="0,16,0,0">
+                <Button x:Name="ResetButton"
+                        Content="Reset all settings"
+                        HorizontalAlignment="Stretch" />
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
