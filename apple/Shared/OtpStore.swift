@@ -61,10 +61,40 @@ public final class OtpStore: ObservableObject {
     }
 
     public init() {
+        #if DEBUG
+        // App Store 스크린샷용 데모 모드: 실제 볼트 없이 샘플 계정을 보여준다.
+        // (라이브 코드는 코어의 순수 함수로 계산되므로 클라이언트가 없어도 표시된다.)
+        if ProcessInfo.processInfo.arguments.contains("-otpeekDemo") {
+            seedDemoData()
+            return
+        }
+        #endif
         vaultExists = VaultAccess.vaultExists
         detectLegacyData()
         openIfPossible()
     }
+
+    #if DEBUG
+    private func seedDemoData() {
+        let now = Int64(Date().timeIntervalSince1970 * 1000)
+        func a(_ issuer: String, _ name: String, _ secret: String, _ i: Int32, fav: Bool = false) -> OtpAccount {
+            OtpAccount(id: UUID().uuidString, otpType: .totp, secret: secret, issuer: issuer,
+                       accountName: name, algorithm: .sha1, digits: 6, period: 30, counter: 0,
+                       folderId: nil, isFavorite: fav, sortOrder: i, icon: nil, color: nil,
+                       createdAt: now, updatedAt: now, deletedAt: nil)
+        }
+        accounts = [
+            a("GitHub", "octocat", "JBSWY3DPEHPK3PXP", 0, fav: true),
+            a("Google", "you@gmail.com", "KRSXG5CTMVRXEZLU", 1, fav: true),
+            a("Amazon", "admin@shop.com", "MFRGGZDFMZTWQ2LK", 2),
+            a("Slack", "you@work.com", "NBSWY3DPO5XXE3DE", 3),
+            a("Dropbox", "you@email.com", "GEZDGNBVGY3TQOJQ", 4),
+            a("Notion", "team@notion.so", "ONXW2ZLUNBUW4ZY7", 5),
+        ]
+        vaultExists = true
+        isReady = true
+    }
+    #endif
 
     // MARK: - 볼트 열기 / 온보딩
 

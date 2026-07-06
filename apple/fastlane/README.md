@@ -31,6 +31,14 @@ One-time: create the App Store Connect record for OTPeek
 
 Build, sign, and upload the iOS build to App Store Connect / TestFlight
 
+### ios upload_screenshots
+
+```sh
+[bundle exec] fastlane ios upload_screenshots
+```
+
+Push App Store screenshots from fastlane/screenshots
+
 ### ios upload_metadata
 
 ```sh
