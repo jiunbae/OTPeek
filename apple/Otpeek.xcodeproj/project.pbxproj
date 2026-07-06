@@ -34,6 +34,7 @@
 		458072363B9D624AD7F5FC28 /* FaviconProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7241B5227ED2EB431B42A95D /* FaviconProvider.swift */; };
 		48901668CB282549AA471FF5 /* OtpWidgetExtension-macOS.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 67FE56860F6D2C1B8E8AAD0F /* OtpWidgetExtension-macOS.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4D51554133A0609F1B2241C4 /* SharedViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B9E2B53D62837C0D688E506 /* SharedViews.swift */; };
+		4FB7EC5118A934A8A0B580B4 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 70647ADDBAC67B6275121687 /* PrivacyInfo.xcprivacy */; };
 		50A8D6AFE69095020972E30E /* OtpTimelineProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAF0EEF1B739B5AE7D093E2F /* OtpTimelineProvider.swift */; };
 		5278DF8DAE1F8E3AB6981B5E /* ImportVaultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAF107AAC38933ADBEE07389 /* ImportVaultView.swift */; };
 		52C9D77038349B339304EA24 /* AppLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 853A371AB8C03A5298A8BB92 /* AppLock.swift */; };
@@ -56,6 +57,7 @@
 		80616D3718D67CAD8EBD6202 /* OtpModelBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6607ED4CCF1CA8C75A052E22 /* OtpModelBridge.swift */; };
 		8232E17F38925D41F4F36DA3 /* QRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEDDA3C4D93F10FE17D5CC35 /* QRScannerView.swift */; };
 		82357DBEBE9D7F32E165732B /* OtpEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9CDC678383A01B5A4B75E45 /* OtpEntry.swift */; };
+		8766354CC16AFC747C63A22D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 70647ADDBAC67B6275121687 /* PrivacyInfo.xcprivacy */; };
 		884D06A8DA6F59E1647E6FFD /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22DE66DC596C2E4DE3C4F5F5 /* ContentView.swift */; };
 		89EBE0728D37904AB1085D36 /* OtpWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF2DDB7DE7AC8C946FAE1375 /* OtpWidget.swift */; };
 		921A5EDE186E6247B7F73AE6 /* OtpModelBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6607ED4CCF1CA8C75A052E22 /* OtpModelBridge.swift */; };
@@ -157,6 +159,7 @@
 		66BBACC7795CB0843396FF97 /* MultiOtpWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiOtpWidget.swift; sourceTree = "<group>"; };
 		66C8BDE4802E41D52FFA1380 /* CloudKitSyncBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitSyncBackend.swift; sourceTree = "<group>"; };
 		67FE56860F6D2C1B8E8AAD0F /* OtpWidgetExtension-macOS.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "OtpWidgetExtension-macOS.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		70647ADDBAC67B6275121687 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		7241B5227ED2EB431B42A95D /* FaviconProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaviconProvider.swift; sourceTree = "<group>"; };
 		7B9E2B53D62837C0D688E506 /* SharedViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedViews.swift; sourceTree = "<group>"; };
 		8191925DC6408558503DB151 /* QRImageImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRImageImportView.swift; sourceTree = "<group>"; };
@@ -230,6 +233,7 @@
 				22DE66DC596C2E4DE3C4F5F5 /* ContentView.swift */,
 				624B92BD01D5461FDF4607D8 /* Otpeek.entitlements */,
 				E36583E2F1FE33791D4DD250 /* OtpeekApp.swift */,
+				70647ADDBAC67B6275121687 /* PrivacyInfo.xcprivacy */,
 			);
 			path = Otpeek;
 			sourceTree = "<group>";
@@ -478,6 +482,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CD2EFBA1BDB1DEC28D6E495C /* Assets.xcassets in Resources */,
+				8766354CC16AFC747C63A22D /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -486,6 +491,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6C37342F194A6062220D157B /* Assets.xcassets in Resources */,
+				4FB7EC5118A934A8A0B580B4 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

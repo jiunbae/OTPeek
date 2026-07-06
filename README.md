@@ -177,6 +177,7 @@ silently via its OS keystore and merges syncs automatically.
 ## Documentation
 
 - [Architecture & API contract](docs/ARCHITECTURE.md) — start here
+- [Releasing & store distribution](docs/RELEASE.md)
 - [OTP Algorithm Specification](docs/SPEC.md)
 - [Data Format Specification](docs/DATA_FORMAT.md)
 - [Legacy Backup Format (v1, import-only)](docs/BACKUP_FORMAT.md)
