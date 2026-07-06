@@ -87,21 +87,32 @@ platform :mac do
   desc "Build, sign, and upload the macOS build to App Store Connect"
   lane :release do
     api_key = asc_api_key
+    unlock_keychain(path: File.expand_path("~/Library/Keychains/otpeek-build.keychain-db"),
+                    password: "otpeekbuild", add_to_search_list: true, set_default: false)
     prepare_project
     build_app(
       project: XCODEPROJ,
       scheme: "Otpeek-macOS",
       configuration: "Release",
       export_method: "app-store",
-      xcargs: "-allowProvisioningUpdates",
       output_directory: "build",
-      clean: true
+      clean: true,
+      export_options: {
+        signingStyle: "manual",
+        provisioningProfiles: {
+          "com.otpeek.app" => "OTPeek macOS AppStore",
+          "com.otpeek.app.widget" => "OTPeek Widget macOS AppStore"
+        },
+        installerSigningCertificate: "3rd Party Mac Developer Installer: Jiun Bae (728FW73BS8)"
+      }
     )
     upload_to_app_store(
       api_key: api_key,
       skip_screenshots: true,
       skip_metadata: true,
       submit_for_review: false,
+      precheck_include_in_app_purchases: false,
+      run_precheck_before_submit: false,
       platform: "osx",
       force: true
     )
