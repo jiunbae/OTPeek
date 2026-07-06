@@ -72,6 +72,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             for url in urls { IncomingVaultFile.shared.load(from: url) }
         }
     }
+
 }
 #endif
 
