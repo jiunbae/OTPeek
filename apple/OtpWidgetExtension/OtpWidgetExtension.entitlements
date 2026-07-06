@@ -6,11 +6,11 @@
     <true/>
     <key>com.apple.security.application-groups</key>
     <array>
-        <string>group.com.otpeek</string>
+        <string>group.com.otpeek.app</string>
     </array>
     <key>keychain-access-groups</key>
     <array>
-        <string>$(AppIdentifierPrefix)group.com.otpeek</string>
+        <string>$(AppIdentifierPrefix)group.com.otpeek.app</string>
     </array>
 </dict>
 </plist>

@@ -74,6 +74,7 @@ public enum FaviconProvider {
     private static let known: [String: String] = [
         "google": "google.com", "github": "github.com",
         "amazon web services": "aws.amazon.com", "aws": "aws.amazon.com",
+        "amazon": "amazon.com",
         "cloudflare": "cloudflare.com", "discord": "discord.com",
         "facebook": "facebook.com", "twitter": "x.com", "linkedin": "linkedin.com",
         "notion": "notion.so", "bitwarden": "bitwarden.com", "tumblr": "tumblr.com",

@@ -4,7 +4,7 @@ import CloudKit
 /// 코어의 `SyncBackend`(UniFFI foreign trait) 를 CloudKit 으로 구현한다.
 /// 백엔드는 암호화된 불투명 바이트만 옮기며 평문을 절대 보지 않는다.
 ///
-/// - Container: iCloud.com.otpeek (see `containerIdentifier`)
+/// - Container: iCloud.com.otpeek.app (see `containerIdentifier`)
 /// - Private DB, record type "Vault", recordName "vault"
 /// - blob: Data, recordChangeTag 를 etag 로 사용
 /// - if_match → save policy .ifServerRecordUnchanged
@@ -16,9 +16,9 @@ public final class CloudKitSyncBackend: SyncBackend, @unchecked Sendable {
 
     /// CloudKit container backing sync. Must match the app's
     /// `com.apple.developer.icloud-container-identifiers` entitlement.
-    /// A team-unique reverse-DNS id (not the generic `iCloud.com.otpeek`,
+    /// A team-unique reverse-DNS id (not the generic `iCloud.com.otpeek.app`,
     /// which is globally taken) so automatic provisioning can create it.
-    public static let containerIdentifier = "iCloud.com.otpeek"
+    public static let containerIdentifier = "iCloud.com.otpeek.app"
 
     private let containerId = CloudKitSyncBackend.containerIdentifier
     private let recordType = "Vault"
