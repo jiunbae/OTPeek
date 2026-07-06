@@ -112,6 +112,7 @@ targets:
         CFBundleDisplayName: OTPeek
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "2"
+        LSApplicationCategoryType: public.app-category.utilities
         ITSAppUsesNonExemptEncryption: false
         NSCameraUsageDescription: Camera access is needed to scan QR codes for adding accounts.
         UILaunchScreen: {}
@@ -173,6 +174,7 @@ targets:
         CFBundleDisplayName: OTPeek
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "2"
+        LSApplicationCategoryType: public.app-category.utilities
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
         ITSAppUsesNonExemptEncryption: false
         UTExportedTypeDeclarations: *otpvaultExportedTypes
