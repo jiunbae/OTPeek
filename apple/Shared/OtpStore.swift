@@ -86,9 +86,9 @@ public final class OtpStore: ObservableObject {
         accounts = [
             a("GitHub", "octocat", "JBSWY3DPEHPK3PXP", 0, fav: true),
             a("Google", "you@gmail.com", "KRSXG5CTMVRXEZLU", 1, fav: true),
-            a("Amazon", "admin@shop.com", "MFRGGZDFMZTWQ2LK", 2),
-            a("Slack", "you@work.com", "NBSWY3DPO5XXE3DE", 3),
-            a("Dropbox", "you@email.com", "GEZDGNBVGY3TQOJQ", 4),
+            a("Amazon", "shopping@gmail.com", "MFRGGZDFMZTWQ2LK", 2),
+            a("Slack", "you@company.com", "NBSWY3DPO5XXE3DE", 3),
+            a("Dropbox", "files@gmail.com", "GEZDGNBVGY3TQOJQ", 4),
             a("Notion", "team@notion.so", "ONXW2ZLUNBUW4ZY7", 5),
         ]
         vaultExists = true

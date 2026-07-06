@@ -19,22 +19,25 @@ struct AccountIconView: View {
     @State private var image: Image?
 
     var body: some View {
-        ZStack {
-            // Fallback / placeholder underneath keeps layout stable while loading.
-            InitialCircle(initial: account.initial, color: account.displayColor, size: size)
-
+        Group {
             if let image {
+                // 로고가 있으면 깨끗한 흰 배경 위에만 그린다(뒤의 글자 원이 비치지 않게).
                 image
                     .resizable()
                     .interpolation(.high)
                     .scaledToFit()
+                    .padding(size * 0.10)
                     .frame(width: size, height: size)
+                    .background(Color.white)
                     .clipShape(RoundedRectangle(cornerRadius: size * 0.28, style: .continuous))
                     .overlay(
                         RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
-                            .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
+                            .stroke(Color.primary.opacity(0.10), lineWidth: 0.5)
                     )
                     .transition(.opacity)
+            } else {
+                // 로고가 없을 때만 색상 이니셜 원.
+                InitialCircle(initial: account.initial, color: account.displayColor, size: size)
             }
         }
         .frame(width: size, height: size)
