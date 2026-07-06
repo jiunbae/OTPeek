@@ -56,6 +56,7 @@ platform :ios do
     api_key = asc_api_key
     prepare_project
     build_app(
+      api_key: api_key,
       project: XCODEPROJ,
       scheme: "Otpeek-iOS",
       configuration: "Release",
@@ -81,6 +82,7 @@ platform :mac do
     api_key = asc_api_key
     prepare_project
     build_app(
+      api_key: api_key,
       project: XCODEPROJ,
       scheme: "Otpeek-macOS",
       configuration: "Release",
