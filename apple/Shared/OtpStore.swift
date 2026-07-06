@@ -383,7 +383,7 @@ public final class OtpStore: ObservableObject {
                 // 생성"한 경우). 원격을 이 기기의 키로 열 수 없다. 정석 해법은 이 기기를 iCloud 에서
                 // 다시 복원해 원격 VMK 를 공유하는 것이다(설정 → "Reset & Restore from iCloud").
                 wrongKey = true
-                result = "Sync failed: this device's vault uses a different key than iCloud. Reset and restore this device from iCloud to share the same key."
+                result = "Sync failed: this device's vault uses a different key than iCloud. Use Settings → \"Restore from iCloud\" to pull the vault from your other device and share the same key."
             } catch {
                 result = "Sync failed: \(await self?.describe(error) ?? "error")"
             }
