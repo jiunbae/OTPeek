@@ -106,7 +106,7 @@ public partial class AccountEditViewModel : BaseViewModel
         OtpAccount account;
         try
         {
-            account = OtpMethods.ParseOtpauthUri(uri, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            account = OtpeekMethods.ParseOtpauthUri(uri, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
         }
         catch (OtpException ex)
         {
@@ -147,7 +147,7 @@ public partial class AccountEditViewModel : BaseViewModel
             return;
         }
 
-        if (!OtpMethods.ValidateSecret(SecretKey))
+        if (!OtpeekMethods.ValidateSecret(SecretKey))
         {
             ValidationError = "Invalid secret key format (must be Base32)";
             IsValid = false;
