@@ -1,0 +1,17 @@
+OTPeek keeps your two-factor codes one glance away. A native widget on your Home Screen, desktop, and menu bar shows your OTP codes without opening the app — glance, tap, copy, done.
+
+WHY OTPEEK
+• At a glance — your codes live in a native widget; no app launch, no digging.
+• One-tap copy — glance, tap, paste. That's the whole flow.
+• Yours only — an end-to-end-encrypted vault; sync servers only ever see ciphertext.
+
+FEATURES
+• TOTP & HOTP (RFC 6238 / RFC 4226), 6–8 digits, SHA-1/256/512
+• Home-screen and desktop widgets
+• End-to-end-encrypted vault (AES-256-GCM, Argon2id-wrapped key)
+• Sync via iCloud or any WebDAV server — the server only ever stores encrypted data
+• Import by QR scan, screenshot, image, or Google Authenticator export
+• Folders, favorites, and encrypted .otpvault backup & restore
+
+PRIVACY
+OTPeek collects no data. There are no ads and no tracking. Your account secrets never leave your devices in the clear.

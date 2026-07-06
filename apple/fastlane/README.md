@@ -31,6 +31,14 @@ One-time: create the App Store Connect record for OTPeek
 
 Build, sign, and upload the iOS build to App Store Connect / TestFlight
 
+### ios upload_metadata
+
+```sh
+[bundle exec] fastlane ios upload_metadata
+```
+
+Push App Store text metadata (name, subtitle, description, keywords, URLs) from fastlane/metadata
+
 ----
 
 
