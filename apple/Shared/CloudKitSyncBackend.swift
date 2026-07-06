@@ -15,9 +15,10 @@ import CloudKit
 public final class CloudKitSyncBackend: SyncBackend, @unchecked Sendable {
 
     /// CloudKit container backing sync. Must match the app's
-    /// `com.apple.developer.icloud-container-identifiers` entitlement.
-    /// A team-unique reverse-DNS id (not the generic `iCloud.com.otpeek.app`,
-    /// which is globally taken) so automatic provisioning can create it.
+    /// `com.apple.developer.icloud-container-identifiers` entitlement. The
+    /// container is provisioned under the team; its `Vault` record type must be
+    /// deployed to the Production schema (Development auto-creates types, but
+    /// Production — which TestFlight/App Store builds use — does not).
     public static let containerIdentifier = "iCloud.com.otpeek.app"
 
     private let containerId = CloudKitSyncBackend.containerIdentifier

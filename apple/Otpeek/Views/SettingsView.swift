@@ -81,7 +81,10 @@ struct SettingsView: View {
                 guard let data = try? Data(contentsOf: url) else { return }
                 pendingImportData = data
                 backupPassword = ""
-                showingImportPassword = true
+                // fileImporter 가 닫히는 같은 런루프에서 alert 를 올리면 SwiftUI 가
+                // 표시를 삼켜 "다이얼로그가 안 뜨는" 문제가 생긴다. 파일 선택기가
+                // 완전히 사라진 뒤 다음 사이클에 비밀번호 alert 를 띄운다.
+                presentImportPasswordAfterDismiss()
             }
             #endif
     }
@@ -476,11 +479,20 @@ struct SettingsView: View {
            let data = try? Data(contentsOf: url) {
             pendingImportData = data
             backupPassword = ""
-            showingImportPassword = true
+            presentImportPasswordAfterDismiss()
         }
         #else
         showingImportPicker = true
         #endif
+    }
+
+    /// Presents the backup-password prompt on the next runloop. Presenting an
+    /// `.alert` synchronously from a file-picker completion collides with the
+    /// picker's dismissal and SwiftUI silently drops it — so defer past it.
+    private func presentImportPasswordAfterDismiss() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            showingImportPassword = true
+        }
     }
 
     private func importBackup() {

@@ -255,11 +255,14 @@ struct WidgetAccountIcon: View {
 
     var body: some View {
         if let data = iconData, let image = Self.image(from: data) {
+            // 앱과 동일하게 깨끗한 흰 배경 위에 로고만(투명 로고가 위젯 배경에 얹혀 지저분해지지 않게).
             image
                 .resizable()
                 .interpolation(.high)
                 .scaledToFit()
+                .padding(size * 0.10)
                 .frame(width: size, height: size)
+                .background(Color.white)
                 .clipShape(RoundedRectangle(cornerRadius: size * 0.28, style: .continuous))
         } else {
             InitialCircle(initial: initial, color: color, size: size)
