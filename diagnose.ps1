@@ -1,5 +1,5 @@
 # Widget Diagnostic Script
-Write-Host "=== OTP Widget Diagnostic ===" -ForegroundColor Cyan
+Write-Host "=== OTPeek Widget Diagnostic ===" -ForegroundColor Cyan
 
 # 1. Package Check
 Write-Host "`n[1] Package Check" -ForegroundColor Green
@@ -17,7 +17,7 @@ if ($pkg) {
 
 # 2. Widget.exe Check
 Write-Host "`n[2] Widget.exe Check" -ForegroundColor Green
-$widgetExe = Join-Path $pkg.InstallLocation "OtpAuthenticator.Widget.exe"
+$widgetExe = Join-Path $pkg.InstallLocation "Otpeek.Widget.exe"
 if (Test-Path $widgetExe) {
     $fileInfo = Get-Item $widgetExe
     Write-Host "  Found: $widgetExe"
@@ -29,7 +29,7 @@ if (Test-Path $widgetExe) {
 
 # 3. Widget Log Check
 Write-Host "`n[3] Widget Log" -ForegroundColor Green
-$logPath = Join-Path $env:LOCALAPPDATA "OtpAuthenticator\widget.log"
+$logPath = Join-Path $env:LOCALAPPDATA "Otpeek\widget.log"
 if (Test-Path $logPath) {
     Write-Host "  Log file exists at: $logPath"
     Write-Host "  Last 10 lines:"

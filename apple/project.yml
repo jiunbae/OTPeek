@@ -1,6 +1,6 @@
-name: OtpAuthenticator
+name: Otpeek
 options:
-  bundleIdPrefix: com.otpauthenticator
+  bundleIdPrefix: com.otpeek
   deploymentTarget:
     iOS: "17.0"
     macOS: "14.0"
@@ -12,9 +12,9 @@ settings:
   base:
     SWIFT_VERSION: "5.9"
     ENABLE_USER_SCRIPT_SANDBOXING: NO
-    # 서명 팀. xcodegen generate 가 매번 프로젝트를 새로 만들므로 여기 고정해
-    # Xcode 에서 팀을 다시 고르지 않아도 되게 한다(자동 서명과 함께 동작).
-    DEVELOPMENT_TEAM: BU7DZ6PQ2D
+    # 서명 팀. 배포 인증서(Apple Distribution / 3rd Party Mac Developer Installer)
+    # 와 iCloud 컨테이너가 모두 이 팀 기반이라, 개발/배포를 728FW73BS8 로 통일한다.
+    DEVELOPMENT_TEAM: 728FW73BS8
     # 공증(notarization) / App Store 배포에 필수. macOS 에만 적용되고 iOS 는 무시.
     ENABLE_HARDENED_RUNTIME: YES
 
@@ -26,7 +26,7 @@ configs:
 # Shared building blocks (reused by every target via YAML anchors)
 # ---------------------------------------------------------------------------
 
-# otp-ffi 로 생성된 Swift 바인딩. include/ 는 C 헤더/모듈맵이므로 소스 컴파일에서 제외
+# otpeek-ffi 로 생성된 Swift 바인딩. include/ 는 C 헤더/모듈맵이므로 소스 컴파일에서 제외
 # (xcframework 가 otpFFI 모듈을 제공한다).
 generatedSources: &generatedSources
   path: Generated
@@ -36,23 +36,23 @@ generatedSources: &generatedSources
 
 # Rust 코어 xcframework (정적 라이브러리 + otpFFI 모듈). embed 하지 않는다.
 coreFramework: &coreFramework
-  framework: Frameworks/OtpCore.xcframework
+  framework: Frameworks/OtpeekCore.xcframework
   embed: false
 
 # 빌드 전에 xcframework 가 없으면 build-core.sh 로 생성한다(멱등).
 buildCoreScript: &buildCoreScript
-  name: Build Rust Core (otp-ffi)
+  name: Build Rust Core (otpeek-ffi)
   basedOnDependencyAnalysis: false
   script: |
     set -e
-    if [ ! -d "${PROJECT_DIR}/Frameworks/OtpCore.xcframework" ]; then
+    if [ ! -d "${PROJECT_DIR}/Frameworks/OtpeekCore.xcframework" ]; then
       "${PROJECT_DIR}/scripts/build-core.sh"
     fi
 
 # `.otpvault` 파일 연결 (Path C: 백업 파일을 열면 앱이 바로 가져오기로 진입).
 # Exported UTI + CFBundleDocumentTypes 를 iOS/macOS 앱 타깃 Info.plist 에 심는다.
 otpvaultExportedTypes: &otpvaultExportedTypes
-  - UTTypeIdentifier: com.otpauthenticator.otpvault
+  - UTTypeIdentifier: com.otpeek.otpvault
     UTTypeDescription: OTP Encrypted Vault
     UTTypeConformsTo:
       - public.data
@@ -65,15 +65,15 @@ otpvaultDocumentTypes: &otpvaultDocumentTypes
     CFBundleTypeRole: Editor
     LSHandlerRank: Owner
     LSItemContentTypes:
-      - com.otpauthenticator.otpvault
+      - com.otpeek.otpvault
 
 targets:
   # iOS App
-  OtpAuthenticator-iOS:
+  Otpeek-iOS:
     type: application
     platform: iOS
     sources:
-      - path: OtpAuthenticator
+      - path: Otpeek
         excludes:
           - "**/.DS_Store"
           # 타깃별 Info plist 는 아래 `info.path` 로 INFOPLIST_FILE 에 지정된다.
@@ -96,9 +96,9 @@ targets:
     # Info.plist 를 XcodeGen 이 생성한다(INFOPLIST_FILE 는 자동 설정). 문서 타입은
     # 여기 properties 로 주입. iOS 는 파일을 컨테이너로 복사하도록 in-place 를 끈다.
     info:
-      path: OtpAuthenticator/Info-iOS.plist
+      path: Otpeek/Info-iOS.plist
       properties:
-        CFBundleDisplayName: OTP Authenticator
+        CFBundleDisplayName: OTPeek
         ITSAppUsesNonExemptEncryption: false
         NSCameraUsageDescription: Camera access is needed to scan QR codes for adding accounts.
         UILaunchScreen: {}
@@ -116,21 +116,21 @@ targets:
         CFBundleDocumentTypes: *otpvaultDocumentTypes
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.otpauthenticator.app
-        CODE_SIGN_ENTITLEMENTS: OtpAuthenticator/OtpAuthenticator.entitlements
+        PRODUCT_BUNDLE_IDENTIFIER: com.otpeek.app
+        CODE_SIGN_ENTITLEMENTS: Otpeek/Otpeek.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        PRODUCT_NAME: OTP Authenticator
+        PRODUCT_NAME: OTPeek
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
         CODE_SIGN_STYLE: Automatic
         ENABLE_DEBUG_DYLIB: NO
 
   # macOS App
-  OtpAuthenticator-macOS:
+  Otpeek-macOS:
     type: application
     platform: macOS
     sources:
-      - path: OtpAuthenticator
+      - path: Otpeek
         excludes:
           - "**/.DS_Store"
           # 타깃별 Info plist 는 아래 `info.path` 로 INFOPLIST_FILE 에 지정된다.
@@ -152,19 +152,19 @@ targets:
         embed: true
     # Info.plist 를 XcodeGen 이 생성한다(INFOPLIST_FILE 는 자동 설정). 문서 타입 주입.
     info:
-      path: OtpAuthenticator/Info-macOS.plist
+      path: Otpeek/Info-macOS.plist
       properties:
-        CFBundleDisplayName: OTP Authenticator
+        CFBundleDisplayName: OTPeek
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
         ITSAppUsesNonExemptEncryption: false
         UTExportedTypeDeclarations: *otpvaultExportedTypes
         CFBundleDocumentTypes: *otpvaultDocumentTypes
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.otpauthenticator.app
-        CODE_SIGN_ENTITLEMENTS: OtpAuthenticator/OtpAuthenticator.entitlements
+        PRODUCT_BUNDLE_IDENTIFIER: com.otpeek.app
+        CODE_SIGN_ENTITLEMENTS: Otpeek/Otpeek.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        PRODUCT_NAME: OTP Authenticator
+        PRODUCT_NAME: OTPeek
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
         CODE_SIGN_STYLE: Automatic
@@ -188,7 +188,7 @@ targets:
       - *coreFramework
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.otpauthenticator.app.widget
+        PRODUCT_BUNDLE_IDENTIFIER: com.otpeek.app.widget
         INFOPLIST_FILE: OtpWidgetExtension/Info.plist
         CODE_SIGN_ENTITLEMENTS: OtpWidgetExtension/OtpWidgetExtension.entitlements
         PRODUCT_NAME: OtpWidget
@@ -215,7 +215,7 @@ targets:
       - *coreFramework
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.otpauthenticator.app.widget
+        PRODUCT_BUNDLE_IDENTIFIER: com.otpeek.app.widget
         INFOPLIST_FILE: OtpWidgetExtension/Info.plist
         CODE_SIGN_ENTITLEMENTS: OtpWidgetExtension/OtpWidgetExtension.entitlements
         PRODUCT_NAME: OtpWidget
@@ -225,10 +225,10 @@ targets:
         CODE_SIGN_STYLE: Automatic
 
 schemes:
-  OtpAuthenticator-iOS:
+  Otpeek-iOS:
     build:
       targets:
-        OtpAuthenticator-iOS: all
+        Otpeek-iOS: all
         OtpWidgetExtension-iOS: all
     run:
       config: Debug
@@ -239,10 +239,10 @@ schemes:
     archive:
       config: Release
 
-  OtpAuthenticator-macOS:
+  Otpeek-macOS:
     build:
       targets:
-        OtpAuthenticator-macOS: all
+        Otpeek-macOS: all
         OtpWidgetExtension-macOS: all
     run:
       config: Debug

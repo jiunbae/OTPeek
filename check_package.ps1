@@ -21,7 +21,7 @@ if ($pkg) {
         Write-Host "Manifest NOT FOUND at: $manifestPath"
     }
 
-    $widgetExe = Join-Path $pkg.InstallLocation "OtpAuthenticator.Widget.exe"
+    $widgetExe = Join-Path $pkg.InstallLocation "Otpeek.Widget.exe"
     if (Test-Path $widgetExe) {
         Write-Host "Widget.exe exists"
     } else {

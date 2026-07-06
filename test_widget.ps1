@@ -1,4 +1,4 @@
-$widgetPath = "F:\workspace\OTPWidget\src\OtpAuthenticator.App\bin\x64\Release\net8.0-windows10.0.22621.0\OtpAuthenticator.Widget.exe"
+$widgetPath = "F:\workspace\OTPeek\src\Otpeek.App\bin\x64\Release\net8.0-windows10.0.22621.0\Otpeek.Widget.exe"
 
 Write-Host "Testing Widget.exe startup..."
 Write-Host "Path: $widgetPath"

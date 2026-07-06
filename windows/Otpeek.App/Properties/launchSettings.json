@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Otpeek.App (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Otpeek.App (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

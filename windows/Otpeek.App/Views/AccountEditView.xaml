@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Otpeek.App.Views.AccountEditView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Otpeek.App.Views">
+
+    <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="24">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,24">
+                <TextBlock x:Name="TitleText"
+                           Text="Add Account"
+                           Style="{StaticResource SubtitleTextBlockStyle}" />
+                <Button HorizontalAlignment="Right"
+                        Background="Transparent"
+                        Click="OnCloseClick">
+                    <FontIcon Glyph="&#xE711;" FontSize="12" />
+                </Button>
+            </Grid>
+
+            <!-- Form -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="16">
+                    <!-- Issuer -->
+                    <TextBox x:Name="IssuerTextBox"
+                             Header="Issuer (Service Name)"
+                             PlaceholderText="e.g., Google, GitHub, Microsoft" />
+
+                    <!-- Account Name -->
+                    <TextBox x:Name="AccountNameTextBox"
+                             Header="Account Name *"
+                             PlaceholderText="e.g., user@example.com" />
+
+                    <!-- Secret Key -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox x:Name="SecretKeyTextBox"
+                                 Grid.Column="0"
+                                 Header="Secret Key (Base32) *"
+                                 PlaceholderText="e.g., JBSWY3DPEHPK3PXP" />
+
+                        <Button Grid.Column="1"
+                                VerticalAlignment="Bottom"
+                                Margin="8,0,0,0"
+                                ToolTipService.ToolTip="Generate random key"
+                                Click="OnGenerateKeyClick">
+                            <FontIcon Glyph="&#xE8EE;" FontSize="16" />
+                        </Button>
+                    </Grid>
+
+                    <!-- Validation Error -->
+                    <InfoBar x:Name="ValidationErrorBar"
+                             IsOpen="False"
+                             Severity="Error"
+                             IsClosable="False" />
+
+                    <!-- Advanced Options -->
+                    <Expander Header="Advanced Options"
+                              HorizontalAlignment="Stretch"
+                              HorizontalContentAlignment="Stretch">
+                        <StackPanel Spacing="12" Padding="0,8,0,0">
+                            <!-- OTP Type -->
+                            <ComboBox x:Name="TypeComboBox"
+                                      Header="Type"
+                                      SelectedIndex="0"
+                                      HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="TOTP (Time-based)" Tag="Totp" />
+                                <ComboBoxItem Content="HOTP (Counter-based)" Tag="Hotp" />
+                            </ComboBox>
+
+                            <!-- Algorithm -->
+                            <ComboBox x:Name="AlgorithmComboBox"
+                                      Header="Algorithm"
+                                      SelectedIndex="0"
+                                      HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="SHA1" Tag="Sha1" />
+                                <ComboBoxItem Content="SHA256" Tag="Sha256" />
+                                <ComboBoxItem Content="SHA512" Tag="Sha512" />
+                            </ComboBox>
+
+                            <!-- Digits -->
+                            <ComboBox x:Name="DigitsComboBox"
+                                      Header="Digits"
+                                      SelectedIndex="0"
+                                      HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="6" Tag="6" />
+                                <ComboBoxItem Content="8" Tag="8" />
+                            </ComboBox>
+
+                            <!-- Period (TOTP only) -->
+                            <ComboBox x:Name="PeriodComboBox"
+                                      Header="Period (seconds)"
+                                      SelectedIndex="1"
+                                      HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="15" Tag="15" />
+                                <ComboBoxItem Content="30" Tag="30" />
+                                <ComboBoxItem Content="60" Tag="60" />
+                            </ComboBox>
+
+                            <!-- Notes -->
+                            <TextBox x:Name="NotesTextBox"
+                                     Header="Notes"
+                                     PlaceholderText="Optional notes..."
+                                     TextWrapping="Wrap"
+                                     AcceptsReturn="True"
+                                     MinHeight="80" />
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Actions -->
+            <Grid Grid.Row="2" Margin="0,24,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="1"
+                        Content="Cancel"
+                        Margin="0,0,8,0"
+                        Click="OnCancelClick" />
+
+                <Button x:Name="SaveButton"
+                        Grid.Column="2"
+                        Content="Save"
+                        Style="{StaticResource AccentButtonStyle}"
+                        Click="OnSaveClick" />
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

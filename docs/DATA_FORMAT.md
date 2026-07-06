@@ -91,7 +91,7 @@ This document defines the data formats used for storing OTP accounts to ensure c
 ## Storage
 
 ### Windows
-- Location: `%LOCALAPPDATA%\OtpAuthenticator\`
+- Location: `%LOCALAPPDATA%\Otpeek\`
 - Accounts: `accounts.json` (encrypted)
 - Settings: `settings.json`
 - Secure data: Windows PasswordVault / DPAPI

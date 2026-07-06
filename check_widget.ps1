@@ -1,7 +1,7 @@
 # Check Widget registration
-Write-Host "=== OtpAuthenticator Package Info ===" -ForegroundColor Green
+Write-Host "=== Otpeek Package Info ===" -ForegroundColor Green
 
-$pkg = Get-AppxPackage -Name "OtpAuthenticator"
+$pkg = Get-AppxPackage -Name "Otpeek"
 if ($pkg) {
     Write-Host "Package found: $($pkg.PackageFullName)"
     Write-Host "Install Location: $($pkg.InstallLocation)"
@@ -35,7 +35,7 @@ if ($pkg) {
 
     # Check if Widget.exe exists
     Write-Host "`n=== Widget.exe Check ===" -ForegroundColor Yellow
-    $widgetExe = Join-Path $pkg.InstallLocation "OtpAuthenticator.Widget.exe"
+    $widgetExe = Join-Path $pkg.InstallLocation "Otpeek.Widget.exe"
     if (Test-Path $widgetExe) {
         Write-Host "  Widget.exe exists at: $widgetExe"
     } else {
@@ -48,7 +48,7 @@ if ($pkg) {
 
 # Check Widget log
 Write-Host "`n=== Widget Log ===" -ForegroundColor Yellow
-$logPath = Join-Path $env:LOCALAPPDATA "OtpAuthenticator\widget.log"
+$logPath = Join-Path $env:LOCALAPPDATA "Otpeek\widget.log"
 if (Test-Path $logPath) {
     Get-Content $logPath
 } else {

@@ -1,16 +1,16 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Regenerates the C# UniFFI bindings for the shared Rust core (otp-ffi).
+    Regenerates the C# UniFFI bindings for the shared Rust core (otpeek-ffi).
 
 .DESCRIPTION
-    Produces windows/OtpAuthenticator.Interop/Generated/otp.cs from the compiled
-    otp-ffi cdylib using NordSecurity's uniffi-bindgen-cs.
+    Produces windows/Otpeek.Interop/Generated/otp.cs from the compiled
+    otpeek-ffi cdylib using NordSecurity's uniffi-bindgen-cs.
 
     The generated file is COMMITTED to the repository (it is platform-independent C#;
-    the native library it binds is discovered at runtime by the name "otp_ffi").
+    the native library it binds is discovered at runtime by the name "otpeek_ffi").
     You only need to run this script when the frozen FFI surface in
-    core/crates/otp-ffi/src/lib.rs changes.
+    core/crates/otpeek-ffi/src/lib.rs changes.
 
     Toolchain (must match docs/ARCHITECTURE.md §7):
       * uniffi          0.29.x   (pinned in core/Cargo.toml)
@@ -18,7 +18,7 @@
 
 .NOTES
     Config (namespace + public access modifier) lives in
-    windows/OtpAuthenticator.Interop/uniffi.toml.
+    windows/Otpeek.Interop/uniffi.toml.
 #>
 [CmdletBinding()]
 param(
@@ -32,18 +32,18 @@ $ErrorActionPreference = 'Stop'
 $ScriptDir  = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot   = Resolve-Path (Join-Path $ScriptDir '..\..')
 $CoreDir    = Join-Path $RepoRoot 'core'
-$InteropDir = Join-Path $RepoRoot 'windows\OtpAuthenticator.Interop'
+$InteropDir = Join-Path $RepoRoot 'windows\Otpeek.Interop'
 $OutDir     = Join-Path $InteropDir 'Generated'
 $ConfigFile = Join-Path $InteropDir 'uniffi.toml'
 
 $UniffiTag = 'v0.10.0+v0.29.4'
 
-# Windows produces otp_ffi.dll; the same script works on macOS/Linux for local checks
-# (libotp_ffi.dylib / libotp_ffi.so).
+# Windows produces otpeek_ffi.dll; the same script works on macOS/Linux for local checks
+# (libotpeek_ffi.dylib / libotpeek_ffi.so).
 $LibCandidates = @(
-    (Join-Path $CoreDir "target\$Profile\otp_ffi.dll"),
-    (Join-Path $CoreDir "target/$Profile/libotp_ffi.dylib"),
-    (Join-Path $CoreDir "target/$Profile/libotp_ffi.so")
+    (Join-Path $CoreDir "target\$Profile\otpeek_ffi.dll"),
+    (Join-Path $CoreDir "target/$Profile/libotpeek_ffi.dylib"),
+    (Join-Path $CoreDir "target/$Profile/libotpeek_ffi.so")
 )
 
 Write-Host '==> Ensuring uniffi-bindgen-cs is installed' -ForegroundColor Cyan
@@ -54,13 +54,13 @@ if (-not (Get-Command uniffi-bindgen-cs -ErrorAction SilentlyContinue)) {
         --tag $UniffiTag
 }
 
-Write-Host '==> Building otp-ffi cdylib' -ForegroundColor Cyan
+Write-Host '==> Building otpeek-ffi cdylib' -ForegroundColor Cyan
 Push-Location $CoreDir
 try {
     if ($Profile -eq 'release') {
-        cargo build -p otp-ffi --release
+        cargo build -p otpeek-ffi --release
     } else {
-        cargo build -p otp-ffi
+        cargo build -p otpeek-ffi
     }
 } finally {
     Pop-Location
@@ -68,7 +68,7 @@ try {
 
 $Lib = $LibCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $Lib) {
-    throw "Could not find a built otp-ffi library. Looked for: $($LibCandidates -join ', ')"
+    throw "Could not find a built otpeek-ffi library. Looked for: $($LibCandidates -join ', ')"
 }
 
 Write-Host "==> Generating C# bindings from $Lib" -ForegroundColor Cyan

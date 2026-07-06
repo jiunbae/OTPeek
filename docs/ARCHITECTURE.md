@@ -9,7 +9,7 @@ internal workaround, and flag it in your final report.
 
 - One implementation of all logic (OTP algorithms, data model, vault crypto, sync) in Rust.
 - Native UI shells kept: SwiftUI + WidgetKit (`apple/`), WinUI 3 (`windows/`).
-- New first-class target: Linux/macOS CLI (`otp`).
+- New first-class target: Linux/macOS CLI (`otpeek`).
 - Secrets live in a single canonical **end-to-end-encrypted vault file**; platform
   keystores (Keychain / DPAPI / Secret Service) hold only the vault master key.
 - Sync = encrypted blob moved by a dumb, pluggable backend (CloudKit, WebDAV).
@@ -24,23 +24,23 @@ internal workaround, and flag it in your final report.
 core/                          # Rust workspace
   Cargo.toml                   # workspace manifest, pinned shared deps
   crates/
-    otp-core/                  # pure logic: TOTP/HOTP, base32, otpauth:// URIs,
+    otpeek-core/                  # pure logic: TOTP/HOTP, base32, otpauth:// URIs,
                                #   Google Authenticator migration import, models
-    otp-vault/                 # vault v2 container: Argon2id KEK, AES-256-GCM,
+    otpeek-vault/                 # vault v2 container: Argon2id KEK, AES-256-GCM,
                                #   atomic file I/O, legacy .otpbackup v1 import
-    otp-sync/                  # SyncBackend trait, merge engine, WebDAV backend
-    otp-ffi/                   # UniFFI facade (OtpClient) exposed to Swift / C#
-    otp-cli/                   # `otp` binary (clap)
-apple/                         # SwiftUI apps + widget; consumes otp-ffi XCFramework
+    otpeek-sync/                  # SyncBackend trait, merge engine, WebDAV backend
+    otpeek-ffi/                   # UniFFI facade (OtpClient) exposed to Swift / C#
+    otpeek-cli/                   # `otpeek` binary (clap)
+apple/                         # SwiftUI apps + widget; consumes otpeek-ffi XCFramework
   scripts/build-core.sh        # builds XCFramework + generates Swift bindings
   Generated/                   # uniffi-generated Swift (gitignored, built on demand)
-windows/                       # WinUI 3 app; consumes otp-ffi cdylib
-  OtpAuthenticator.Interop/    # uniffi-bindgen-cs generated C# + native lib packaging
+windows/                       # WinUI 3 app; consumes otpeek-ffi cdylib
+  Otpeek.Interop/    # uniffi-bindgen-cs generated C# + native lib packaging
 docs/                          # specs (this file, SPEC.md, DATA_FORMAT.md)
 ```
 
 Legacy Swift logic (`apple/Shared/OtpGenerator.swift`, `AccountStore.swift`) and .NET
-logic (`OtpAuthenticator.Core/Services/*`, `CloudSync/*`) are deleted after migration;
+logic (`Otpeek.Core/Services/*`, `CloudSync/*`) are deleted after migration;
 UI code is preserved.
 
 ## 3. Canonical data model
@@ -55,7 +55,7 @@ Model fields follow `docs/DATA_FORMAT.md` with these v2 changes:
   90 days (purge happens during vault save).
 - `icon_url` in DATA_FORMAT maps to `icon` here (string, URL or platform asset name).
 
-### Rust types (`otp-core::types`) — frozen
+### Rust types (`otpeek-core::types`) — frozen
 
 ```rust
 pub enum OtpType { Totp, Hotp }
@@ -105,7 +105,7 @@ Serde: all JSON uses `camelCase` field names (`serde(rename_all = "camelCase")`)
 `"SHA1" | "SHA256" | "SHA512"`. Optional fields are omitted when `None`
 (`skip_serializing_if = "Option::is_none"`).
 
-## 4. `otp-core` — public API (frozen)
+## 4. `otpeek-core` — public API (frozen)
 
 ```rust
 pub enum CoreError {
@@ -139,9 +139,9 @@ Notes:
 - HMAC offset is taken from the **last byte** of the HMAC output (`hmac[len-1] & 0x0F`),
   which generalizes the SHA1 formula in SPEC.md to SHA256/512.
 - The `19` in SPEC.md's formula is SHA1-specific; implement per RFC.
-- No `std::time` calls inside otp-core — time is always a parameter (testability).
+- No `std::time` calls inside otpeek-core — time is always a parameter (testability).
 
-## 5. `otp-vault` — vault container v2
+## 5. `otpeek-vault` — vault container v2
 
 ### 5.1 Key hierarchy
 
@@ -234,7 +234,7 @@ pub fn import_backup_v1(data: &[u8], password: &str, now_ms: i64)
     -> Result<VaultPayload, VaultError>;
 ```
 
-## 6. `otp-sync` — sync engine
+## 6. `otpeek-sync` — sync engine
 
 ### 6.1 Backend abstraction (frozen)
 
@@ -259,8 +259,8 @@ pub trait SyncBackend: Send + Sync {
 ```
 
 Implementations:
-- **WebDAV** (in `otp-sync`, feature `webdav`, `ureq` + rustls): single file
-  `otp-vault.otpvault` at a configured URL; ETag / `If-Match` / `If-None-Match: *`
+- **WebDAV** (in `otpeek-sync`, feature `webdav`, `ureq` + rustls): single file
+  `otpeek-vault.otpvault` at a configured URL; ETag / `If-Match` / `If-None-Match: *`
   for optimistic concurrency; Basic auth.
 - **CloudKit** (Swift, in `apple/`): implements the FFI mirror of this trait
   (see §7). Private DB, record type `Vault`, record name `"vault"`, blob in a
@@ -300,10 +300,10 @@ impl SyncEngine {
 Bootstrap on a new device: fetch remote blob → `Vault::open_with_password` → stash VMK
 in platform keystore → save locally. This is platform-side glue using the APIs above.
 
-## 7. `otp-ffi` — UniFFI facade (frozen surface)
+## 7. `otpeek-ffi` — UniFFI facade (frozen surface)
 
 UniFFI **0.29.x**, proc-macro mode (no UDL). `crate-type = ["staticlib", "cdylib", "lib"]`,
-namespace `otp`. All FFI types live in this crate (converted from core types).
+namespace `otpeek`. All FFI types live in this crate (converted from core types).
 C# generation via `uniffi-bindgen-cs` (v0.9.x, matching uniffi 0.29), Swift via
 `uniffi-bindgen generate --library`.
 
@@ -394,17 +394,17 @@ advisory lock). `OtpClient` is `Send + Sync`; internal `Mutex` serializes access
 Change notification across processes (app ↔ widget) is platform-side
 (Darwin notifications / file watcher) — not in core.
 
-## 8. `otp-cli` — the `otp` binary
+## 8. `otpeek-cli` — the `otpeek` binary
 
-- Binary name `otp`. Targets: `aarch64/x86_64-unknown-linux-{gnu,musl}`, macOS, Windows.
-- Depends only on `otp-core`, `otp-vault`, `otp-sync` (not otp-ffi).
-- Vault path: `$OTP_VAULT` env → `--vault` flag → XDG default
-  `~/.local/share/otp-auth/vault.otpvault`. Config: `~/.config/otp-auth/config.toml`
+- Binary name `otpeek`. Targets: `aarch64/x86_64-unknown-linux-{gnu,musl}`, macOS, Windows.
+- Depends only on `otpeek-core`, `otpeek-vault`, `otpeek-sync` (not otpeek-ffi).
+- Vault path: `$OTPEEK_VAULT` env → `--vault` flag → XDG default
+  `~/.local/share/otpeek/vault.otpvault`. Config: `~/.config/otpeek/config.toml`
   (sync backend settings only — never secrets).
 - VMK storage: `keyring` crate (Secret Service / macOS Keychain / Windows Credential
-  Manager), service `"otp-auth"`, user = vault path. Fallback when no keystore
-  (headless): prompt for master password (`rpassword`), or `$OTP_VAULT_PASSWORD`.
-- WebDAV password: keyring entry `"otp-auth-webdav"`, or `$OTP_WEBDAV_PASSWORD`.
+  Manager), service `"otpeek"`, user = vault path. Fallback when no keystore
+  (headless): prompt for master password (`rpassword`), or `$OTPEEK_VAULT_PASSWORD`.
+- WebDAV password: keyring entry `"otpeek-webdav"`, or `$OTP_WEBDAV_PASSWORD`.
 
 Commands (clap v4, kebab-case):
 
@@ -434,7 +434,7 @@ Output: human tables to stdout, errors to stderr, exit codes 0/1/2 (ok/error/amb
 ## 9. Apple integration (`apple/`)
 
 1. **Build plumbing**: `apple/scripts/build-core.sh` —
-   `cargo build -p otp-ffi --release` for `aarch64-apple-darwin`, `aarch64-apple-ios`,
+   `cargo build -p otpeek-ffi --release` for `aarch64-apple-darwin`, `aarch64-apple-ios`,
    `aarch64-apple-ios-sim` → `xcodebuild -create-xcframework` → `apple/Frameworks/OtpCore.xcframework`;
    `uniffi-bindgen generate --library ... --language swift` → `apple/Generated/`.
    Wire as a pre-build script phase in `project.yml` (XcodeGen), or committed build output.
@@ -443,13 +443,13 @@ Output: human tables to stdout, errors to stderr, exit codes 0/1/2 (ok/error/amb
    the VMK: account `"vmk"`, access group shared with the widget,
    `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`.
    Vault file lives in the App Group container:
-   `FileManager.containerURL(forSecurityApplicationGroupIdentifier: "group.com.otpauthenticator")/vault.otpvault`.
+   `FileManager.containerURL(forSecurityApplicationGroupIdentifier: "group.com.otpeek")/vault.otpvault`.
 3. **Widget**: opens `OtpClient.openWithKey` (keychain VMK + shared vault path),
    `codesAt(...)` for timeline entries. No Argon2, no password UI in the widget.
    App posts a Darwin notification (`CFNotificationCenterGetDarwinNotifyCenter`) +
    `WidgetCenter.reloadAllTimelines()` after each mutation.
 4. **CloudKit backend**: Swift class `CloudKitSyncBackend: SyncBackend` (the uniffi
-   foreign trait). Container `iCloud.com.otpauthenticator`, private DB, record type
+   foreign trait). Container `iCloud.com.otpeek`, private DB, record type
    `Vault`, recordName `"vault"`, `blob: Data` field, `recordChangeTag` as etag;
    `if_match` maps to save policy `.ifServerRecordUnchanged` (translate CKError
    `.serverRecordChanged` → `OtpError.Conflict`). Bridge async CloudKit with a semaphore
@@ -459,23 +459,23 @@ Output: human tables to stdout, errors to stderr, exit codes 0/1/2 (ok/error/amb
    asks user to create a master password → `OtpClient.create` → insert legacy accounts
    (convert RFC3339 → epoch ms) → verify count → rename legacy UserDefaults keys to
    `migrated_*` (keep one release as safety net).
-6. **UI kept**: all views under `apple/OtpAuthenticator/Views/` and the widget UI stay;
+6. **UI kept**: all views under `apple/Otpeek/Views/` and the widget UI stay;
    only their data layer moves to `OtpStore`. Update `project.yml` and entitlements
    (add CloudKit capability).
 
 ## 10. Windows integration (`windows/`)
 
-1. **Interop project** `windows/OtpAuthenticator.Interop/`: C# generated by
-   `uniffi-bindgen-cs` from the otp-ffi cdylib (`otp.dll`), plus MSBuild targets that
-   run `cargo build -p otp-ffi --release --target x86_64-pc-windows-msvc` (and arm64)
+1. **Interop project** `windows/Otpeek.Interop/`: C# generated by
+   `uniffi-bindgen-cs` from the otpeek-ffi cdylib (`otp.dll`), plus MSBuild targets that
+   run `cargo build -p otpeek-ffi --release --target x86_64-pc-windows-msvc` (and arm64)
    and copy the DLL into the output. Generated file committed (regenerate script:
    `windows/scripts/generate-bindings.ps1`).
 2. **Replace**: `OtpService`, `EncryptionService`, `AccountRepository`, `BackupService`,
    `SyncManager`, `CloudSync/*` are removed; ViewModels call a new
    `OtpClientService` (DI singleton) wrapping `OtpClient`.
    `SecureStorageService` shrinks to: DPAPI-protect the VMK in
-   `%LOCALAPPDATA%\OtpAuthenticator\vmk.bin`. Vault:
-   `%LOCALAPPDATA%\OtpAuthenticator\vault.otpvault`.
+   `%LOCALAPPDATA%\Otpeek\vmk.bin`. Vault:
+   `%LOCALAPPDATA%\Otpeek\vault.otpvault`.
 3. **Sync**: WebDAV is built into the core — settings UI configures URL/user/password
    (password DPAPI-protected). OneDrive/GDrive UI removed.
 4. **Migration**: on startup, if legacy `accounts.json` exists and no vault →
@@ -488,37 +488,37 @@ Output: human tables to stdout, errors to stderr, exit codes 0/1/2 (ok/error/amb
 
 | Crate | Version | Used by |
 |---|---|---|
-| hmac, sha1, sha2 | 0.12 / 0.10 / 0.10 | otp-core |
-| data-encoding (base32) | 2 | otp-core |
-| url | 2 | otp-core |
-| uuid (v4) | 1 | otp-core |
-| prost (migration protobuf) | 0.13 | otp-core (hand-rolled varint decode is also acceptable) |
+| hmac, sha1, sha2 | 0.12 / 0.10 / 0.10 | otpeek-core |
+| data-encoding (base32) | 2 | otpeek-core |
+| url | 2 | otpeek-core |
+| uuid (v4) | 1 | otpeek-core |
+| prost (migration protobuf) | 0.13 | otpeek-core (hand-rolled varint decode is also acceptable) |
 | serde, serde_json | 1 | all |
 | thiserror | 2 | all |
-| aes-gcm | 0.10 | otp-vault |
-| argon2 | 0.5 | otp-vault |
-| rand (OsRng via getrandom) | 0.8 | otp-vault |
-| zeroize | 1 | otp-vault |
-| fd-lock | 4 | otp-vault |
-| ureq (rustls, no default tls) | 2 | otp-sync |
-| uniffi | 0.29 | otp-ffi |
-| clap | 4 | otp-cli |
-| keyring | 3 | otp-cli |
-| rpassword, comfy-table, qrcode, arboard | latest | otp-cli |
+| aes-gcm | 0.10 | otpeek-vault |
+| argon2 | 0.5 | otpeek-vault |
+| rand (OsRng via getrandom) | 0.8 | otpeek-vault |
+| zeroize | 1 | otpeek-vault |
+| fd-lock | 4 | otpeek-vault |
+| ureq (rustls, no default tls) | 2 | otpeek-sync |
+| uniffi | 0.29 | otpeek-ffi |
+| clap | 4 | otpeek-cli |
+| keyring | 3 | otpeek-cli |
+| rpassword, comfy-table, qrcode, arboard | latest | otpeek-cli |
 
 ## 12. Testing
 
-- **otp-core**: RFC 4226/6238 vectors from `docs/SPEC.md` (all three SHA variants for
+- **otpeek-core**: RFC 4226/6238 vectors from `docs/SPEC.md` (all three SHA variants for
   TOTP per RFC 6238 Appendix B), URI round-trips, migration payload decode, base32 edge
   cases (lowercase, padding, invalid chars).
-- **otp-vault**: round-trip create→save→open (key and password paths), wrong password →
+- **otpeek-vault**: round-trip create→save→open (key and password paths), wrong password →
   `WrongPassword`, corrupt/truncated data → `Corrupt`, AAD tamper detection, v1 backup
   import against a fixture generated with the documented v1 parameters, tombstone purge.
-  Commit a small fixture `core/crates/otp-vault/tests/fixtures/vault-v2.otpvault`
+  Commit a small fixture `core/crates/otpeek-vault/tests/fixtures/vault-v2.otpvault`
   (password `"test-password-123"`) so future refactors can't silently break the format.
-- **otp-sync**: merge property tests (LWW, tombstone, counter-max, determinism),
+- **otpeek-sync**: merge property tests (LWW, tombstone, counter-max, determinism),
   engine tests with an in-memory `SyncBackend` (including etag-conflict retry).
-- **otp-cli**: integration tests via `assert_cmd` with `$OTP_VAULT_PASSWORD` and a temp
+- **otpeek-cli**: integration tests via `assert_cmd` with `$OTPEEK_VAULT_PASSWORD` and a temp
   vault dir (no keyring in CI).
 - **apple**: existing UI preserved; add an XCTest that round-trips add→code against the
   real core, and RFC vector checks through the FFI.
@@ -528,9 +528,9 @@ Output: human tables to stdout, errors to stderr, exit codes 0/1/2 (ok/error/amb
 
 | WS | Owner agent | Owns (exclusive write access) | Deliverable |
 |----|-------------|-------------------------------|-------------|
-| A | core | `core/crates/otp-core/` | algorithms/models/URI/migration + tests green |
-| B | vault-sync | `core/crates/otp-vault/`, `core/crates/otp-sync/` | vault v2 + engine + WebDAV + tests green |
-| C | ffi-cli | `core/crates/otp-ffi/`, `core/crates/otp-cli/` | facade wired + CLI e2e |
+| A | core | `core/crates/otpeek-core/` | algorithms/models/URI/migration + tests green |
+| B | vault-sync | `core/crates/otpeek-vault/`, `core/crates/otpeek-sync/` | vault v2 + engine + WebDAV + tests green |
+| C | ffi-cli | `core/crates/otpeek-ffi/`, `core/crates/otpeek-cli/` | facade wired + CLI e2e |
 | D | apple | `apple/` | app+widget on core, CloudKit backend, migration |
 | E | windows | `windows/` | app+widget on interop, DPAPI VMK, migration (build-unverified) |
 

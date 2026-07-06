@@ -1,0 +1,20 @@
+[package]
+name = "otpeek-ffi"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "otpeek_ffi"
+crate-type = ["staticlib", "cdylib", "lib"]
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi-bindgen.rs"
+
+[dependencies]
+otpeek-core = { path = "../otpeek-core" }
+otpeek-vault = { path = "../otpeek-vault" }
+otpeek-sync = { path = "../otpeek-sync" }
+uniffi = { workspace = true, features = ["cli"] }
+thiserror.workspace = true
+uuid.workspace = true

@@ -121,12 +121,12 @@ The decrypted payload is a JSON object:
 ## Compatibility
 
 ### Import Sources
-- OTP Authenticator backup files (.otpbackup)
+- OTPeek backup files (.otpbackup)
 - Google Authenticator migration QR codes
 - Plain otpauth:// URIs
 
 ### Export Targets
-- OTP Authenticator backup files (.otpbackup)
+- OTPeek backup files (.otpbackup)
 - Individual QR codes (otpauth:// URIs)
 
 ## Implementation Notes

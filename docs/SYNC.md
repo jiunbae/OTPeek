@@ -41,15 +41,15 @@ First device (CLI example):
 ```bash
 otp init                                   # choose your master password
 otp add 'otpauth://totp/GitHub:me?secret=...&issuer=GitHub'
-otp sync setup webdav https://nas.example.com/dav/otp-vault.otpvault --user june
+otp sync setup webdav https://nas.example.com/dav/otpeek-vault.otpvault --user june
 otp sync now                               # first push
 ```
 
 Every other device:
 
 ```bash
-otp restore https://nas.example.com/dav/otp-vault.otpvault   # asks master password
-otp sync setup webdav https://nas.example.com/dav/otp-vault.otpvault --user june
+otp restore https://nas.example.com/dav/otpeek-vault.otpvault   # asks master password
+otp sync setup webdav https://nas.example.com/dav/otpeek-vault.otpvault --user june
 otp sync now
 ```
 

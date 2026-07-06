@@ -10,24 +10,24 @@ verification, then a functional pass.
 ```bash
 cd core
 cargo test --workspace        # expect: 77 tests, 0 failures
-cargo build -p otp-cli --release
+cargo build -p otpeek-cli --release
 ```
 
 Functional smoke (isolated vault; no keyring/prompt needed):
 
 ```bash
-export OTP_VAULT=/tmp/otp-test/vault.otpvault
-export OTP_VAULT_PASSWORD='test-master-pw'
-OTP=core/target/release/otp
+export OTPEEK_VAULT=/tmp/otp-test/vault.otpvault
+export OTPEEK_VAULT_PASSWORD='test-master-pw'
+OTP=core/target/release/otpeek
 
 $OTP init
 $OTP add 'otpauth://totp/GitHub:me@example.com?secret=JBSWY3DPEHPK3PXP&issuer=GitHub'
 $OTP list
 $OTP code github            # 6-digit code
 $OTP code github --watch    # live countdown; Ctrl-C to exit
-OTP_BACKUP_PASSWORD='bk-pw' $OTP export /tmp/otp-test/backup.otpvault
+OTPEEK_BACKUP_PASSWORD='bk-pw' $OTP export /tmp/otp-test/backup.otpvault
 $OTP rm github --yes
-OTP_BACKUP_PASSWORD='bk-pw' $OTP import /tmp/otp-test/backup.otpvault --merge   # resurrects
+OTPEEK_BACKUP_PASSWORD='bk-pw' $OTP import /tmp/otp-test/backup.otpvault --merge   # resurrects
 ```
 
 Real-world (keyring) mode: unset both env vars, run `otp init` — it prompts for
@@ -37,7 +37,7 @@ Secret Service). Subsequent commands must NOT prompt.
 WebDAV sync (needs a WebDAV server, e.g. Nextcloud):
 
 ```bash
-$OTP sync setup webdav https://host/remote.php/dav/files/you/otp-vault.otpvault --user you
+$OTP sync setup webdav https://host/remote.php/dav/files/you/otpeek-vault.otpvault --user you
 $OTP sync now               # first push
 # second machine: otp restore <same-url>  → enter master password → otp list
 ```
@@ -51,7 +51,7 @@ not CommandLineTools), XcodeGen, iOS Rust targets:
 rustup target add aarch64-apple-ios aarch64-apple-ios-sim
 apple/scripts/build-core.sh          # builds XCFramework + Swift bindings
 cd apple && xcodegen generate
-xcodebuild -project OtpAuthenticator.xcodeproj -scheme OtpAuthenticator-macOS build CODE_SIGNING_ALLOWED=NO
+xcodebuild -project Otpeek.xcodeproj -scheme Otpeek-macOS build CODE_SIGNING_ALLOWED=NO
 ```
 
 - [ ] `build-core.sh` completes: all 3 slices + `Frameworks/OtpCore.xcframework` + `Generated/otp.swift`
@@ -68,7 +68,7 @@ xcodebuild -project OtpAuthenticator.xcodeproj -scheme OtpAuthenticator-macOS bu
 - [ ] File association: double-click a `.otpvault` in Finder → app opens the
       import dialog; AirDrop the file from iPhone → same; export offers the
       share sheet; opening a file on a FRESH install routes to restore
-- [ ] iCloud sync (needs signing team + CloudKit container `iCloud.com.otpauthenticator`
+- [ ] iCloud sync (needs signing team + CloudKit container `iCloud.com.otpeek`
       provisioned in the developer portal): enable on device A, add account,
       sync; device B "Restore from iCloud" with master password → same accounts;
       edit on both sides → newest edit wins after both sync
@@ -82,16 +82,16 @@ Prereqs: VS 2022 (.NET Desktop + Windows App SDK), .NET 8 SDK, Rust MSVC:
 
 ```powershell
 rustup target add x86_64-pc-windows-msvc
-dotnet restore OtpAuthenticator.Windows.sln
-dotnet build windows/OtpAuthenticator.App/OtpAuthenticator.App.csproj -p:Platform=x64
+dotnet restore Otpeek.Windows.sln
+dotnet build windows/Otpeek.App/Otpeek.App.csproj -p:Platform=x64
 ```
 
-- [ ] Interop project's MSBuild target runs cargo and stages `otp_ffi.dll` into
-      the App output dir (check `bin/x64/Debug/.../otp_ffi.dll` exists)
-- [ ] If bindings drift from otp-ffi: re-run `windows/scripts/generate-bindings.ps1`
-- [ ] App launches; `[DllImport("otp_ffi")]` resolves (no DllNotFoundException)
+- [ ] Interop project's MSBuild target runs cargo and stages `otpeek_ffi.dll` into
+      the App output dir (check `bin/x64/Debug/.../otpeek_ffi.dll` exists)
+- [ ] If bindings drift from otpeek-ffi: re-run `windows/scripts/generate-bindings.ps1`
+- [ ] App launches; `[DllImport("otpeek_ffi")]` resolves (no DllNotFoundException)
 - [ ] Fresh start: master-password creation dialog → empty list
-- [ ] Upgrade path: with a real v1 profile (`%LOCALAPPDATA%\OtpAuthenticator\accounts.dat`),
+- [ ] Upgrade path: with a real v1 profile (`%LOCALAPPDATA%\Otpeek\accounts.dat`),
       migration prompt appears, accounts survive, legacy file renamed `.migrated`
 - [ ] Add via QR (screen capture + image file) and manual entry; codes correct
 - [ ] Restart: no password prompt (VMK via DPAPI `vmk.bin`)

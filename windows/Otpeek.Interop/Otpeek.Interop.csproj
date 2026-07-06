@@ -1,0 +1,111 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Otpeek.Interop
+    ========================
+    UniFFI-generated C# bindings (Generated/otp.cs) for the shared Rust core (otpeek-ffi),
+    plus MSBuild plumbing that builds and packages the native library (otpeek_ffi.dll).
+
+    IMPORTANT: This project intentionally targets plain net8.0 (NOT net8.0-windows and NOT
+    WinUI). The generated bindings are platform-independent P/Invoke against the native
+    library named "otpeek_ffi" (see [DllImport("otpeek_ffi")] in Generated/otp.cs). Keeping this
+    project WinUI-free lets the widget host (which cannot depend on WinUI) reference it.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Otpeek.Interop</RootNamespace>
+    <AssemblyName>Otpeek.Interop</AssemblyName>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Platforms>x86;x64;ARM64</Platforms>
+    <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+    <!-- The generated bindings use unsafe pointer code for the FFI layer. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <!-- Path to the Rust workspace (repo-root/core). -->
+    <RustCoreDir>$(MSBuildThisFileDirectory)..\..\core</RustCoreDir>
+    <!-- Cargo profile: Debug builds use the debug profile, everything else release. -->
+    <CargoProfile Condition="'$(Configuration)' == 'Debug'">dev</CargoProfile>
+    <CargoProfile Condition="'$(Configuration)' != 'Debug'">release</CargoProfile>
+    <CargoProfileDir Condition="'$(Configuration)' == 'Debug'">debug</CargoProfileDir>
+    <CargoProfileDir Condition="'$(Configuration)' != 'Debug'">release</CargoProfileDir>
+  </PropertyGroup>
+
+  <!-- Map the .NET platform/RID to the Rust MSVC target triple. -->
+  <PropertyGroup>
+    <RustTarget Condition="'$(Platform)' == 'x64'">x86_64-pc-windows-msvc</RustTarget>
+    <RustTarget Condition="'$(Platform)' == 'ARM64'">aarch64-pc-windows-msvc</RustTarget>
+    <RustTarget Condition="'$(Platform)' == 'x86'">i686-pc-windows-msvc</RustTarget>
+    <!-- Fallback for AnyCPU / RID-driven builds. -->
+    <RustTarget Condition="'$(RustTarget)' == '' and '$(RuntimeIdentifier)' == 'win-arm64'">aarch64-pc-windows-msvc</RustTarget>
+    <RustTarget Condition="'$(RustTarget)' == '' and '$(RuntimeIdentifier)' == 'win-x86'">i686-pc-windows-msvc</RustTarget>
+    <RustTarget Condition="'$(RustTarget)' == ''">x86_64-pc-windows-msvc</RustTarget>
+  </PropertyGroup>
+
+  <!--
+    BuildNativeCore
+    ===============
+    Builds otpeek_ffi.dll from the Rust workspace for the current $(RustTarget) and stages it.
+    Runs before the C# compile so the DLL is available to copy into consumers' output.
+
+    The whole target is skipped when the Rust toolchain is unavailable AND a prebuilt DLL
+    already exists (e.g. CI restored an artifact). If neither cargo nor a prebuilt DLL is
+    present the build fails LOUDLY (see ErrorIfNoNativeCore) rather than silently shipping
+    a package with no native library.
+  -->
+  <Target Name="LocateCargo">
+    <!-- Resolve cargo from PATH; empty if not installed. -->
+    <Exec Command="where cargo" ConsoleToMSBuild="true" ContinueOnError="true" StandardOutputImportance="low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_CargoWhereOutput" />
+      <Output TaskParameter="ExitCode" PropertyName="_CargoWhereExit" />
+    </Exec>
+    <PropertyGroup>
+      <CargoAvailable Condition="'$(_CargoWhereExit)' == '0'">true</CargoAvailable>
+      <CargoAvailable Condition="'$(_CargoWhereExit)' != '0'">false</CargoAvailable>
+      <NativeCoreDll>$(RustCoreDir)\target\$(RustTarget)\$(CargoProfileDir)\otpeek_ffi.dll</NativeCoreDll>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="BuildNativeCore"
+          BeforeTargets="BeforeBuild;BeforeCompile"
+          DependsOnTargets="LocateCargo">
+    <Message Condition="'$(CargoAvailable)' == 'true'"
+             Importance="high"
+             Text="[Interop] Building native otpeek_ffi.dll: cargo build -p otpeek-ffi --profile $(CargoProfile) --target $(RustTarget)" />
+    <Exec Command="cargo build -p otpeek-ffi --profile $(CargoProfile) --target $(RustTarget)"
+          WorkingDirectory="$(RustCoreDir)"
+          Condition="'$(CargoAvailable)' == 'true'" />
+  </Target>
+
+  <!-- If we could not build and no DLL exists, fail with an actionable message. -->
+  <Target Name="ErrorIfNoNativeCore"
+          AfterTargets="BuildNativeCore"
+          DependsOnTargets="LocateCargo"
+          Condition="!Exists('$(NativeCoreDll)')">
+    <Error Condition="'$(CargoAvailable)' != 'true'"
+           Text="Rust toolchain (cargo) not found and no prebuilt native library at '$(NativeCoreDll)'. Install Rust (https://rustup.rs) and the '$(RustTarget)' target (rustup target add $(RustTarget)), or restore a prebuilt otpeek_ffi.dll into that path. See windows/README.md." />
+    <Error Condition="'$(CargoAvailable)' == 'true'"
+           Text="Expected native library was not found at '$(NativeCoreDll)' after running cargo build." />
+  </Target>
+
+  <!--
+    Expose otpeek_ffi.dll as a Content item so it is copied into THIS project's output and,
+    transitively, into every project that references Interop (App, Widget, Core.Windows).
+  -->
+  <Target Name="StageNativeCore"
+          AfterTargets="ErrorIfNoNativeCore"
+          DependsOnTargets="LocateCargo"
+          BeforeTargets="AssignTargetPaths"
+          Condition="Exists('$(NativeCoreDll)')">
+    <ItemGroup>
+      <Content Include="$(NativeCoreDll)">
+        <Link>otpeek_ffi.dll</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <Visible>false</Visible>
+      </Content>
+    </ItemGroup>
+  </Target>
+
+</Project>

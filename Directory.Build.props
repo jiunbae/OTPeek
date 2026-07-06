@@ -11,9 +11,9 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Authors>OTP Authenticator Team</Authors>
-    <Company>OTP Authenticator</Company>
-    <Product>OTP Authenticator</Product>
+    <Authors>OTPeek Team</Authors>
+    <Company>OTPeek</Company>
+    <Product>OTPeek</Product>
     <Copyright>Copyright (c) 2024</Copyright>
     <Version>1.0.0</Version>
   </PropertyGroup>
