@@ -15,6 +15,7 @@
 
             <!-- Converters -->
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <converters:BoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" Inverse="True" />
             <converters:CopyIconConverter x:Key="CopyIconConverter" />
             <converters:ProgressToColorConverter x:Key="ProgressToColorConverter" />
             <converters:CopiedBackgroundConverter x:Key="CopiedBackgroundConverter" />

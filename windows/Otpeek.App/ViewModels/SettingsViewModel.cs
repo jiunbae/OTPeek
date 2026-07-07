@@ -39,6 +39,9 @@ public partial class SettingsViewModel : BaseViewModel
     [ObservableProperty]
     private bool _requireAuthentication;
 
+    [ObservableProperty]
+    private bool _showFavicons;
+
     // --- WebDAV 동기화 ---
 
     [ObservableProperty]
@@ -90,6 +93,7 @@ public partial class SettingsViewModel : BaseViewModel
         EnableWidgetProvider = settings.EnableWidgetProvider;
         SelectedTheme = settings.Theme;
         RequireAuthentication = settings.RequireAuthentication;
+        ShowFavicons = settings.ShowFavicons;
 
         WebDavEnabled = settings.WebDav.Enabled;
         WebDavUrl = settings.WebDav.Url;
@@ -114,6 +118,7 @@ public partial class SettingsViewModel : BaseViewModel
             settings.EnableWidgetProvider = EnableWidgetProvider;
             settings.Theme = SelectedTheme;
             settings.RequireAuthentication = RequireAuthentication;
+            settings.ShowFavicons = ShowFavicons;
 
             settings.WebDav.Enabled = WebDavEnabled;
             settings.WebDav.Url = WebDavUrl;

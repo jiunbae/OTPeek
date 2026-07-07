@@ -61,6 +61,11 @@ public class AppSettings
     public bool ShowCopyNotification { get; set; } = true;
 
     /// <summary>
+    /// 계정 목록/위젯에 서비스 로고(파비콘)를 표시 (없으면 색상 이니셜). 기본 켜짐.
+    /// </summary>
+    public bool ShowFavicons { get; set; } = true;
+
+    /// <summary>
     /// WebDAV 동기화 설정 (Rust 코어의 SyncBackend로 연결)
     /// </summary>
     public WebDavSettings WebDav { get; set; } = new();

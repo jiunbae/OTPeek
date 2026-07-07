@@ -78,17 +78,30 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <!-- Icon -->
-                            <Border Grid.Column="0"
-                                    Style="{StaticResource IconCircleStyle}"
-                                    Margin="0,0,16,0">
-                                <TextBlock Text="{x:Bind Initial}"
-                                           FontSize="20"
-                                           FontWeight="SemiBold"
-                                           Foreground="White"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center" />
-                            </Border>
+                            <!-- Icon: 서비스 로고(파비콘)가 있으면 흰 배경 타일, 없으면 색상 이니셜 -->
+                            <Grid Grid.Column="0"
+                                  Width="44" Height="44"
+                                  Margin="0,0,16,0">
+                                <!-- 이니셜 폴백 -->
+                                <Border CornerRadius="12"
+                                        Background="{StaticResource PrimaryBrush}"
+                                        Visibility="{x:Bind HasIcon, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                                    <TextBlock Text="{x:Bind Initial}"
+                                               FontSize="18"
+                                               FontWeight="SemiBold"
+                                               Foreground="White"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Border>
+                                <!-- 파비콘: 깨끗한 흰 타일 위에 로고(투명 로고 대비) -->
+                                <Border CornerRadius="12"
+                                        Background="White"
+                                        Padding="5"
+                                        Visibility="{x:Bind HasIcon, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <Image Source="{x:Bind IconSource, Mode=OneWay}"
+                                           Stretch="Uniform" />
+                                </Border>
+                            </Grid>
 
                             <!-- Account Info -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -136,10 +149,13 @@
                                     <FontIcon Glyph="&#xE712;" FontSize="16" />
                                     <Button.Flyout>
                                         <MenuFlyout>
-                                            <MenuFlyoutItem Text="Edit" Icon="Edit" />
-                                            <MenuFlyoutItem Text="Favorite" Icon="Favorite" />
+                                            <MenuFlyoutItem Text="Edit" Icon="Edit"
+                                                            Command="{x:Bind EditCommand}" />
+                                            <MenuFlyoutItem Text="Favorite" Icon="Favorite"
+                                                            Command="{x:Bind ToggleFavoriteCommand}" />
                                             <MenuFlyoutSeparator />
-                                            <MenuFlyoutItem Text="Delete" Icon="Delete" />
+                                            <MenuFlyoutItem Text="Delete" Icon="Delete"
+                                                            Command="{x:Bind DeleteCommand}" />
                                         </MenuFlyout>
                                     </Button.Flyout>
                                 </Button>

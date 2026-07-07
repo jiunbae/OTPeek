@@ -25,6 +25,7 @@ public sealed partial class SettingsPage : Page
         MinimizeToTrayToggle.Toggled += (s, e) => ViewModel.MinimizeToTray = MinimizeToTrayToggle.IsOn;
         EnableWidgetToggle.Toggled += (s, e) => ViewModel.EnableWidgetProvider = EnableWidgetToggle.IsOn;
         RequireAuthToggle.Toggled += (s, e) => ViewModel.RequireAuthentication = RequireAuthToggle.IsOn;
+        ShowFaviconsToggle.Toggled += (s, e) => ViewModel.ShowFavicons = ShowFaviconsToggle.IsOn;
         ClipboardClearCombo.SelectionChanged += OnClipboardClearChanged;
 
         // WebDAV 동기화
@@ -75,6 +76,7 @@ public sealed partial class SettingsPage : Page
         MinimizeToTrayToggle.IsOn = ViewModel.MinimizeToTray;
         EnableWidgetToggle.IsOn = ViewModel.EnableWidgetProvider;
         RequireAuthToggle.IsOn = ViewModel.RequireAuthentication;
+        ShowFaviconsToggle.IsOn = ViewModel.ShowFavicons;
 
         // ComboBox 선택
         SelectComboBoxItem(ClipboardClearCombo, ViewModel.ClipboardClearSeconds.ToString());

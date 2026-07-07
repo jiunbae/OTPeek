@@ -18,6 +18,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IClipboardService, ClipboardService>();
         services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();
         services.AddSingleton<IQrCodeService, QrCodeService>();
+        services.AddSingleton<IFaviconService, FaviconService>();
 
         // Rust 코어 볼트 래퍼 (앱 전역에서 단일 인스턴스로 공유)
         services.AddSingleton<IOtpClientService, OtpClientService>();

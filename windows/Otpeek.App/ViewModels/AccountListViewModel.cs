@@ -16,6 +16,7 @@ public partial class AccountListViewModel : BaseViewModel
     private readonly IOtpClientService _client;
     private readonly IClipboardService _clipboardService;
     private readonly ISettingsService _settingsService;
+    private readonly IFaviconService _faviconService;
     private readonly DispatcherQueue _dispatcherQueue;
 
     public ObservableCollection<AccountItemViewModel> Accounts { get; } = new();
@@ -44,11 +45,13 @@ public partial class AccountListViewModel : BaseViewModel
     public AccountListViewModel(
         IOtpClientService client,
         IClipboardService clipboardService,
-        ISettingsService settingsService)
+        ISettingsService settingsService,
+        IFaviconService faviconService)
     {
         _client = client;
         _clipboardService = clipboardService;
         _settingsService = settingsService;
+        _faviconService = faviconService;
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
         // 볼트 변경 시(잠금 해제/동기화/외부 변경) 목록 새로고침
@@ -72,6 +75,7 @@ public partial class AccountListViewModel : BaseViewModel
             foreach (var vm in Accounts)
             {
                 vm.CopyRequested -= OnCopyRequested;
+                vm.EditRequested -= OnItemEditRequested;
                 vm.Dispose();
             }
             Accounts.Clear();
@@ -93,8 +97,9 @@ public partial class AccountListViewModel : BaseViewModel
 
             foreach (var account in accounts)
             {
-                var vm = new AccountItemViewModel(account, _client);
+                var vm = new AccountItemViewModel(account, _client, _faviconService);
                 vm.CopyRequested += OnCopyRequested;
+                vm.EditRequested += OnItemEditRequested;
                 Accounts.Add(vm);
             }
 
@@ -153,11 +158,19 @@ public partial class AccountListViewModel : BaseViewModel
         await _clipboardService.CopyAsync(code, settings.ClipboardClearSeconds);
     }
 
+    // 아이템의 편집 요청을 목록 이벤트로 승격(MainViewModel 이 편집 화면을 연다).
+    private void OnItemEditRequested(object? sender, EventArgs e)
+    {
+        if (sender is AccountItemViewModel vm)
+            EditRequested?.Invoke(this, vm.Account);
+    }
+
     public void Cleanup()
     {
         foreach (var vm in Accounts)
         {
             vm.CopyRequested -= OnCopyRequested;
+            vm.EditRequested -= OnItemEditRequested;
             vm.Dispose();
         }
         Accounts.Clear();
