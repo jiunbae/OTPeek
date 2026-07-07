@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Otpeek.Core.Windows;
@@ -27,10 +28,17 @@ public partial class AccountItemViewModel : ObservableObject, IDisposable
     /// <summary>서비스 로고(파비콘). null 이면 색상 이니셜로 폴백.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasIcon))]
+    [NotifyPropertyChangedFor(nameof(IconVisibility))]
+    [NotifyPropertyChangedFor(nameof(InitialVisibility))]
     private ImageSource? _iconSource;
 
     /// <summary>로고가 로드되었는지(아이콘 vs 이니셜 표시 전환).</summary>
     public bool HasIcon => IconSource != null;
+
+    // Window(트레이 팝업)의 x:Bind 는 {StaticResource 컨버터} 를 못 쓰므로(Window 는
+    // FrameworkElement 가 아님) Visibility 를 VM 에서 직접 노출한다. Page/Window 공통.
+    public Visibility IconVisibility => HasIcon ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility InitialVisibility => HasIcon ? Visibility.Collapsed : Visibility.Visible;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(FormattedCode))]

@@ -32,7 +32,7 @@
                         <Grid Grid.Column="0" Width="32" Height="32" Margin="0,0,10,0">
                             <Border CornerRadius="9"
                                     Background="{StaticResource PrimaryBrush}"
-                                    Visibility="{x:Bind HasIcon, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                                    Visibility="{x:Bind InitialVisibility, Mode=OneWay}">
                                 <TextBlock Text="{x:Bind Initial}"
                                            FontSize="12"
                                            FontWeight="SemiBold"
@@ -43,7 +43,7 @@
                             <Border CornerRadius="9"
                                     Background="White"
                                     Padding="4"
-                                    Visibility="{x:Bind HasIcon, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    Visibility="{x:Bind IconVisibility, Mode=OneWay}">
                                 <Image Source="{x:Bind IconSource, Mode=OneWay}" Stretch="Uniform" />
                             </Border>
                         </Grid>

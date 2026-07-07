@@ -85,7 +85,7 @@
                                 <!-- 이니셜 폴백 -->
                                 <Border CornerRadius="12"
                                         Background="{StaticResource PrimaryBrush}"
-                                        Visibility="{x:Bind HasIcon, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                                        Visibility="{x:Bind InitialVisibility, Mode=OneWay}">
                                     <TextBlock Text="{x:Bind Initial}"
                                                FontSize="18"
                                                FontWeight="SemiBold"
@@ -97,7 +97,7 @@
                                 <Border CornerRadius="12"
                                         Background="White"
                                         Padding="5"
-                                        Visibility="{x:Bind HasIcon, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        Visibility="{x:Bind IconVisibility, Mode=OneWay}">
                                     <Image Source="{x:Bind IconSource, Mode=OneWay}"
                                            Stretch="Uniform" />
                                 </Border>
