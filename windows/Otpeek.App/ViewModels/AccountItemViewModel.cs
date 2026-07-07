@@ -99,10 +99,13 @@ public partial class AccountItemViewModel : ObservableObject, IDisposable
         try
         {
             if (_favicon is null || !_favicon.Enabled) return;
-            var domain = _favicon.DomainFor(Account);
+            var resolved = _favicon.Resolve(Account);
+            if (resolved is null) return;
+            var (domain, confident) = resolved.Value;
             if (string.IsNullOrEmpty(domain)) return;
 
-            var path = _favicon.CachedIconPath(domain) ?? await _favicon.GetIconPathAsync(domain);
+            var path = _favicon.CachedIconPath(domain)
+                       ?? await _favicon.GetIconPathAsync(domain, brandOnly: !confident);
             if (string.IsNullOrEmpty(path)) return;
 
             _dispatcherQueue.TryEnqueue(async () =>

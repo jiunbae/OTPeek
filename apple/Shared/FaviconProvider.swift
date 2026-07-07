@@ -51,22 +51,33 @@ public enum FaviconProvider {
 
     /// 계정을 가장 그럴듯한 웹사이트 도메인으로 매핑(로고/파비콘 조회용).
     public static func domain(for account: OtpAccount) -> String? {
+        resolve(for: account)?.domain
+    }
+
+    /// 도메인과 "확신 여부"를 함께 반환한다.
+    /// - confident=true: Known 매핑 / 도메인처럼 생긴 문자열 / 이메일 호스트 → 신뢰. Google·icon.horse
+    ///   같은 '항상 무언가 반환하는' 폴백을 써도 대체로 맞다.
+    /// - confident=false: 단순 추측(`{issuer}.com`) → 브랜드 로고(Clearbit)만 조회. Clearbit 이
+    ///   404 면 아이콘 없이 이니셜로 남긴다(엉뚱한 글로브/글자 로고를 확신처럼 보여주지 않기 위함).
+    public static func resolve(for account: OtpAccount) -> (domain: String, confident: Bool)? {
         let issuer = (account.issuer ?? "").trimmingCharacters(in: .whitespaces)
         let name = account.accountName
         for source in [issuer, name] {
             let lower = source.lowercased()
             guard !lower.isEmpty else { continue }
-            for (key, dom) in known where lower.contains(key) { return dom }
+            for (key, dom) in known where lower.contains(key) { return (dom, true) }
             // 이미 도메인처럼 보이는 경우("pixiv.net").
-            if !lower.contains(" "), lower.contains("."), !lower.contains("@") { return lower }
+            if !lower.contains(" "), lower.contains("."), !lower.contains("@") { return (lower, true) }
             // 이메일 계정명 → 일반 메일 호스트가 아니면 그 도메인 사용.
             if let at = lower.firstIndex(of: "@") {
                 let host = String(lower[lower.index(after: at)...])
-                if !genericMailHosts.contains(host) { return host }
+                if !genericMailHosts.contains(host) { return (host, true) }
             }
         }
-        if let first = issuer.lowercased().split(separator: " ").first, !first.isEmpty {
-            return "\(first).com"
+        // 마지막 폴백은 issuer 가 '한 단어'일 때만 추측한다(다단어는 사내 툴 등 오매칭이 잦다).
+        let words = issuer.lowercased().split(separator: " ")
+        if words.count == 1, let first = words.first, !first.isEmpty {
+            return ("\(first).com", false)
         }
         return nil
     }
@@ -119,13 +130,14 @@ public actor FaviconStore {
     /// 계정의 파비콘이 캐시에 없으면 받아 둔다(설정 on 일 때만). 위젯 프리페치용.
     public func prefetch(_ account: OtpAccount) async {
         guard FaviconProvider.faviconsEnabled,
-              let domain = FaviconProvider.domain(for: account),
-              FaviconProvider.cachedData(for: domain) == nil else { return }
-        _ = await iconData(for: domain)
+              let r = FaviconProvider.resolve(for: account),
+              FaviconProvider.cachedData(for: r.domain) == nil else { return }
+        _ = await iconData(for: r.domain, brandOnly: !r.confident)
     }
 
     /// 메모리 → 디스크 → 네트워크 순으로 이미지를 얻는다.
-    public func iconData(for domain: String) async -> Data? {
+    /// brandOnly=true 면 실제 브랜드 로고(Clearbit)만 시도한다(추측 도메인용).
+    public func iconData(for domain: String, brandOnly: Bool = false) async -> Data? {
         if let cached = memory[domain] { return cached }
         if let disk = FaviconProvider.cachedData(for: domain) {
             memory[domain] = disk
@@ -133,7 +145,7 @@ public actor FaviconStore {
         }
         if let task = inFlight[domain] { return await task.value }
 
-        let task = Task<Data?, Never> { await Self.download(domain: domain) }
+        let task = Task<Data?, Never> { await Self.download(domain: domain, brandOnly: brandOnly) }
         inFlight[domain] = task
         let data = await task.value
         inFlight[domain] = nil
@@ -151,13 +163,17 @@ public actor FaviconStore {
     /// 받은 이미지가 이미 충분히 크면(≥128px) 즉시 사용하고, 모두 작을 때만
     /// 그중 가장 큰 것을 쓴다(16px 짜리 저화질 파비콘을 피한다).
     /// SVG/HTML 등 래스터가 아닌 응답(UIImage/NSImage 로 못 읽음)은 건너뛴다.
-    private static func download(domain: String) async -> Data? {
-        let sources = [
-            "https://logo.clearbit.com/\(domain)?size=256&format=png",
-            "https://icon.horse/icon/\(domain)",
-            "https://www.google.com/s2/favicons?domain=\(domain)&sz=256",
-            "https://www.google.com/s2/favicons?domain=\(domain)&sz=128",
-        ]
+    private static func download(domain: String, brandOnly: Bool = false) async -> Data? {
+        // 추측 도메인(brandOnly)은 Clearbit 만: 없으면 404 → 아이콘 없이 이니셜(엉뚱한 로고 방지).
+        // 확신 도메인은 전체 체인(icon.horse/Google 폴백 포함).
+        let sources = brandOnly
+            ? ["https://logo.clearbit.com/\(domain)?size=256&format=png"]
+            : [
+                "https://logo.clearbit.com/\(domain)?size=256&format=png",
+                "https://icon.horse/icon/\(domain)",
+                "https://www.google.com/s2/favicons?domain=\(domain)&sz=256",
+                "https://www.google.com/s2/favicons?domain=\(domain)&sz=128",
+            ]
         var best: Data?
         var bestDim = 0
         for urlString in sources {

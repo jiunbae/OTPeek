@@ -46,11 +46,11 @@ struct AccountIconView: View {
     private var taskKey: String { "\(showFavicons)|\(FaviconProvider.domain(for: account) ?? "")" }
 
     private func loadIcon() async {
-        guard showFavicons, let domain = FaviconProvider.domain(for: account) else {
+        guard showFavicons, let r = FaviconProvider.resolve(for: account) else {
             image = nil
             return
         }
-        if let data = await FaviconStore.shared.iconData(for: domain),
+        if let data = await FaviconStore.shared.iconData(for: r.domain, brandOnly: !r.confident),
            let platform = PlatformImage(data: data) {
             #if canImport(AppKit)
             let img = Image(nsImage: platform)
