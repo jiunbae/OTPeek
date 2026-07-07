@@ -30,7 +30,7 @@ $OTP rm github --yes
 OTPEEK_BACKUP_PASSWORD='bk-pw' $OTP import /tmp/otp-test/backup.otpvault --merge   # resurrects
 ```
 
-Real-world (keyring) mode: unset both env vars, run `otp init` — it prompts for
+Real-world (keyring) mode: unset both env vars, run `otpeek init` — it prompts for
 a master password and stores the vault key in the OS keystore (macOS Keychain /
 Secret Service). Subsequent commands must NOT prompt.
 
@@ -39,7 +39,7 @@ WebDAV sync (needs a WebDAV server, e.g. Nextcloud):
 ```bash
 $OTP sync setup webdav https://host/remote.php/dav/files/you/otpeek-vault.otpvault --user you
 $OTP sync now               # first push
-# second machine: otp restore <same-url>  → enter master password → otp list
+# second machine: otpeek restore <same-url>  → enter master password → otpeek list
 ```
 
 ## 1. macOS / iOS
@@ -114,7 +114,7 @@ dotnet build windows/Otpeek.App/Otpeek.App.csproj -p:Platform=x64
 - [ ] Export a backup on macOS → import on Windows and via CLI → identical codes
       at the same instant (and vice versa)
 - [ ] CLI and macOS app pointed at the SAME WebDAV vault stay consistent:
-      add on CLI (`otp sync now`) → sync in app → account appears
+      add on CLI (`otpeek sync now`) → sync in app → account appears
 - [ ] HOTP account: generate on two devices alternately → counters never reuse
       after sync (counter takes the max)
 

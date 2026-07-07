@@ -39,22 +39,22 @@ nginx WebDAV, etc. The server only ever stores an encrypted blob.
 First device (CLI example):
 
 ```bash
-otp init                                   # choose your master password
-otp add 'otpauth://totp/GitHub:me?secret=...&issuer=GitHub'
-otp sync setup webdav https://nas.example.com/dav/otpeek-vault.otpvault --user june
-otp sync now                               # first push
+otpeek init                                   # choose your master password
+otpeek add 'otpauth://totp/GitHub:me?secret=...&issuer=GitHub'
+otpeek sync setup webdav https://nas.example.com/dav/otpeek-vault.otpvault --user june
+otpeek sync now                               # first push
 ```
 
 Every other device:
 
 ```bash
-otp restore https://nas.example.com/dav/otpeek-vault.otpvault   # asks master password
-otp sync setup webdav https://nas.example.com/dav/otpeek-vault.otpvault --user june
-otp sync now
+otpeek restore https://nas.example.com/dav/otpeek-vault.otpvault   # asks master password
+otpeek sync setup webdav https://nas.example.com/dav/otpeek-vault.otpvault --user june
+otpeek sync now
 ```
 
 - Windows app: Settings → WebDAV → same URL/user → restore flow.
-- Sync anytime with `otp sync now` (CLI) or the Sync Now button (apps).
+- Sync anytime with `otpeek sync now` (CLI) or the Sync Now button (apps).
 
 ## Path C — No server at all: encrypted backup file
 
@@ -64,9 +64,9 @@ it is AES-256-GCM encrypted under a password you choose at export time
 (independent from your master password).
 
 ```bash
-otp export backup.otpvault                 # prompts for a backup password
+otpeek export backup.otpvault                 # prompts for a backup password
 # move the file to the other device, then:
-otp import backup.otpvault --merge        # prompts for that backup password
+otpeek import backup.otpvault --merge        # prompts for that backup password
 ```
 
 Apps: Backup page → Export / Import. Even easier, `.otpvault` is a registered
@@ -86,7 +86,7 @@ Notes:
   moves, cold backups, or air-gapped machines; use Path A/B for continuous sync.
 - `--merge` adds accounts you don't have and **restores ones you deleted by
   mistake**; without `--merge` the import replaces your vault entirely.
-- To move a single account instead of the whole vault: `otp qr <account>`
+- To move a single account instead of the whole vault: `otpeek qr <account>`
   (or the app's per-account QR) and scan it on the other device.
 
 ## Security notes
@@ -98,7 +98,7 @@ Notes:
   changes). Day-to-day unlock is silent via the OS keystore.
 - Losing the master password does not lock out already-joined devices (they
   hold the vault key), but no NEW device can join and the remote blob becomes
-  unrecoverable — change the password from a joined device (`otp passwd`),
+  unrecoverable — change the password from a joined device (`otpeek passwd`),
   which takes effect everywhere on the next sync.
 
 ## Choosing
@@ -108,4 +108,4 @@ Notes:
 | Mac + iPhone, one Apple ID | Path A (iCloud) |
 | Any Windows/Linux in the mix, or different user accounts | Path B (WebDAV) |
 | One-time migration / cold backup / air-gapped box | Path C (encrypted file) |
-| Move one account to a friend/another app | per-account QR (`otp qr`) |
+| Move one account to a friend/another app | per-account QR (`otpeek qr`) |
