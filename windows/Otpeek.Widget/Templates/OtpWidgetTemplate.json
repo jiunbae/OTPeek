@@ -14,7 +14,16 @@
                             "width": "auto",
                             "items": [
                                 {
+                                    "type": "Image",
+                                    "$when": "${hasIcon}",
+                                    "url": "${icon}",
+                                    "width": "40px",
+                                    "height": "40px",
+                                    "altText": "${issuer}"
+                                },
+                                {
                                     "type": "Container",
+                                    "$when": "${hasIcon == false}",
                                     "style": "accent",
                                     "items": [
                                         {

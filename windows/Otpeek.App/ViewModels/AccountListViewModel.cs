@@ -95,6 +95,15 @@ public partial class AccountListViewModel : BaseViewModel
             else if (!string.IsNullOrEmpty(FilterFolderId))
                 accounts = accounts.Where(a => a.folderId == FilterFolderId);
 
+            // 검색 필터(발행처/계정명, 대소문자 무시).
+            if (!string.IsNullOrWhiteSpace(SearchQuery))
+            {
+                var q = SearchQuery.Trim();
+                accounts = accounts.Where(a =>
+                    (a.issuer ?? string.Empty).Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                    a.accountName.Contains(q, StringComparison.OrdinalIgnoreCase));
+            }
+
             foreach (var account in accounts)
             {
                 var vm = new AccountItemViewModel(account, _client, _faviconService);
@@ -149,7 +158,8 @@ public partial class AccountListViewModel : BaseViewModel
 
     partial void OnSearchQueryChanged(string value)
     {
-        // TODO: 필터링 구현
+        // 입력마다 목록을 다시 필터링(파비콘은 캐시되어 재로드가 가볍다).
+        _dispatcherQueue.TryEnqueue(() => _ = LoadAccountsAsync());
     }
 
     private async void OnCopyRequested(object? sender, string code)

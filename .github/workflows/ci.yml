@@ -91,6 +91,12 @@ jobs:
       - name: Build Otpeek.App (Release x64)
         run: dotnet build windows/Otpeek.App/Otpeek.App.csproj -c Release -p:Platform=x64 --no-restore
 
+      # NOTE: Otpeek.Widget is a CsWinRT component and needs the UAP platform SDK
+      # (Platforms\UAP\...\Platform.xml), which isn't present on windows-latest, so
+      # it can't be built standalone here. It compiles as part of the MSIX package
+      # build locally. The App build above still covers the shared Otpeek.Core.Windows
+      # (incl. FaviconService) that the widget depends on.
+
   # ---------------------------------------------------------------------------
   # Apple app. Builds the Rust xcframework + Swift bindings, generates the
   # Xcode project with XcodeGen, then builds the macOS scheme unsigned.

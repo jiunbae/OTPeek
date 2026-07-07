@@ -13,17 +13,18 @@ public sealed class FaviconService : IFaviconService
 {
     private static readonly HttpClient Http = CreateClient();
 
+    /// <summary>파비콘 캐시 폴더(앱·위젯 공유). %LOCALAPPDATA%\Otpeek\Favicons.</summary>
+    public static readonly string CacheDir = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "Otpeek", "Favicons");
+
     private readonly ISettingsService _settings;
-    private readonly string _cacheDir;
     private readonly ConcurrentDictionary<string, Task<string?>> _inflight = new();
 
     public FaviconService(ISettingsService settings)
     {
         _settings = settings;
-        _cacheDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Otpeek", "Favicons");
-        Directory.CreateDirectory(_cacheDir);
+        Directory.CreateDirectory(CacheDir);
     }
 
     private static HttpClient CreateClient()
@@ -92,9 +93,13 @@ public sealed class FaviconService : IFaviconService
     };
 
     public string? DomainFor(OtpAccount account)
+        => ResolveDomain(account.issuer, account.accountName);
+
+    /// <summary>발행처/계정명만으로 도메인을 해석(위젯 등 OtpAccount 가 없는 곳에서 재사용).</summary>
+    public static string? ResolveDomain(string? issuer, string? accountName)
     {
-        var issuer = (account.issuer ?? string.Empty).Trim();
-        var name = account.accountName ?? string.Empty;
+        issuer = (issuer ?? string.Empty).Trim();
+        var name = accountName ?? string.Empty;
 
         foreach (var source in new[] { issuer, name })
         {
@@ -126,10 +131,13 @@ public sealed class FaviconService : IFaviconService
     // 캐시 + 다운로드
     // ------------------------------------------------------------------
 
-    private string FileFor(string domain)
-        => Path.Combine(_cacheDir, domain.Replace('/', '_') + ".png");
+    private static string FileFor(string domain)
+        => Path.Combine(CacheDir, domain.Replace('/', '_') + ".png");
 
-    public string? CachedIconPath(string domain)
+    public string? CachedIconPath(string domain) => CachedPath(domain);
+
+    /// <summary>도메인의 캐시된 파비콘 파일 경로(없으면 null). 정적 — 위젯에서도 사용.</summary>
+    public static string? CachedPath(string domain)
     {
         var f = FileFor(domain);
         return File.Exists(f) && new FileInfo(f).Length > 0 ? f : null;
