@@ -103,6 +103,34 @@ an unpackaged `dotnet run`.
 
 ## CLI (Linux / macOS)
 
+Prebuilt binaries are published to **GitHub Releases** by
+[`.github/workflows/release-cli.yml`](../.github/workflows/release-cli.yml), which
+builds `otpeek` on native runners for four targets — `x86_64`/`aarch64` ×
+`unknown-linux-gnu`/`apple-darwin` — and attaches a `.tar.gz` + `.sha256` for each,
+plus `install.sh`.
+
+**Cut a release:**
+
+```bash
+# 1. bump core/Cargo.toml workspace.package.version to match the tag, land it on main
+# 2. tag and push — this triggers the release workflow
+git tag v2.0.0
+git push origin v2.0.0
+```
+
+The workflow creates/updates the `v2.0.0` Release and uploads the assets. Re-run it
+against an existing tag from the Actions tab ("Run workflow" → enter the tag) if a
+build needs redoing. Once assets exist, the one-liner works:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jiunbae/OTPeek/main/install.sh | sh
+```
+
+Linux runtime deps: `libdbus-1` (keystore) + `libxcb` (clipboard) — bundled on any
+desktop distro; headless boxes need `libdbus-1-3 libxcb1`.
+
+**Build from source** instead:
+
 ```bash
 cd core
 cargo build -p otpeek-cli --release

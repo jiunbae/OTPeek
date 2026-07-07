@@ -91,12 +91,29 @@ neither app reimplements any OTP, crypto, or sync logic.
 <details>
 <summary><b>🦀 Rust core & CLI</b></summary>
 
+**Install the prebuilt binary** (Linux / macOS, x86_64 / aarch64):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jiunbae/OTPeek/main/install.sh | sh
+```
+
+Installs `otpeek` into `~/.local/bin` (override with `OTPEEK_BIN_DIR`; pin a version
+with `OTPEEK_VERSION=v2.0.0`). On Linux the binary needs `libdbus-1` (keystore) and
+`libxcb` (clipboard) at runtime — present on any desktop install; on a headless box
+`sudo apt-get install -y libdbus-1-3 libxcb1`.
+
+**Or build from source** (needs [Rust](https://rustup.rs) stable):
+
 ```bash
 cd core
 cargo test --workspace          # RFC vectors, vault, sync, CLI
 cargo build -p otpeek-cli --release
 sudo cp target/release/otpeek /usr/local/bin/   # optional: install on PATH
+```
 
+**First run:**
+
+```bash
 otpeek init                     # create a vault
 otpeek add 'otpauth://totp/GitHub:me?secret=JBSWY3DPEHPK3PXP&issuer=GitHub'
 otpeek code github --copy
