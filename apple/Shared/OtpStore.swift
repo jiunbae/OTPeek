@@ -161,14 +161,19 @@ public final class OtpStore: ObservableObject {
     }
 
     /// 백업/iCloud 블롭에서 이 기기로 복원 (새 기기 부트스트랩).
-    public func restore(blob: Data, password: String) {
-        guard let path = VaultAccess.vaultPath else { return }
+    /// 복원 성공 여부를 반환한다(호출부가 성공했을 때만 후속 동작을 하도록).
+    @discardableResult
+    public func restore(blob: Data, password: String) -> Bool {
+        guard let path = VaultAccess.vaultPath else { return false }
         do {
             let client = try OtpClient.restore(vaultPath: path, blob: blob, masterPassword: password)
             KeychainHelper.shared.saveVMK(client.vaultKey())
+            lastError = nil
             finishOpen(client)
+            return true
         } catch {
             lastError = describe(error)
+            return false
         }
     }
 
@@ -200,9 +205,12 @@ public final class OtpStore: ObservableObject {
                 case .success(nil):
                     self.lastError = "No iCloud vault found yet. Enable iCloud Sync on your first device, then try again."
                 case .success(.some(let blob)):
-                    self.restore(blob: blob.data, password: password)
-                    // 복원 성공 시 이 기기에서도 동기화를 켜 둔다(원격 VMK 를 공유하므로 안전).
-                    if self.isReady { self.setICloudSync(enabled: true) }
+                    // 복원이 실제로 성공했을 때만 동기화를 켠다. (기존 볼트가 있는 기기에서
+                    // 비밀번호가 틀리면 restore 는 실패하고 isReady 는 이전 값 그대로이므로,
+                    // isReady 를 조건으로 쓰면 실패해도 동기화가 켜지는 버그가 있었다.)
+                    if self.restore(blob: blob.data, password: password) {
+                        self.setICloudSync(enabled: true)
+                    }
                 }
             }
         }

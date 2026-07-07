@@ -72,23 +72,29 @@ public enum FaviconProvider {
     }
 
     /// 표시 이름이 도메인으로 깔끔히 매핑되지 않는 알려진 서비스.
-    private static let known: [String: String] = [
-        "google": "google.com", "github": "github.com",
-        "amazon web services": "aws.amazon.com", "aws": "aws.amazon.com",
-        "amazon": "amazon.com",
-        "cloudflare": "cloudflare.com", "discord": "discord.com",
-        "facebook": "facebook.com", "twitter": "x.com", "linkedin": "linkedin.com",
-        "notion": "notion.so", "bitwarden": "bitwarden.com", "tumblr": "tumblr.com",
-        "pixiv": "pixiv.net", "nvidia": "nvidia.com", "mathworks": "mathworks.com",
-        "mailgun": "mailgun.com", "proxmox": "proxmox.com", "electronic arts": "ea.com",
-        "plaync": "plaync.com", "bithumb": "bithumb.com", "coinrail": "coinrail.co.kr",
-        "coinnest": "coinnest.co.kr", "coinlink": "coinlink.co.kr",
-        "miningpoolhub": "miningpoolhub.com", "pypi": "pypi.org",
-        "visit japan web": "vjw-lp.digital.go.jp", "microsoft": "microsoft.com",
-        "apple": "apple.com", "dropbox": "dropbox.com", "slack": "slack.com",
-        "gitlab": "gitlab.com", "steam": "steampowered.com", "reddit": "reddit.com",
-        "paypal": "paypal.com", "instagram": "instagram.com", "binance": "binance.com",
-        "coinbase": "coinbase.com", "upbit": "upbit.com",
+    /// 부분일치(contains)이므로 **더 구체적인 키를 먼저** 두어야 한다(순서 있는 배열).
+    /// 예: "Amazon Web Services" 는 "amazon" 도 포함하므로 "amazon web services"/"aws" 를
+    /// 먼저 검사해야 AWS 로고가 결정적으로 선택된다(Dictionary 는 순서가 불명확해 부적합).
+    private static let known: [(String, String)] = [
+        ("amazon web services", "aws.amazon.com"),
+        ("aws", "aws.amazon.com"),
+        ("visit japan web", "vjw-lp.digital.go.jp"),
+        ("electronic arts", "ea.com"),
+        ("google", "google.com"), ("github", "github.com"), ("gitlab", "gitlab.com"),
+        ("amazon", "amazon.com"),
+        ("cloudflare", "cloudflare.com"), ("discord", "discord.com"),
+        ("facebook", "facebook.com"), ("twitter", "x.com"), ("linkedin", "linkedin.com"),
+        ("notion", "notion.so"), ("bitwarden", "bitwarden.com"), ("tumblr", "tumblr.com"),
+        ("pixiv", "pixiv.net"), ("nvidia", "nvidia.com"), ("mathworks", "mathworks.com"),
+        ("mailgun", "mailgun.com"), ("proxmox", "proxmox.com"),
+        ("plaync", "plaync.com"), ("bithumb", "bithumb.com"), ("coinrail", "coinrail.co.kr"),
+        ("coinnest", "coinnest.co.kr"), ("coinlink", "coinlink.co.kr"),
+        ("miningpoolhub", "miningpoolhub.com"), ("pypi", "pypi.org"),
+        ("microsoft", "microsoft.com"), ("apple", "apple.com"),
+        ("dropbox", "dropbox.com"), ("slack", "slack.com"),
+        ("steam", "steampowered.com"), ("reddit", "reddit.com"),
+        ("paypal", "paypal.com"), ("instagram", "instagram.com"), ("binance", "binance.com"),
+        ("coinbase", "coinbase.com"), ("upbit", "upbit.com"),
     ]
 
     private static let genericMailHosts: Set<String> = [
