@@ -9,6 +9,7 @@
     <Grid Padding="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -39,9 +40,16 @@
             </StackPanel>
         </Grid>
 
+        <!-- Search -->
+        <AutoSuggestBox x:Name="SearchBox"
+                        Grid.Row="1"
+                        Margin="0,0,0,16"
+                        PlaceholderText="Search accounts"
+                        QueryIcon="Find" />
+
         <!-- Empty State -->
         <StackPanel x:Name="EmptyState"
-                    Grid.Row="1"
+                    Grid.Row="2"
                     Visibility="Collapsed"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -63,7 +71,7 @@
 
         <!-- Account List -->
         <ListView x:Name="AccountListView"
-                  Grid.Row="1"
+                  Grid.Row="2"
                   SelectionMode="None"
                   ItemsSource="{x:Bind ViewModel.Accounts, Mode=OneWay}">
             <ListView.ItemTemplate>
@@ -168,7 +176,7 @@
 
         <!-- Loading -->
         <ProgressRing x:Name="LoadingRing"
-                      Grid.Row="1"
+                      Grid.Row="2"
                       IsActive="False"
                       Width="48"
                       Height="48"

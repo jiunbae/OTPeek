@@ -21,6 +21,7 @@ public sealed partial class AccountListPage : Page
         // 이벤트 연결
         AddButton.Click += OnAddButtonClick;
         ScanQrButton.Click += OnScanQrButtonClick;
+        SearchBox.TextChanged += OnSearchTextChanged;
 
         // ViewModel 상태 바인딩
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
@@ -80,6 +81,13 @@ public sealed partial class AccountListPage : Page
     private async void OnScanQrButtonClick(object sender, RoutedEventArgs e)
     {
         await ShowQrScannerDialogAsync();
+    }
+
+    private void OnSearchTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    {
+        // 사용자가 입력한 경우에만 검색어 갱신(프로그램적 변경 제외).
+        if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
+            ViewModel.SearchQuery = sender.Text;
     }
 
     private async void OnAddRequested(object? sender, EventArgs e)
