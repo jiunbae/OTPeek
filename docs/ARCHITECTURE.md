@@ -443,13 +443,13 @@ Output: human tables to stdout, errors to stderr, exit codes 0/1/2 (ok/error/amb
    the VMK: account `"vmk"`, access group shared with the widget,
    `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`.
    Vault file lives in the App Group container:
-   `FileManager.containerURL(forSecurityApplicationGroupIdentifier: "group.com.otpeek")/vault.otpvault`.
+   `FileManager.containerURL(forSecurityApplicationGroupIdentifier: "group.com.otpeek.app")/vault.otpvault`.
 3. **Widget**: opens `OtpClient.openWithKey` (keychain VMK + shared vault path),
    `codesAt(...)` for timeline entries. No Argon2, no password UI in the widget.
    App posts a Darwin notification (`CFNotificationCenterGetDarwinNotifyCenter`) +
    `WidgetCenter.reloadAllTimelines()` after each mutation.
 4. **CloudKit backend**: Swift class `CloudKitSyncBackend: SyncBackend` (the uniffi
-   foreign trait). Container `iCloud.com.otpeek`, private DB, record type
+   foreign trait). Container `iCloud.com.otpeek.app`, private DB, record type
    `Vault`, recordName `"vault"`, `blob: Data` field, `recordChangeTag` as etag;
    `if_match` maps to save policy `.ifServerRecordUnchanged` (translate CKError
    `.serverRecordChanged` → `OtpError.Conflict`). Bridge async CloudKit with a semaphore

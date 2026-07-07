@@ -39,3 +39,12 @@ core/target/
 # Generated FFI bindings / built frameworks (rebuilt by scripts)
 apple/Generated/
 apple/Frameworks/
+
+# fastlane — secrets & build artifacts (NEVER commit API keys or .env)
+apple/fastlane/.env
+apple/fastlane/build/
+apple/fastlane/report.xml
+apple/fastlane/Preview.html
+apple/fastlane/test_output/
+apple/build/
+**/*.p8

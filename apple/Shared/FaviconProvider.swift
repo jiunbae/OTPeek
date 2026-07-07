@@ -1,4 +1,5 @@
 import Foundation
+import ImageIO
 
 /// 앱과 위젯이 공유하는 App Group UserDefaults(파비콘 on/off 등).
 public extension UserDefaults {
@@ -74,6 +75,7 @@ public enum FaviconProvider {
     private static let known: [String: String] = [
         "google": "google.com", "github": "github.com",
         "amazon web services": "aws.amazon.com", "aws": "aws.amazon.com",
+        "amazon": "amazon.com",
         "cloudflare": "cloudflare.com", "discord": "discord.com",
         "facebook": "facebook.com", "twitter": "x.com", "linkedin": "linkedin.com",
         "notion": "notion.so", "bitwarden": "bitwarden.com", "tumblr": "tumblr.com",
@@ -136,15 +138,22 @@ public actor FaviconStore {
         return data
     }
 
-    /// 소스들을 차례로 시도.
-    /// (1) icon.horse — 대개 512px PNG 로 실제 로고 수준의 고화질.
-    /// (2) Google s2 128px — 항상 무언가 반환하는 안정적 폴백.
+    /// 소스들을 화질 우선순위로 시도한다.
+    /// (1) Clearbit — 유명 브랜드의 실제 로고를 256px 로 제공(구글/디스코드 등 고화질).
+    /// (2) icon.horse — 대개 512px PNG.
+    /// (3) Google s2 256/128 — 항상 무언가 반환하는 안정적 폴백.
+    /// 받은 이미지가 이미 충분히 크면(≥128px) 즉시 사용하고, 모두 작을 때만
+    /// 그중 가장 큰 것을 쓴다(16px 짜리 저화질 파비콘을 피한다).
     /// SVG/HTML 등 래스터가 아닌 응답(UIImage/NSImage 로 못 읽음)은 건너뛴다.
     private static func download(domain: String) async -> Data? {
         let sources = [
+            "https://logo.clearbit.com/\(domain)?size=256&format=png",
             "https://icon.horse/icon/\(domain)",
+            "https://www.google.com/s2/favicons?domain=\(domain)&sz=256",
             "https://www.google.com/s2/favicons?domain=\(domain)&sz=128",
         ]
+        var best: Data?
+        var bestDim = 0
         for urlString in sources {
             guard let url = URL(string: urlString) else { continue }
             var request = URLRequest(url: url)
@@ -152,9 +161,26 @@ public actor FaviconStore {
             guard let (data, response) = try? await URLSession.shared.data(for: request),
                   let http = response as? HTTPURLResponse, http.statusCode == 200,
                   data.count > 200, isRasterImage(data) else { continue }
-            return data
+            let dim = pixelDimension(data)
+            if dim >= 128 { return data }            // 이미 선명 → 채택
+            if dim > bestDim { best = data; bestDim = dim }  // 더 큰 후보 기억
         }
-        return nil
+        return best
+    }
+
+    /// 인코딩된 이미지의 최대 픽셀 변(멀티 해상도 .ico 포함)을 ImageIO 로 확인한다.
+    /// 전체 디코드 없이 헤더만 읽으므로 가볍다.
+    private static func pixelDimension(_ data: Data) -> Int {
+        guard let src = CGImageSourceCreateWithData(data as CFData, nil) else { return 0 }
+        var maxDim = 0
+        for i in 0..<max(CGImageSourceGetCount(src), 1) {
+            guard let props = CGImageSourceCopyPropertiesAtIndex(src, i, nil) as? [CFString: Any]
+            else { continue }
+            let w = (props[kCGImagePropertyPixelWidth] as? Int) ?? 0
+            let h = (props[kCGImagePropertyPixelHeight] as? Int) ?? 0
+            maxDim = max(maxDim, w, h)
+        }
+        return maxDim
     }
 
     /// OS 가 디코딩할 수 있는 래스터 이미지인지 매직 바이트로 확인(SVG/HTML 배제).

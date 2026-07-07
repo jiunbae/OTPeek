@@ -125,7 +125,7 @@ cd apple && xcodegen generate && open Otpeek.xcodeproj
 - macOS: `Otpeek-macOS` scheme → My Mac → ⌘R
 - iOS: `Otpeek-iOS` scheme → Simulator → ⌘R
 
-iCloud sync requires the `iCloud.com.otpeek` CloudKit container on your signing team.
+iCloud sync requires the `iCloud.com.otpeek.app` CloudKit container on your signing team.
 
 </details>
 

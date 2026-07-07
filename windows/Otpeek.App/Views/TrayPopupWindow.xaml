@@ -28,20 +28,25 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <!-- Icon -->
-                        <Border Grid.Column="0"
-                                Width="32"
-                                Height="32"
-                                CornerRadius="16"
-                                Background="{StaticResource PrimaryBrush}"
-                                Margin="0,0,10,0">
-                            <TextBlock Text="{x:Bind Initial}"
-                                       FontSize="12"
-                                       FontWeight="SemiBold"
-                                       Foreground="White"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center" />
-                        </Border>
+                        <!-- Icon: 파비콘(흰 타일) 또는 색상 이니셜 -->
+                        <Grid Grid.Column="0" Width="32" Height="32" Margin="0,0,10,0">
+                            <Border CornerRadius="9"
+                                    Background="{StaticResource PrimaryBrush}"
+                                    Visibility="{x:Bind InitialVisibility, Mode=OneWay}">
+                                <TextBlock Text="{x:Bind Initial}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" />
+                            </Border>
+                            <Border CornerRadius="9"
+                                    Background="White"
+                                    Padding="4"
+                                    Visibility="{x:Bind IconVisibility, Mode=OneWay}">
+                                <Image Source="{x:Bind IconSource, Mode=OneWay}" Stretch="Uniform" />
+                            </Border>
+                        </Grid>
 
                         <!-- Info -->
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">

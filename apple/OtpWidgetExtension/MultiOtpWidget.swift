@@ -255,12 +255,17 @@ struct WidgetAccountIcon: View {
 
     var body: some View {
         if let data = iconData, let image = Self.image(from: data) {
+            // 앱과 동일하게 깨끗한 흰 배경 위에 로고만(투명 로고가 위젯 배경에 얹혀 지저분해지지 않게).
+            // 앱(AccountIconView)과 같은 패딩/코너/그림자로 디자인 언어를 일치시킨다.
             image
                 .resizable()
                 .interpolation(.high)
                 .scaledToFit()
+                .padding(size * 0.12)
                 .frame(width: size, height: size)
+                .background(Color.white)
                 .clipShape(RoundedRectangle(cornerRadius: size * 0.28, style: .continuous))
+                .shadow(color: .black.opacity(0.08), radius: 0.5, y: 0.5)
         } else {
             InitialCircle(initial: initial, color: color, size: size)
         }

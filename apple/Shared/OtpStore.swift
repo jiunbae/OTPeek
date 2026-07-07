@@ -61,10 +61,40 @@ public final class OtpStore: ObservableObject {
     }
 
     public init() {
+        #if DEBUG
+        // App Store 스크린샷용 데모 모드: 실제 볼트 없이 샘플 계정을 보여준다.
+        // (라이브 코드는 코어의 순수 함수로 계산되므로 클라이언트가 없어도 표시된다.)
+        if ProcessInfo.processInfo.arguments.contains("-otpeekDemo") {
+            seedDemoData()
+            return
+        }
+        #endif
         vaultExists = VaultAccess.vaultExists
         detectLegacyData()
         openIfPossible()
     }
+
+    #if DEBUG
+    private func seedDemoData() {
+        let now = Int64(Date().timeIntervalSince1970 * 1000)
+        func a(_ issuer: String, _ name: String, _ secret: String, _ i: Int32, fav: Bool = false) -> OtpAccount {
+            OtpAccount(id: UUID().uuidString, otpType: .totp, secret: secret, issuer: issuer,
+                       accountName: name, algorithm: .sha1, digits: 6, period: 30, counter: 0,
+                       folderId: nil, isFavorite: fav, sortOrder: i, icon: nil, color: nil,
+                       createdAt: now, updatedAt: now, deletedAt: nil)
+        }
+        accounts = [
+            a("GitHub", "octocat", "JBSWY3DPEHPK3PXP", 0, fav: true),
+            a("Google", "you@gmail.com", "KRSXG5CTMVRXEZLU", 1, fav: true),
+            a("Amazon", "shopping@gmail.com", "MFRGGZDFMZTWQ2LK", 2),
+            a("Slack", "you@company.com", "NBSWY3DPO5XXE3DE", 3),
+            a("Dropbox", "files@gmail.com", "GEZDGNBVGY3TQOJQ", 4),
+            a("Notion", "team@notion.so", "ONXW2ZLUNBUW4ZY7", 5),
+        ]
+        vaultExists = true
+        isReady = true
+    }
+    #endif
 
     // MARK: - 볼트 열기 / 온보딩
 
@@ -353,7 +383,7 @@ public final class OtpStore: ObservableObject {
                 // 생성"한 경우). 원격을 이 기기의 키로 열 수 없다. 정석 해법은 이 기기를 iCloud 에서
                 // 다시 복원해 원격 VMK 를 공유하는 것이다(설정 → "Reset & Restore from iCloud").
                 wrongKey = true
-                result = "Sync failed: this device's vault uses a different key than iCloud. Reset and restore this device from iCloud to share the same key."
+                result = "Sync failed: this device's vault uses a different key than iCloud. Use Settings → \"Restore from iCloud\" to pull the vault from your other device and share the same key."
             } catch {
                 result = "Sync failed: \(await self?.describe(error) ?? "error")"
             }

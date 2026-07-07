@@ -31,8 +31,9 @@ struct SettingsView: View {
     @State private var pendingImportData: Data?
     // iOS: 문서 선택기(.fileImporter) 표시 여부. macOS 는 NSOpenPanel 을 직접 띄운다.
     @State private var showingImportPicker = false
-    // WrongKey(다른 VMK) 복구용 "Reset & Restore from iCloud" 확인 다이얼로그.
-    @State private var showingResetConfirm = false
+    // 기존 iCloud 볼트를 이 기기로 받아오기(로컬 교체). 볼트가 이미 있어도 쓸 수 있는 진입점.
+    @State private var showingICloudRestore = false
+    @State private var icloudRestorePassword = ""
 
     // 내보내기 대상: 파일로 저장할지 / 공유 시트(AirDrop 등)로 보낼지.
     private enum ExportDestination { case save, share }
@@ -63,11 +64,15 @@ struct SettingsView: View {
             } message: {
                 Text("Enter the password used to encrypt this backup.")
             }
-            .alert("Reset & Restore from iCloud", isPresented: $showingResetConfirm) {
-                Button("Cancel", role: .cancel) {}
-                Button("Reset", role: .destructive) { appState.resetForRestore() }
+            .alert("Restore from iCloud", isPresented: $showingICloudRestore) {
+                SecureField("Master Password", text: $icloudRestorePassword)
+                Button("Cancel", role: .cancel) { icloudRestorePassword = "" }
+                Button("Restore") {
+                    appState.restoreFromICloud(password: icloudRestorePassword)
+                    icloudRestorePassword = ""
+                }
             } message: {
-                Text("This removes this device's local vault so you can restore it from iCloud with your master password, sharing the same key. Accounts that exist only on this device and haven't synced will be lost. Your iCloud copy is not affected.")
+                Text("Downloads your iCloud vault to this device and replaces the local one, adopting the shared key so sync works across devices. Enter the master password from the device where you set up Sync. Accounts that exist only on this device will be replaced.")
             }
             #if os(iOS)
             .fileImporter(
@@ -81,7 +86,10 @@ struct SettingsView: View {
                 guard let data = try? Data(contentsOf: url) else { return }
                 pendingImportData = data
                 backupPassword = ""
-                showingImportPassword = true
+                // fileImporter 가 닫히는 같은 런루프에서 alert 를 올리면 SwiftUI 가
+                // 표시를 삼켜 "다이얼로그가 안 뜨는" 문제가 생긴다. 파일 선택기가
+                // 완전히 사라진 뒤 다음 사이클에 비밀번호 alert 를 띄운다.
+                presentImportPasswordAfterDismiss()
             }
             #endif
     }
@@ -224,6 +232,15 @@ struct SettingsView: View {
                 }
                 .tint(.green)
 
+                // 다른 기기에서 이미 iCloud 동기화를 켠 경우, 이 기기(로컬 볼트가 이미 있어도)로
+                // 원격 볼트를 받아오는 진입점. 원격을 비밀번호로 열어 공유 키를 채택하므로
+                // 이후 양방향 동기화가 성립한다.
+                Button { showingICloudRestore = true } label: {
+                    settingLabel("Restore from iCloud", "icloud.and.arrow.down",
+                                 detail: "Pull the vault from another device and replace this one.")
+                }
+                .buttonStyle(.plain)
+
                 if appState.iCloudSyncEnabled {
                     Button { appState.syncNow() } label: {
                         HStack {
@@ -241,12 +258,6 @@ struct SettingsView: View {
                             .multilineTextAlignment(.trailing)
                     }
                     .font(.caption)
-
-                    Button(role: .destructive) { showingResetConfirm = true } label: {
-                        actionRow("Reset & Restore from iCloud", "arrow.triangle.2.circlepath.icloud",
-                                  tint: .red)
-                    }
-                    .buttonStyle(.plain)
                 }
 
             case .some(false):
@@ -476,11 +487,20 @@ struct SettingsView: View {
            let data = try? Data(contentsOf: url) {
             pendingImportData = data
             backupPassword = ""
-            showingImportPassword = true
+            presentImportPasswordAfterDismiss()
         }
         #else
         showingImportPicker = true
         #endif
+    }
+
+    /// Presents the backup-password prompt on the next runloop. Presenting an
+    /// `.alert` synchronously from a file-picker completion collides with the
+    /// picker's dismissal and SwiftUI silently drops it — so defer past it.
+    private func presentImportPasswordAfterDismiss() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            showingImportPassword = true
+        }
     }
 
     private func importBackup() {

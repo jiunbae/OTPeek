@@ -2,11 +2,10 @@
 <Scheme
    LastUpgradeVersion = "1500"
    wasCreatedForAppExtension = "YES"
-   version = "1.7">
+   version = "2.0">
    <BuildAction
       parallelizeBuildables = "YES"
-      buildImplicitDependencies = "YES"
-      runPostActionsOnFailure = "NO">
+      buildImplicitDependencies = "YES">
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
@@ -17,7 +16,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "CFF5C4D710DBBD67FD2116C4"
-               BuildableName = "OtpWidgetExtension-macOS.appex"
+               BuildableName = "OtpWidget.appex"
                BlueprintName = "OtpWidgetExtension-macOS"
                ReferencedContainer = "container:Otpeek.xcodeproj">
             </BuildableReference>
@@ -31,7 +30,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "0A0A269B363FBEDD48284A57"
-               BuildableName = "Otpeek-macOS.app"
+               BuildableName = "OTPeek.app"
                BlueprintName = "Otpeek-macOS"
                ReferencedContainer = "container:Otpeek.xcodeproj">
             </BuildableReference>
@@ -42,13 +41,12 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES"
-      onlyGenerateCoverageForSpecifiedTargets = "NO">
+      shouldUseLaunchSchemeArgsEnv = "YES">
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "CFF5C4D710DBBD67FD2116C4"
-            BuildableName = "OtpWidgetExtension-macOS.appex"
+            BuildableName = "OtpWidget.appex"
             BlueprintName = "OtpWidgetExtension-macOS"
             ReferencedContainer = "container:Otpeek.xcodeproj">
          </BuildableReference>
@@ -61,6 +59,7 @@
       selectedDebuggerIdentifier = ""
       selectedLauncherIdentifier = "Xcode.IDEFoundation.Launcher.PosixSpawn"
       launchStyle = "0"
+      askForAppToLaunch = "Yes"
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
@@ -72,13 +71,11 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "CFF5C4D710DBBD67FD2116C4"
-            BuildableName = "OtpWidgetExtension-macOS.appex"
+            BuildableName = "OtpWidget.appex"
             BlueprintName = "OtpWidgetExtension-macOS"
             ReferencedContainer = "container:Otpeek.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <CommandLineArguments>
-      </CommandLineArguments>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -91,13 +88,11 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "CFF5C4D710DBBD67FD2116C4"
-            BuildableName = "OtpWidgetExtension-macOS.appex"
+            BuildableName = "OtpWidget.appex"
             BlueprintName = "OtpWidgetExtension-macOS"
             ReferencedContainer = "container:Otpeek.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <CommandLineArguments>
-      </CommandLineArguments>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

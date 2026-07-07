@@ -4,7 +4,7 @@ import WidgetKit
 /// App 과 Widget 확장이 공유하는 볼트 파일 위치 / 프로세스 간 변경 알림 유틸리티.
 public enum VaultAccess {
 
-    public static let appGroupId = "group.com.otpeek"
+    public static let appGroupId = "group.com.otpeek.app"
     public static let vaultFileName = "vault.otpvault"
 
     /// Darwin 알림 이름 — 앱이 변경 후 게시하면 위젯이 타임라인을 새로고침한다.

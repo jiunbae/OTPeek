@@ -1,0 +1,1 @@
+2FA,OTP,authenticator,TOTP,two-factor,verification,widget,MFA,security,login,code

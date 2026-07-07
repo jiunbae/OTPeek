@@ -1,0 +1,9 @@
+# fastlane Appfile — identity for the App Store Connect record.
+# Authentication uses an App Store Connect API key (see Fastfile / .env), so no
+# Apple ID password or interactive 2FA is needed. apple_id is optional.
+
+app_identifier("com.otpeek.app")
+team_id("728FW73BS8")            # Apple Distribution: Jiun Bae (728FW73BS8)
+
+# Optional — only used by actions that fall back to Apple ID auth.
+# apple_id(ENV["FASTLANE_APPLE_ID"])

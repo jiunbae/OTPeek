@@ -14,6 +14,7 @@ public partial class TrayPopupViewModel : BaseViewModel
     private readonly IOtpClientService _client;
     private readonly IClipboardService _clipboardService;
     private readonly ISettingsService _settingsService;
+    private readonly IFaviconService _faviconService;
 
     public ObservableCollection<AccountItemViewModel> Accounts { get; } = new();
 
@@ -28,11 +29,13 @@ public partial class TrayPopupViewModel : BaseViewModel
     public TrayPopupViewModel(
         IOtpClientService client,
         IClipboardService clipboardService,
-        ISettingsService settingsService)
+        ISettingsService settingsService,
+        IFaviconService faviconService)
     {
         _client = client;
         _clipboardService = clipboardService;
         _settingsService = settingsService;
+        _faviconService = faviconService;
     }
 
     /// <summary>
@@ -64,7 +67,7 @@ public partial class TrayPopupViewModel : BaseViewModel
 
             foreach (var account in sortedAccounts)
             {
-                var vm = new AccountItemViewModel(account, _client);
+                var vm = new AccountItemViewModel(account, _client, _faviconService);
                 vm.CopyRequested += OnCopyRequested;
                 Accounts.Add(vm);
             }

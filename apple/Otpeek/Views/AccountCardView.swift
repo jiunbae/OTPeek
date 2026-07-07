@@ -27,10 +27,16 @@ struct AccountCardView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            AccountIconView(account: account, size: 34)
+            // 탭-복사 영역은 아이콘·정보·코드까지만. ⋯ 오버플로 메뉴는 이 버튼 밖의
+            // 형제 뷰로 두어, iOS 에서 카드 탭 제스처가 메뉴 버튼 탭을 삼키지 않게 한다.
+            Button {
+                if autoClipboard { copyCode() }
+            } label: {
+              HStack(spacing: 12) {
+                AccountIconView(account: account, size: 34)
 
-            // Identity (secondary)
-            VStack(alignment: .leading, spacing: 1) {
+                // Identity (secondary)
+                VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 4) {
                     Text(title)
                         .font(.system(size: 13, weight: .semibold))
@@ -75,7 +81,11 @@ struct AccountCardView: View {
                         .foregroundColor(isCopied ? .green : (urgent ? .red : .primary))
                 }
             }
-            .fixedSize()
+              .fixedSize()
+              }
+              .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
 
             // Overflow menu (quiet until hover on macOS)
             Menu {
@@ -108,9 +118,7 @@ struct AccountCardView: View {
             RoundedRectangle(cornerRadius: 8)
                 .fill(rowHighlight)
         )
-        .contentShape(Rectangle())
-        .onTapGesture { if autoClipboard { copyCode() } }
-        .help(autoClipboard ? "Click anywhere to copy the code" : "Tap-to-copy is off (enable in Settings)")
+        .help(autoClipboard ? "Tap the code area to copy" : "Tap-to-copy is off (enable in Settings)")
         #if os(macOS)
         .onHover { hovering = $0
             if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }

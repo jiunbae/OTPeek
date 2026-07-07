@@ -68,7 +68,7 @@ xcodebuild -project Otpeek.xcodeproj -scheme Otpeek-macOS build CODE_SIGNING_ALL
 - [ ] File association: double-click a `.otpvault` in Finder → app opens the
       import dialog; AirDrop the file from iPhone → same; export offers the
       share sheet; opening a file on a FRESH install routes to restore
-- [ ] iCloud sync (needs signing team + CloudKit container `iCloud.com.otpeek`
+- [ ] iCloud sync (needs signing team + CloudKit container `iCloud.com.otpeek.app`
       provisioned in the developer portal): enable on device A, add account,
       sync; device B "Restore from iCloud" with master password → same accounts;
       edit on both sides → newest edit wins after both sync
