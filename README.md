@@ -21,6 +21,15 @@ platform, powered by a single **shared Rust core**.
 ![E2E encrypted](https://img.shields.io/badge/vault-AES--256--GCM-2E7D32)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
+<br/>
+
+**[Website](https://jiun.dev/OTPeek/)** ·
+**[App Store](https://apps.apple.com/app/otpeek/id6787845951)** ·
+**[Privacy](https://jiun.dev/OTPeek/privacy.html)** ·
+**[Support](https://jiun.dev/OTPeek/support.html)**
+
+<a href="https://buymeacoffee.com/jiunbae"><img src="https://img.shields.io/badge/☕️%20Buy%20me%20a%20coffee-FFDD00?style=flat&logoColor=black" alt="Buy Me a Coffee" /></a>
+
 </div>
 
 ---
