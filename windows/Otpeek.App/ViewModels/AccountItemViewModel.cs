@@ -105,11 +105,24 @@ public partial class AccountItemViewModel : ObservableObject, IDisposable
             var path = _favicon.CachedIconPath(domain) ?? await _favicon.GetIconPathAsync(domain);
             if (string.IsNullOrEmpty(path)) return;
 
-            _dispatcherQueue.TryEnqueue(() =>
+            _dispatcherQueue.TryEnqueue(async () =>
             {
                 if (_disposed) return;
-                try { IconSource = new BitmapImage(new Uri(path)); }
-                catch { /* 손상 캐시 등은 무시하고 이니셜 유지 */ }
+                // 파일경로 Uri 로 BitmapImage 를 만들면 (1) MSIX 패키지 모드에서 로드가 막히고
+                // (2) 디코드가 비동기라 실패해도 IconSource 가 이미 세팅돼 이니셜이 숨겨진 채
+                // "빈 흰 타일" 이 남는다. 스트림으로 디코드까지 마친 뒤에만 아이콘으로 전환한다.
+                try
+                {
+                    using var stream = await Windows.Storage.Streams.FileRandomAccessStream
+                        .OpenAsync(path, Windows.Storage.FileAccessMode.Read);
+                    var bmp = new BitmapImage();
+                    await bmp.SetSourceAsync(stream);
+                    if (!_disposed) IconSource = bmp;
+                }
+                catch
+                {
+                    if (!_disposed) IconSource = null; // 실패 시 이니셜 폴백 유지
+                }
             });
         }
         catch

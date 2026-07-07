@@ -18,6 +18,7 @@ public partial class AccountListViewModel : BaseViewModel
     private readonly ISettingsService _settingsService;
     private readonly IFaviconService _faviconService;
     private readonly DispatcherQueue _dispatcherQueue;
+    private System.Threading.CancellationTokenSource? _searchDebounceCts;
 
     public ObservableCollection<AccountItemViewModel> Accounts { get; } = new();
 
@@ -158,8 +159,16 @@ public partial class AccountListViewModel : BaseViewModel
 
     partial void OnSearchQueryChanged(string value)
     {
-        // 입력마다 목록을 다시 필터링(파비콘은 캐시되어 재로드가 가볍다).
-        _dispatcherQueue.TryEnqueue(() => _ = LoadAccountsAsync());
+        // 매 키 입력마다 목록 전체를 재생성하면 깜빡임/타이머 churn/아이콘 재로드가 발생한다.
+        // ~250ms 디바운스: 입력이 멎은 뒤에만 한 번 다시 로드한다.
+        _searchDebounceCts?.Cancel();
+        _searchDebounceCts = new System.Threading.CancellationTokenSource();
+        var token = _searchDebounceCts.Token;
+        _ = Task.Delay(250, token).ContinueWith(
+            _ => _dispatcherQueue.TryEnqueue(() => _ = LoadAccountsAsync()),
+            token,
+            TaskContinuationOptions.OnlyOnRanToCompletion,
+            TaskScheduler.Default);
     }
 
     private async void OnCopyRequested(object? sender, string code)

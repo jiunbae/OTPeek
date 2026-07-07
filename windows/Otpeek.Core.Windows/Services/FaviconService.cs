@@ -18,8 +18,12 @@ public sealed class FaviconService : IFaviconService
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "Otpeek", "Favicons");
 
+    private static readonly TimeSpan FailTtl = TimeSpan.FromHours(6);
+
     private readonly ISettingsService _settings;
     private readonly ConcurrentDictionary<string, Task<string?>> _inflight = new();
+    // 최근 실패한 도메인(네거티브 캐시). 매 리로드마다 4-URL 을 다시 때리지 않도록 한다.
+    private readonly ConcurrentDictionary<string, DateTime> _failed = new();
 
     public FaviconService(ISettingsService settings)
     {
@@ -147,6 +151,9 @@ public sealed class FaviconService : IFaviconService
     {
         var cached = CachedIconPath(domain);
         if (cached != null) return Task.FromResult<string?>(cached);
+        // 최근 실패한 도메인은 TTL 동안 재시도하지 않는다(다운로드 폭주 방지).
+        if (_failed.TryGetValue(domain, out var when) && DateTime.UtcNow - when < FailTtl)
+            return Task.FromResult<string?>(null);
         return _inflight.GetOrAdd(domain, d => DownloadAsync(d, ct));
     }
 
@@ -174,16 +181,24 @@ public sealed class FaviconService : IFaviconService
                 if (bytes == null) continue;
                 int dim = PixelDimension(bytes);
                 if (dim >= 128) { best = bytes; break; }      // 선명 → 채택
-                if (dim > bestDim) { best = bytes; bestDim = dim; }
+                // dim==0 은 GDI+ 가 크기를 못 재는 유효 포맷(WEBP 등)일 수 있다. 아직 후보가
+                // 없으면 그래도 채택해, dimension 판정 실패로 파비콘이 아예 안 뜨는 걸 막는다.
+                if (best == null || dim > bestDim) { best = bytes; bestDim = dim; }
             }
 
-            if (best == null) return null;
+            if (best == null)
+            {
+                _failed[domain] = DateTime.UtcNow;   // 네거티브 캐시
+                return null;
+            }
             var f = FileFor(domain);
             await File.WriteAllBytesAsync(f, best, ct);
+            _failed.TryRemove(domain, out _);
             return f;
         }
         catch
         {
+            _failed[domain] = DateTime.UtcNow;
             return null;
         }
         finally

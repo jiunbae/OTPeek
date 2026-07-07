@@ -323,7 +323,7 @@ struct SettingsView: View {
         } header: {
             Text("Export")
         } footer: {
-            Text("Backups are AES-256 encrypted with a password you choose. Keep it somewhere safe — it can't be recovered.")
+            Text("Backups are AES-256 encrypted with a password you choose. Keep it somewhere safe — it can't be recovered. On Linux/macOS the otpeek CLI imports the same file: otpeek import <file> --merge.")
         }
     }
 
