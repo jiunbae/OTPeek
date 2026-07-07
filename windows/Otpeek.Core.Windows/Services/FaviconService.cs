@@ -96,11 +96,20 @@ public sealed class FaviconService : IFaviconService
         "yahoo.com", "icloud.com", "me.com", "proton.me", "protonmail.com",
     };
 
-    public string? DomainFor(OtpAccount account)
-        => ResolveDomain(account.issuer, account.accountName);
+    public string? DomainFor(OtpAccount account) => Resolve(account)?.Domain;
 
-    /// <summary>발행처/계정명만으로 도메인을 해석(위젯 등 OtpAccount 가 없는 곳에서 재사용).</summary>
+    public (string Domain, bool Confident)? Resolve(OtpAccount account)
+        => ResolveInfo(account.issuer, account.accountName);
+
+    /// <summary>발행처/계정명만으로 도메인만 해석(위젯 캐시 조회 등, 확신여부 불필요).</summary>
     public static string? ResolveDomain(string? issuer, string? accountName)
+        => ResolveInfo(issuer, accountName)?.Domain;
+
+    /// <summary>
+    /// 도메인 + 확신여부. Confident=true(Known/실도메인/이메일)면 전체 소스, false(단순 추측)면
+    /// 브랜드 로고만. 추측은 issuer 가 '한 단어'일 때만(다단어는 오매칭이 잦다).
+    /// </summary>
+    public static (string Domain, bool Confident)? ResolveInfo(string? issuer, string? accountName)
     {
         issuer = (issuer ?? string.Empty).Trim();
         var name = accountName ?? string.Empty;
@@ -111,23 +120,23 @@ public sealed class FaviconService : IFaviconService
             if (string.IsNullOrEmpty(lower)) continue;
 
             foreach (var (key, dom) in Known)
-                if (lower.Contains(key)) return dom;
+                if (lower.Contains(key)) return (dom, true);
 
             // 이미 도메인처럼 보이는 경우("pixiv.net").
             if (!lower.Contains(' ') && lower.Contains('.') && !lower.Contains('@'))
-                return lower;
+                return (lower, true);
 
             // 이메일 계정명 → 일반 메일 호스트가 아니면 그 도메인 사용.
             var at = lower.IndexOf('@');
             if (at >= 0)
             {
                 var host = lower[(at + 1)..];
-                if (!GenericMailHosts.Contains(host)) return host;
+                if (!GenericMailHosts.Contains(host)) return (host, true);
             }
         }
 
-        var first = issuer.ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
-        if (!string.IsNullOrEmpty(first)) return $"{first}.com";
+        var words = issuer.ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length == 1) return ($"{words[0]}.com", false);
         return null;
     }
 
@@ -147,29 +156,32 @@ public sealed class FaviconService : IFaviconService
         return File.Exists(f) && new FileInfo(f).Length > 0 ? f : null;
     }
 
-    public Task<string?> GetIconPathAsync(string domain, CancellationToken ct = default)
+    public Task<string?> GetIconPathAsync(string domain, bool brandOnly = false, CancellationToken ct = default)
     {
         var cached = CachedIconPath(domain);
         if (cached != null) return Task.FromResult<string?>(cached);
         // 최근 실패한 도메인은 TTL 동안 재시도하지 않는다(다운로드 폭주 방지).
         if (_failed.TryGetValue(domain, out var when) && DateTime.UtcNow - when < FailTtl)
             return Task.FromResult<string?>(null);
-        return _inflight.GetOrAdd(domain, d => DownloadAsync(d, ct));
+        return _inflight.GetOrAdd(domain, d => DownloadAsync(d, brandOnly, ct));
     }
 
     /// <summary>
     /// 화질 우선순위로 시도: Clearbit(실제 브랜드 로고 256px) → icon.horse(대개 512) →
     /// Google s2 256/128. 이미 충분히 크면(≥128px) 즉시 채택, 모두 작으면 가장 큰 것.
     /// </summary>
-    private async Task<string?> DownloadAsync(string domain, CancellationToken ct)
+    private async Task<string?> DownloadAsync(string domain, bool brandOnly, CancellationToken ct)
     {
-        string[] sources =
-        {
-            $"https://logo.clearbit.com/{domain}?size=256&format=png",
-            $"https://icon.horse/icon/{domain}",
-            $"https://www.google.com/s2/favicons?domain={domain}&sz=256",
-            $"https://www.google.com/s2/favicons?domain={domain}&sz=128",
-        };
+        // 추측 도메인(brandOnly)은 Clearbit 만: 없으면 404 → 이니셜(엉뚱한 로고 방지).
+        string[] sources = brandOnly
+            ? new[] { $"https://logo.clearbit.com/{domain}?size=256&format=png" }
+            : new[]
+            {
+                $"https://logo.clearbit.com/{domain}?size=256&format=png",
+                $"https://icon.horse/icon/{domain}",
+                $"https://www.google.com/s2/favicons?domain={domain}&sz=256",
+                $"https://www.google.com/s2/favicons?domain={domain}&sz=128",
+            };
 
         byte[]? best = null;
         int bestDim = 0;
