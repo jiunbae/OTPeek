@@ -1,4 +1,11 @@
 name: Otpeek
+
+# 원격 SPM 패키지. GoogleMobileAds 는 iOS 앱 타깃에서만 링크한다(macOS 미지원).
+packages:
+  GoogleMobileAds:
+    url: https://github.com/googleads/swift-package-manager-google-mobile-ads
+    from: 12.0.0
+
 options:
   bundleIdPrefix: com.otpeek
   deploymentTarget:
@@ -104,6 +111,7 @@ targets:
       - *coreFramework
       - target: OtpWidgetExtension-iOS
         embed: true
+      - package: GoogleMobileAds
     # Info.plist 를 XcodeGen 이 생성한다(INFOPLIST_FILE 는 자동 설정). 문서 타입은
     # 여기 properties 로 주입. iOS 는 파일을 컨테이너로 복사하도록 in-place 를 끈다.
     info:
@@ -115,6 +123,15 @@ targets:
         LSApplicationCategoryType: public.app-category.utilities
         ITSAppUsesNonExemptEncryption: false
         NSCameraUsageDescription: Camera access is needed to scan QR codes for adding accounts.
+        # AdMob 앱 ID. 실제 계정 발급 전까지 Google 공식 테스트 앱 ID.
+        GADApplicationIdentifier: ca-app-pub-3940256099942544~1458002511
+        # ATT 미사용(비개인화 광고 전용) — SKAdNetwork 로 전환 측정만 허용.
+        SKAdNetworkItems:
+          - SKAdNetworkIdentifier: cstr6suwn9.skadnetwork   # Google
+          - SKAdNetworkIdentifier: 4fzdc2evr5.skadnetwork
+          - SKAdNetworkIdentifier: 2fnua5tdw4.skadnetwork
+          - SKAdNetworkIdentifier: ydx93a7ass.skadnetwork
+          - SKAdNetworkIdentifier: p78axxw29g.skadnetwork
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
