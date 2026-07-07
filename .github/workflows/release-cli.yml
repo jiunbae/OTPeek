@@ -1,0 +1,109 @@
+name: Release CLI
+
+# Builds the `otpeek` command-line client for Linux and macOS and attaches the
+# tarballs (+ SHA-256 sums and the installer) to the GitHub Release for the tag.
+#
+# Trigger by pushing a version tag (e.g. `git tag v2.0.0 && git push origin v2.0.0`),
+# or run manually against an existing tag via the Actions "Run workflow" button.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to build and attach assets to (e.g. v2.0.0)'
+        required: true
+
+# action-gh-release needs write access to create/update the Release.
+permissions:
+  contents: write
+
+concurrency:
+  group: release-cli-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-22.04
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-22.04-arm
+          - target: x86_64-apple-darwin
+            os: macos-13
+          - target: aarch64-apple-darwin
+            os: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref_name }}
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      # The CLI links keyring (Secret Service → libdbus) and arboard (clipboard → xcb).
+      - name: Install Linux system deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config libdbus-1-dev \
+            libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core
+          key: ${{ matrix.target }}
+
+      - name: Build otpeek (release)
+        working-directory: core
+        run: cargo build -p otpeek-cli --release --target ${{ matrix.target }}
+
+      - name: Package tarball + checksum
+        working-directory: core
+        run: |
+          set -eu
+          bin="target/${{ matrix.target }}/release/otpeek"
+          strip "$bin" || true
+          dir="otpeek-${{ matrix.target }}"
+          mkdir -p "$dir"
+          cp "$bin" "$dir/"
+          cp ../LICENSE "$dir/" 2>/dev/null || true
+          tar -czf "$dir.tar.gz" "$dir"
+          shasum -a 256 "$dir.tar.gz" > "$dir.tar.gz.sha256"
+          ls -l "$dir.tar.gz" "$dir.tar.gz.sha256"
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          files: |
+            core/otpeek-*.tar.gz
+            core/otpeek-*.tar.gz.sha256
+          fail_on_unmatched_files: true
+
+  # Attach the installer script itself so `releases/latest/download/install.sh` works.
+  installer:
+    name: Attach install.sh
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref_name }}
+
+      - name: Upload installer
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          files: install.sh
+          fail_on_unmatched_files: true
