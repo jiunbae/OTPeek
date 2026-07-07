@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — OTPeek</title>
+<link rel="icon" href="assets/icon-180.png">
+<style>
+  :root { --accent:#0a84ff; --bg:#fff; --fg:#1d1d1f; --fg2:#6e6e73; --border:rgba(0,0,0,.08); }
+  @media (prefers-color-scheme: dark) { :root { --bg:#000; --fg:#f5f5f7; --fg2:#a1a1a6; --border:rgba(255,255,255,.12); } }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--fg); line-height:1.7; }
+  .wrap { max-width:760px; margin:0 auto; padding:56px 24px 80px; }
+  a { color:var(--accent); text-decoration:none; }
+  h1 { font-size:36px; letter-spacing:-.02em; margin-bottom:4px; }
+  .date { color:var(--fg2); font-size:14px; margin-bottom:36px; }
+  h2 { font-size:22px; margin:36px 0 10px; }
+  p, li { color:var(--fg); font-size:16px; margin-bottom:10px; }
+  ul { padding-left:22px; }
+  .tldr { background:rgba(10,132,255,.08); border:1px solid rgba(10,132,255,.25); border-radius:14px; padding:18px 20px; margin-bottom:8px; }
+  .back { display:inline-block; margin-bottom:28px; font-size:15px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← OTPeek</a>
+  <h1>Privacy Policy</h1>
+  <p class="date">Effective: July 7, 2026</p>
+
+  <div class="tldr">
+    <strong>The short version:</strong> your 2FA secrets never leave your device unencrypted, we run no
+    servers and collect no analytics, and we cannot see your accounts or codes — ever.
+  </div>
+
+  <h2>1. What OTPeek stores</h2>
+  <p>OTPeek stores your two-factor authentication accounts (issuer, account name, and the shared
+     secret used to generate codes) in an encrypted vault on your device. The vault is encrypted with
+     AES-256-GCM; the key is derived from your master password using Argon2id, or held in your
+     device's secure keystore (Keychain on Apple platforms, DPAPI on Windows). We — the developers —
+     have no access to it.</p>
+
+  <h2>2. iCloud sync (optional)</h2>
+  <p>If you enable iCloud Sync on Apple devices, OTPeek stores a copy of the <em>already-encrypted</em>
+     vault in your personal iCloud (CloudKit private database). Only your devices, using your master
+     password/key, can decrypt it. Apple's handling of iCloud data is governed by
+     <a href="https://www.apple.com/legal/privacy/">Apple's Privacy Policy</a>. The same applies to
+     optional WebDAV sync on Windows: only the encrypted vault is uploaded, to a server you choose.</p>
+
+  <h2>3. Service logos (favicons)</h2>
+  <p>To show a recognizable logo next to each account, OTPeek derives a website domain from the
+     account's issuer name (for example, issuer “GitHub” → <code>github.com</code>) and requests that
+     domain's logo from third-party icon services (Clearbit Logo API, icon.horse, and Google's favicon
+     service). Only the derived <em>domain name</em> is sent — never your account name, email, secrets,
+     or codes. Icons are cached on your device afterwards. You can turn this off any time in
+     Settings → “Show website icons,” and no such requests will be made.</p>
+
+  <h2>4. Advertising (iOS, free tier)</h2>
+  <p>The iOS app may show a small banner ad served by Google AdMob. AdMob may collect device
+     identifiers and usage signals to serve and measure ads, as described in
+     <a href="https://policies.google.com/privacy">Google's Privacy Policy</a>. OTPeek requests
+     non-personalized ads where required, honors iOS App Tracking Transparency (we do not request
+     tracking permission), and never shares your vault contents, account names, or codes with any ad
+     network. Purchasing the one-time <strong>Remove Ads</strong> upgrade removes the ad SDK's activity
+     entirely. The macOS and Windows apps contain no advertising.</p>
+
+  <h2>5. Purchases</h2>
+  <p>In-app purchases (Remove Ads, tips) are processed entirely by Apple. We receive no payment
+     details — only an anonymous receipt that unlocks the purchase.</p>
+
+  <h2>6. What we do NOT do</h2>
+  <ul>
+    <li>No accounts, sign-ups, or developer-run servers.</li>
+    <li>No analytics, telemetry, or crash-reporting SDKs.</li>
+    <li>No selling, sharing, or monetizing of your data — we never see it in the first place.</li>
+  </ul>
+
+  <h2>7. Your data, your control</h2>
+  <p>You can export your vault at any time as an encrypted backup in an
+     <a href="https://github.com/jiunbae/OTPeek/blob/main/docs/BACKUP_FORMAT.md">open, documented format</a>,
+     and delete all data by deleting your accounts or uninstalling the app (plus removing the iCloud
+     copy from Settings if you enabled sync).</p>
+
+  <h2>8. Children</h2>
+  <p>OTPeek is a utility for managing authentication codes and is not directed at children under 13.</p>
+
+  <h2>9. Changes &amp; contact</h2>
+  <p>We'll update this page if the policy changes; the effective date above always reflects the latest
+     revision. Questions? Open an issue on
+     <a href="https://github.com/jiunbae/OTPeek/issues">GitHub</a> or email
+     <a href="mailto:jiunbae.623@gmail.com">jiunbae.623@gmail.com</a>.</p>
+</div>
+</body>
+</html>
