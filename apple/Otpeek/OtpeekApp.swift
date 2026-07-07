@@ -8,6 +8,7 @@ struct OtpeekApp: App {
     @StateObject private var appState = OtpStore()
     @StateObject private var incoming = IncomingVaultFile.shared
     @StateObject private var appLock = AppLock()
+    @StateObject private var store = StoreManager()
 
     #if os(macOS)
     // macOS 에서 SwiftUI App 의 .onOpenURL 은 파일(문서) 오픈에 신뢰성이 떨어진다.
@@ -32,9 +33,11 @@ struct OtpeekApp: App {
                 .environmentObject(appState)
                 .environmentObject(incoming)
                 .environmentObject(appLock)
+                .environmentObject(store)
                 #if os(iOS)
                 // iOS 는 열린 문서를 .onOpenURL 로 받는다(문서/URL 스킴 모두 신뢰성 있음).
                 .onOpenURL { url in incoming.load(from: url) }
+                .task { AdSetup.startIfNeeded(adsRemoved: store.adsRemoved) }
                 #endif
         }
         #if os(macOS)
@@ -47,6 +50,7 @@ struct OtpeekApp: App {
             SettingsView()
                 .environmentObject(appState)
                 .environmentObject(appLock)
+                .environmentObject(store)
         }
 
         MenuBarExtra {

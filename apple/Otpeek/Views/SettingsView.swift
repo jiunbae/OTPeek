@@ -2,6 +2,7 @@ import SwiftUI
 import WidgetKit
 import UniformTypeIdentifiers
 import CloudKit
+import StoreKit
 
 #if os(macOS)
 import AppKit
@@ -12,6 +13,7 @@ import UIKit
 struct SettingsView: View {
     @EnvironmentObject var appState: OtpStore
     @EnvironmentObject var appLock: AppLock
+    @EnvironmentObject var store: StoreManager
     @AppStorage("autoClipboard") private var autoClipboard = true
     @AppStorage("showInMenuBar") private var showInMenuBar = true
     @AppStorage("launchAtLogin") private var launchAtLogin = false
@@ -108,6 +110,8 @@ struct SettingsView: View {
                 .tabItem { Label("Sync", systemImage: "icloud") }
             Form { backupSection }.formStyle(.grouped)
                 .tabItem { Label("Backup", systemImage: "externaldrive") }
+            Form { supportSection }.formStyle(.grouped)
+                .tabItem { Label("Support", systemImage: "heart") }
             Form { aboutSection }.formStyle(.grouped)
                 .tabItem { Label("About", systemImage: "info.circle") }
         }
@@ -119,11 +123,100 @@ struct SettingsView: View {
             securitySection
             syncSection
             backupSection
+            supportSection
             aboutSection
         }
         .formStyle(.grouped)
         .navigationTitle("Settings")
         #endif
+    }
+
+    // MARK: - Support (tips / remove ads / links)
+
+    @ViewBuilder
+    private var supportSection: some View {
+        Section {
+            #if os(iOS)
+            // 광고 제거(비소모성). macOS 에는 광고가 없어 표시하지 않는다.
+            if !store.adsRemoved, let product = store.removeAdsProduct {
+                Button {
+                    Task { await store.purchase(product) }
+                } label: {
+                    HStack {
+                        settingLabel("Remove Ads", "rectangle.slash",
+                                     detail: "One-time purchase. No more banner, forever.")
+                        Spacer()
+                        Text(product.displayPrice).foregroundColor(.secondary)
+                    }
+                }
+                .buttonStyle(.plain)
+                .disabled(store.isPurchasing)
+            } else if store.adsRemoved {
+                Label("Ads removed — thank you for your support!", systemImage: "checkmark.seal.fill")
+                    .foregroundColor(.green)
+            }
+            #endif
+
+            // 팁(순수 후원). 아무 기능도 잠그지 않는다.
+            if store.showTipThanks {
+                Label("Thank you for the tip! ☕️", systemImage: "heart.fill")
+                    .foregroundColor(.pink)
+            }
+            ForEach(store.tipProducts, id: \.id) { product in
+                Button {
+                    Task { await store.purchase(product) }
+                } label: {
+                    HStack {
+                        settingLabel(tipTitle(for: product.id), tipIcon(for: product.id))
+                        Spacer()
+                        Text(product.displayPrice).foregroundColor(.secondary)
+                    }
+                }
+                .buttonStyle(.plain)
+                .disabled(store.isPurchasing)
+            }
+
+            Button {
+                Task { await store.restorePurchases() }
+            } label: {
+                actionRow("Restore Purchases", "arrow.clockwise")
+            }
+            .buttonStyle(.plain)
+        } header: {
+            Text("Support OTPeek")
+        } footer: {
+            Text("OTPeek is free and open source. Tips fund development; they don't unlock features.")
+        }
+
+        Section {
+            Link(destination: URL(string: "https://jiun.dev/OTPeek/")!) {
+                settingLabel("Website", "globe")
+            }
+            Link(destination: URL(string: "https://github.com/jiunbae/OTPeek")!) {
+                settingLabel("Source Code on GitHub", "chevron.left.forwardslash.chevron.right")
+            }
+            Link(destination: URL(string: "https://github.com/jiunbae/OTPeek/issues")!) {
+                settingLabel("Report an Issue", "ladybug")
+            }
+        } header: {
+            Text("Links")
+        }
+    }
+
+    private func tipTitle(for id: String) -> String {
+        switch id {
+        case StoreManager.tipIDs[0]: return "Espresso Tip"
+        case StoreManager.tipIDs[1]: return "Latte Tip"
+        default:                     return "Dessert Tip"
+        }
+    }
+
+    private func tipIcon(for id: String) -> String {
+        switch id {
+        case StoreManager.tipIDs[0]: return "cup.and.saucer"
+        case StoreManager.tipIDs[1]: return "mug"
+        default:                     return "birthday.cake"
+        }
     }
 
     // MARK: - Security
