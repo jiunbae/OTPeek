@@ -137,27 +137,6 @@ struct SettingsView: View {
     @ViewBuilder
     private var supportSection: some View {
         Section {
-            #if os(iOS)
-            // 광고 제거(비소모성). macOS 에는 광고가 없어 표시하지 않는다.
-            if !store.adsRemoved, let product = store.removeAdsProduct {
-                Button {
-                    Task { await store.purchase(product) }
-                } label: {
-                    HStack {
-                        settingLabel("Remove Ads", "rectangle.slash",
-                                     detail: "One-time purchase. No more banner, forever.")
-                        Spacer()
-                        Text(product.displayPrice).foregroundColor(.secondary)
-                    }
-                }
-                .buttonStyle(.plain)
-                .disabled(store.isPurchasing)
-            } else if store.adsRemoved {
-                Label("Ads removed — thank you for your support!", systemImage: "checkmark.seal.fill")
-                    .foregroundColor(.green)
-            }
-            #endif
-
             // 팁(순수 후원). 아무 기능도 잠그지 않는다.
             if store.showTipThanks {
                 Label("Thank you for the tip! ☕️", systemImage: "heart.fill")
@@ -176,13 +155,6 @@ struct SettingsView: View {
                 .buttonStyle(.plain)
                 .disabled(store.isPurchasing)
             }
-
-            Button {
-                Task { await store.restorePurchases() }
-            } label: {
-                actionRow("Restore Purchases", "arrow.clockwise")
-            }
-            .buttonStyle(.plain)
         } header: {
             Text("Support OTPeek")
         } footer: {

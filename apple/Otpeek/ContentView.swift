@@ -10,7 +10,6 @@ enum FolderFilter: Hashable {
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
     #if os(iOS)
-    @EnvironmentObject var store: StoreManager
     // iOS 는 설정을 담을 별도 씬(macOS Settings/MenuBar)이 없으므로 시트로 띄운다.
     @State private var showingSettings = false
     // iOS 폴더(그룹) 필터/편집 상태.
@@ -34,10 +33,6 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 FolderChipBar(filter: $folderFilter, onEdit: { editingFolder = $0 })
                 filteredAccountList
-                // 하단 배너 광고(무료 사용자). "Remove Ads" 구매 시 즉시 사라진다.
-                if !store.adsRemoved {
-                    AdBannerView().frame(height: 60)
-                }
             }
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
