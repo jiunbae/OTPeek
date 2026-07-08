@@ -16,6 +16,7 @@ struct SettingsView: View {
     @EnvironmentObject var store: StoreManager
     @AppStorage("autoClipboard") private var autoClipboard = true
     @AppStorage("showInMenuBar") private var showInMenuBar = true
+    @AppStorage("hideDockIconWhenNoWindows") private var hideDockIconWhenNoWindows = true
     @AppStorage("launchAtLogin") private var launchAtLogin = false
     @AppStorage("showFavicons", store: UserDefaults.appGroup) private var showFavicons = true
     @AppStorage(AppLock.enabledKey) private var biometricLockEnabled = false
@@ -279,6 +280,11 @@ struct SettingsView: View {
             Toggle(isOn: $showInMenuBar) {
                 settingLabel("Show in menu bar", "menubar.arrow.up.rectangle")
             }
+            Toggle(isOn: $hideDockIconWhenNoWindows) {
+                settingLabel("Hide Dock icon when no windows are open", "dock.rectangle",
+                             detail: "Keeps OTPeek menu-bar only after closing all app windows.")
+            }
+            .disabled(!showInMenuBar)
             Toggle(isOn: $launchAtLogin) {
                 settingLabel("Launch at login", "power")
             }

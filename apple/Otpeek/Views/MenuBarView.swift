@@ -3,6 +3,7 @@ import SwiftUI
 #if os(macOS)
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.openWindow) private var openWindow
     @State private var copiedAccountId: String?
     @State private var searchText = ""
 
@@ -49,7 +50,7 @@ struct MenuBarView: View {
 
             Button { openMainWindow() } label: { Image(systemName: "macwindow") }
                 .buttonStyle(.plain).help("Open main window")
-            SettingsLink { Image(systemName: "gearshape") }
+            Button { openSettingsWindow() } label: { Image(systemName: "gearshape") }
                 .buttonStyle(.plain).help("Settings")
             Button { NSApplication.shared.terminate(nil) } label: { Image(systemName: "power") }
                 .buttonStyle(.plain).help("Quit OTPeek")
@@ -133,12 +134,17 @@ struct MenuBarView: View {
     }
 
     private func openMainWindow() {
-        NSApp.activate(ignoringOtherApps: true)
-        if let window = NSApp.windows.first(where: { $0.canBecomeKey && !$0.isMiniaturized }) {
-            window.makeKeyAndOrderFront(nil)
-        } else {
-            NSApp.sendAction(#selector(NSApplication.unhide(_:)), to: nil, from: nil)
+        DockIconController.shared.showDockIconForWindow()
+        if !DockIconController.shared.focusMainWindow() {
+            openWindow(id: DockIconController.mainWindowGroupID)
+            DockIconController.shared.focusMainWindowSoon()
         }
+    }
+
+    private func openSettingsWindow() {
+        DockIconController.shared.showDockIconForWindow()
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 }
 

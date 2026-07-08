@@ -11,6 +11,9 @@ struct OtpeekApp: App {
     @StateObject private var store = StoreManager()
 
     #if os(macOS)
+    @AppStorage("showInMenuBar") private var showInMenuBar = true
+    @AppStorage("hideDockIconWhenNoWindows") private var hideDockIconWhenNoWindows = true
+
     // macOS 에서 SwiftUI App 의 .onOpenURL 은 파일(문서) 오픈에 신뢰성이 떨어진다.
     // Finder 더블클릭 / AirDrop 수신은 AppDelegate 의 application(_:open:) 로 받는 것이 확실하다.
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
@@ -28,32 +31,35 @@ struct OtpeekApp: App {
     #endif
 
     var body: some Scene {
-        WindowGroup {
+        #if os(macOS)
+        WindowGroup("OTPeek", id: DockIconController.mainWindowGroupID) {
             RootView()
                 .environmentObject(appState)
                 .environmentObject(incoming)
                 .environmentObject(appLock)
                 .environmentObject(store)
-                #if os(iOS)
-                // iOS 는 열린 문서를 .onOpenURL 로 받는다(문서/URL 스킴 모두 신뢰성 있음).
-                .onOpenURL { url in incoming.load(from: url) }
-                .task { AdSetup.startIfNeeded(adsRemoved: store.adsRemoved) }
-                #endif
+                .background(DockManagedWindow(identifier: DockIconController.mainWindowIdentifier))
+                .dockActivationPreferences(
+                    showInMenuBar: showInMenuBar,
+                    hideDockIconWhenNoWindows: hideDockIconWhenNoWindows
+                )
         }
-        #if os(macOS)
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
-        #endif
 
-        #if os(macOS)
         Settings {
             SettingsView()
                 .environmentObject(appState)
                 .environmentObject(appLock)
                 .environmentObject(store)
+                .background(DockManagedWindow(identifier: DockIconController.settingsWindowIdentifier))
+                .dockActivationPreferences(
+                    showInMenuBar: showInMenuBar,
+                    hideDockIconWhenNoWindows: hideDockIconWhenNoWindows
+                )
         }
 
-        MenuBarExtra {
+        MenuBarExtra(isInserted: $showInMenuBar) {
             MenuBarView()
                 .environmentObject(appState)
                 .environmentObject(appLock)
@@ -63,6 +69,17 @@ struct OtpeekApp: App {
             Image(nsImage: Self.menuBarIcon)
         }
         .menuBarExtraStyle(.window)
+        #else
+        WindowGroup {
+            RootView()
+                .environmentObject(appState)
+                .environmentObject(incoming)
+                .environmentObject(appLock)
+                .environmentObject(store)
+                // iOS 는 열린 문서를 .onOpenURL 로 받는다(문서/URL 스킴 모두 신뢰성 있음).
+                .onOpenURL { url in incoming.load(from: url) }
+                .task { AdSetup.startIfNeeded(adsRemoved: store.adsRemoved) }
+        }
         #endif
     }
 }
@@ -70,13 +87,182 @@ struct OtpeekApp: App {
 #if os(macOS)
 /// macOS 문서 오픈(더블클릭 / AirDrop 수신)을 받아 앱 UI 로 넘긴다.
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        DockIconController.shared.startFromDefaults()
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        DockIconController.shared.showDockIconForWindow()
+        return true
+    }
+
     func application(_ application: NSApplication, open urls: [URL]) {
+        DockIconController.shared.showDockIconForWindow()
         // AppKit 은 이 콜백을 메인 스레드에서 호출한다.
         MainActor.assumeIsolated {
             for url in urls { IncomingVaultFile.shared.load(from: url) }
         }
     }
+}
 
+final class DockIconController {
+    static let shared = DockIconController()
+
+    static let mainWindowGroupID = "main"
+    static let mainWindowIdentifier = NSUserInterfaceItemIdentifier("otpeek.main-window")
+    static let settingsWindowIdentifier = NSUserInterfaceItemIdentifier("otpeek.settings-window")
+
+    private var showInMenuBar = true
+    private var hideDockIconWhenNoWindows = true
+    private var observers: [NSObjectProtocol] = []
+
+    private init() {}
+
+    func startFromDefaults() {
+        startObservingWindows()
+        configure(
+            showInMenuBar: Self.defaultedBool(forKey: "showInMenuBar", defaultValue: true),
+            hideDockIconWhenNoWindows: Self.defaultedBool(forKey: "hideDockIconWhenNoWindows", defaultValue: true)
+        )
+    }
+
+    func configure(showInMenuBar: Bool, hideDockIconWhenNoWindows: Bool) {
+        self.showInMenuBar = showInMenuBar
+        self.hideDockIconWhenNoWindows = hideDockIconWhenNoWindows
+        schedulePolicyUpdate()
+    }
+
+    func showDockIconForWindow() {
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    @discardableResult
+    func focusMainWindow() -> Bool {
+        guard let window = NSApp.windows.first(where: { $0.identifier == Self.mainWindowIdentifier }) else {
+            return false
+        }
+        showDockIconForWindow()
+        if window.isMiniaturized {
+            window.deminiaturize(nil)
+        }
+        window.makeKeyAndOrderFront(nil)
+        return true
+    }
+
+    func focusMainWindowSoon() {
+        DispatchQueue.main.async { self.focusMainWindow() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { self.focusMainWindow() }
+    }
+
+    func schedulePolicyUpdate() {
+        DispatchQueue.main.async { self.updateActivationPolicy() }
+    }
+
+    private func startObservingWindows() {
+        guard observers.isEmpty else { return }
+
+        let center = NotificationCenter.default
+        let names: [Notification.Name] = [
+            NSWindow.didBecomeKeyNotification,
+            NSWindow.didBecomeMainNotification,
+            NSWindow.didDeminiaturizeNotification,
+            NSWindow.didMiniaturizeNotification,
+            NSWindow.willCloseNotification
+        ]
+
+        observers = names.map { name in
+            center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                self?.schedulePolicyUpdate()
+            }
+        }
+    }
+
+    private func updateActivationPolicy() {
+        guard hideDockIconWhenNoWindows, showInMenuBar else {
+            NSApp.setActivationPolicy(.regular)
+            return
+        }
+
+        NSApp.setActivationPolicy(hasVisibleManagedWindow ? .regular : .accessory)
+    }
+
+    private var hasVisibleManagedWindow: Bool {
+        NSApp.windows.contains { window in
+            isManagedWindow(window) && window.isVisible && !window.isMiniaturized
+        }
+    }
+
+    private func isManagedWindow(_ window: NSWindow) -> Bool {
+        window.identifier == Self.mainWindowIdentifier ||
+            window.identifier == Self.settingsWindowIdentifier
+    }
+
+    private static func defaultedBool(forKey key: String, defaultValue: Bool) -> Bool {
+        guard UserDefaults.standard.object(forKey: key) != nil else { return defaultValue }
+        return UserDefaults.standard.bool(forKey: key)
+    }
+}
+
+private struct DockManagedWindow: NSViewRepresentable {
+    let identifier: NSUserInterfaceItemIdentifier
+
+    func makeNSView(context: Context) -> DockManagedNSView {
+        let view = DockManagedNSView()
+        view.managedWindowIdentifier = identifier
+        return view
+    }
+
+    func updateNSView(_ nsView: DockManagedNSView, context: Context) {
+        nsView.managedWindowIdentifier = identifier
+        nsView.attachToWindow()
+    }
+}
+
+private final class DockManagedNSView: NSView {
+    var managedWindowIdentifier: NSUserInterfaceItemIdentifier?
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        attachToWindow()
+    }
+
+    func attachToWindow() {
+        guard let window, let managedWindowIdentifier else { return }
+        window.identifier = managedWindowIdentifier
+        DockIconController.shared.schedulePolicyUpdate()
+    }
+}
+
+private struct DockActivationPreferences: ViewModifier {
+    let showInMenuBar: Bool
+    let hideDockIconWhenNoWindows: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .onAppear { apply() }
+            .onChange(of: showInMenuBar) { _, _ in apply() }
+            .onChange(of: hideDockIconWhenNoWindows) { _, _ in apply() }
+    }
+
+    private func apply() {
+        DockIconController.shared.configure(
+            showInMenuBar: showInMenuBar,
+            hideDockIconWhenNoWindows: hideDockIconWhenNoWindows
+        )
+    }
+}
+
+private extension View {
+    func dockActivationPreferences(
+        showInMenuBar: Bool,
+        hideDockIconWhenNoWindows: Bool
+    ) -> some View {
+        modifier(DockActivationPreferences(
+            showInMenuBar: showInMenuBar,
+            hideDockIconWhenNoWindows: hideDockIconWhenNoWindows
+        ))
+    }
 }
 #endif
 
