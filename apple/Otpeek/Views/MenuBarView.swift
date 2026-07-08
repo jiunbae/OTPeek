@@ -6,6 +6,7 @@ struct MenuBarView: View {
     @Environment(\.openWindow) private var openWindow
     @State private var copiedAccountId: String?
     @State private var searchText = ""
+    @FocusState private var searchIsFocused: Bool
 
     private var matches: [OtpAccount] {
         guard !searchText.isEmpty else { return appState.accounts }
@@ -25,6 +26,8 @@ struct MenuBarView: View {
             content
         }
         .frame(width: 320)
+        .background(MenuBarFocusObserver { focusSearchField() })
+        .onAppear { focusSearchField() }
     }
 
     // MARK: - Compact toolbar (search + actions on one row)
@@ -38,6 +41,7 @@ struct MenuBarView: View {
             TextField("Search", text: $searchText)
                 .textFieldStyle(.plain)
                 .font(.system(size: 13))
+                .focused($searchIsFocused)
 
             if !searchText.isEmpty {
                 Button { searchText = "" } label: {
@@ -145,6 +149,73 @@ struct MenuBarView: View {
         DockIconController.shared.showDockIconForWindow()
         NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func focusSearchField() {
+        DispatchQueue.main.async {
+            searchIsFocused = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+            searchIsFocused = true
+        }
+    }
+}
+
+private struct MenuBarFocusObserver: NSViewRepresentable {
+    let onWindowBecameKey: () -> Void
+
+    func makeNSView(context: Context) -> MenuBarFocusObserverView {
+        let view = MenuBarFocusObserverView()
+        view.onWindowBecameKey = onWindowBecameKey
+        return view
+    }
+
+    func updateNSView(_ nsView: MenuBarFocusObserverView, context: Context) {
+        nsView.onWindowBecameKey = onWindowBecameKey
+        nsView.attachToWindow()
+    }
+}
+
+private final class MenuBarFocusObserverView: NSView {
+    var onWindowBecameKey: (() -> Void)?
+
+    private weak var observedWindow: NSWindow?
+    private var observer: NSObjectProtocol?
+
+    deinit {
+        if let observer {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        attachToWindow()
+        triggerFocus()
+    }
+
+    func attachToWindow() {
+        guard observedWindow !== window else { return }
+        if let observer {
+            NotificationCenter.default.removeObserver(observer)
+            self.observer = nil
+        }
+
+        observedWindow = window
+        guard let window else { return }
+        observer = NotificationCenter.default.addObserver(
+            forName: NSWindow.didBecomeKeyNotification,
+            object: window,
+            queue: .main
+        ) { [weak self] _ in
+            self?.triggerFocus()
+        }
+    }
+
+    private func triggerFocus() {
+        DispatchQueue.main.async { [weak self] in
+            self?.onWindowBecameKey?()
+        }
     }
 }
 

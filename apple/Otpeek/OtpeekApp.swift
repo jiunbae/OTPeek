@@ -155,25 +155,38 @@ final class DockIconController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { self.focusMainWindow() }
     }
 
-    func schedulePolicyUpdate() {
+    func schedulePolicyUpdate(settling: Bool = false) {
         DispatchQueue.main.async { self.updateActivationPolicy() }
+        guard settling else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { self.updateActivationPolicy() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { self.updateActivationPolicy() }
     }
 
     private func startObservingWindows() {
         guard observers.isEmpty else { return }
 
         let center = NotificationCenter.default
-        let names: [Notification.Name] = [
+        let immediateUpdateNames: [Notification.Name] = [
             NSWindow.didBecomeKeyNotification,
             NSWindow.didBecomeMainNotification,
+            NSWindow.didChangeOcclusionStateNotification,
             NSWindow.didDeminiaturizeNotification,
+            NSWindow.didResignKeyNotification,
+            NSWindow.didResignMainNotification
+        ]
+        let settlingUpdateNames: [Notification.Name] = [
             NSWindow.didMiniaturizeNotification,
             NSWindow.willCloseNotification
         ]
 
-        observers = names.map { name in
+        observers = immediateUpdateNames.map { name in
             center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                 self?.schedulePolicyUpdate()
+            }
+        }
+        observers += settlingUpdateNames.map { name in
+            center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                self?.schedulePolicyUpdate(settling: true)
             }
         }
     }
@@ -189,7 +202,10 @@ final class DockIconController {
 
     private var hasVisibleManagedWindow: Bool {
         NSApp.windows.contains { window in
-            isManagedWindow(window) && window.isVisible && !window.isMiniaturized
+            isManagedWindow(window) &&
+                window.isVisible &&
+                !window.isMiniaturized &&
+                window.windowNumber > 0
         }
     }
 
@@ -230,7 +246,7 @@ private final class DockManagedNSView: NSView {
     func attachToWindow() {
         guard let window, let managedWindowIdentifier else { return }
         window.identifier = managedWindowIdentifier
-        DockIconController.shared.schedulePolicyUpdate()
+        DockIconController.shared.schedulePolicyUpdate(settling: true)
     }
 }
 
