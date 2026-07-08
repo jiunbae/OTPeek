@@ -20,7 +20,6 @@
 		262B27613B09F0590D14A3FF /* OtpeekCore.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA291F60B6661DF0ED5B8042 /* OtpeekCore.xcframework */; };
 		27D28B907E1CC06E3AF8C4D2 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20D38C65B0403945BD877732 /* MenuBarView.swift */; };
 		29F974701F493254DE6DF4DE /* otpeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C084D0E337FE64FBD894CD7 /* otpeek.swift */; };
-		2A14FA5F21D3202CF66BA5A6 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 0EC111A09BBB1C82D09C86C0 /* GoogleMobileAds */; };
 		2BFA1C06D4EC4A7E69E23542 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E9CC8662C961848BC77ADDB /* KeychainHelper.swift */; };
 		2F58C065A51768B1938A0BBA /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E9CC8662C961848BC77ADDB /* KeychainHelper.swift */; };
 		3491A484ECC881F981D92B20 /* OtpGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 065664E27D1DDB3265845FF9 /* OtpGenerator.swift */; };
@@ -61,7 +60,6 @@
 		8766354CC16AFC747C63A22D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 70647ADDBAC67B6275121687 /* PrivacyInfo.xcprivacy */; };
 		884D06A8DA6F59E1647E6FFD /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22DE66DC596C2E4DE3C4F5F5 /* ContentView.swift */; };
 		89EBE0728D37904AB1085D36 /* OtpWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF2DDB7DE7AC8C946FAE1375 /* OtpWidget.swift */; };
-		8BE9E213771B7E8F0F4E4E37 /* AdBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71CEEBCC5244E0684AB91AA1 /* AdBannerView.swift */; };
 		921A5EDE186E6247B7F73AE6 /* OtpModelBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6607ED4CCF1CA8C75A052E22 /* OtpModelBridge.swift */; };
 		9596A8C334C000BC38048BFD /* otpeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C084D0E337FE64FBD894CD7 /* otpeek.swift */; };
 		95A3C93B3AE8A48977A34620 /* OtpWidgetEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 997918DC98088E032336E738 /* OtpWidgetEntryView.swift */; };
@@ -77,7 +75,6 @@
 		AEA6AC769EF9A040770E6CA4 /* OtpeekApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E36583E2F1FE33791D4DD250 /* OtpeekApp.swift */; };
 		AF870A2BAAE05C6009AE331F /* LockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3BD28163A9AB2F1B075332 /* LockView.swift */; };
 		B481D1BEE4B4963A61286EC7 /* StoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0434FDB92ABA36F8F357074 /* StoreManager.swift */; };
-		B4C5B8C488A56A072D3594D0 /* AdBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71CEEBCC5244E0684AB91AA1 /* AdBannerView.swift */; };
 		B52D49B9C328EECE226F1B62 /* SharedViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B9E2B53D62837C0D688E506 /* SharedViews.swift */; };
 		B887B223CEF32E1973CF428C /* WidgetSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBD05CF608489D2A47C38939 /* WidgetSettingsView.swift */; };
 		BBAE2C87C5691FF05DB0B781 /* AccountCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 909054FBA05D7A4829C5EF1A /* AccountCardView.swift */; };
@@ -165,7 +162,6 @@
 		66C8BDE4802E41D52FFA1380 /* CloudKitSyncBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitSyncBackend.swift; sourceTree = "<group>"; };
 		67FE56860F6D2C1B8E8AAD0F /* OtpWidgetExtension-macOS.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "OtpWidgetExtension-macOS.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 		70647ADDBAC67B6275121687 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		71CEEBCC5244E0684AB91AA1 /* AdBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdBannerView.swift; sourceTree = "<group>"; };
 		7241B5227ED2EB431B42A95D /* FaviconProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaviconProvider.swift; sourceTree = "<group>"; };
 		7B9E2B53D62837C0D688E506 /* SharedViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedViews.swift; sourceTree = "<group>"; };
 		8191925DC6408558503DB151 /* QRImageImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRImageImportView.swift; sourceTree = "<group>"; };
@@ -208,7 +204,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				262B27613B09F0590D14A3FF /* OtpeekCore.xcframework in Frameworks */,
-				2A14FA5F21D3202CF66BA5A6 /* GoogleMobileAds in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -234,7 +229,6 @@
 		01E088E8DC7FD6B57A4D2B70 /* Otpeek */ = {
 			isa = PBXGroup;
 			children = (
-				D2D35E018C81C5BC9BE0A2DB /* Ads */,
 				581154F0668C45041A126941 /* Resources */,
 				EAD59889EE6FFA4C727EA26D /* Store */,
 				CC85942F3277D71335C092DA /* ViewModels */,
@@ -318,14 +312,6 @@
 			children = (
 			);
 			path = ViewModels;
-			sourceTree = "<group>";
-		};
-		D2D35E018C81C5BC9BE0A2DB /* Ads */ = {
-			isa = PBXGroup;
-			children = (
-				71CEEBCC5244E0684AB91AA1 /* AdBannerView.swift */,
-			);
-			path = Ads;
 			sourceTree = "<group>";
 		};
 		E76AF86AF7BB086408B21A55 /* Views */ = {
@@ -429,7 +415,6 @@
 			);
 			name = "Otpeek-iOS";
 			packageProductDependencies = (
-				0EC111A09BBB1C82D09C86C0 /* GoogleMobileAds */,
 			);
 			productName = "Otpeek-iOS";
 			productReference = EB9C448C47EA88383F3CD990 /* Otpeek-iOS.app */;
@@ -490,9 +475,6 @@
 			);
 			mainGroup = F919911FE9475E35B0970AD3;
 			minimizedProjectReferenceProxies = 1;
-			packageReferences = (
-				77F46F2735D3598E4487886F /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
-			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9EEE7FF24BE346D6E4CC18BF /* Products */;
 			projectDirPath = "";
@@ -637,7 +619,6 @@
 				BBAE2C87C5691FF05DB0B781 /* AccountCardView.swift in Sources */,
 				C1F99BA7A43D56757DED409F /* AccountIconView.swift in Sources */,
 				70180A982F076DD652207470 /* AccountListView.swift in Sources */,
-				B4C5B8C488A56A072D3594D0 /* AdBannerView.swift in Sources */,
 				6994F0A9E0A129F119C1C138 /* AddAccountView.swift in Sources */,
 				7F25D55F16C71B3F337AB95C /* AppLock.swift in Sources */,
 				5F7FBC2A621AC02BE7B449EA /* CloudKitSyncBackend.swift in Sources */,
@@ -694,7 +675,6 @@
 				DCB68AC3F9CF70E3B30FF712 /* AccountCardView.swift in Sources */,
 				9CA89CF71F48AEDD241B467A /* AccountIconView.swift in Sources */,
 				1F34E7ECA0DD086B1A91DA21 /* AccountListView.swift in Sources */,
-				8BE9E213771B7E8F0F4E4E37 /* AdBannerView.swift in Sources */,
 				54BB4E552B7DA8CCAF3C8511 /* AddAccountView.swift in Sources */,
 				52C9D77038349B339304EA24 /* AppLock.swift in Sources */,
 				5D8C96CF9366DDD2D7434B95 /* CloudKitSyncBackend.swift in Sources */,
@@ -743,7 +723,7 @@
 				CODE_SIGN_ENTITLEMENTS = OtpWidgetExtension/OtpWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
@@ -772,7 +752,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -798,7 +778,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
@@ -826,7 +806,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -852,7 +832,7 @@
 				CODE_SIGN_ENTITLEMENTS = Otpeek/Otpeek.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -938,7 +918,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
@@ -964,7 +944,7 @@
 				CODE_SIGN_ENTITLEMENTS = OtpWidgetExtension/OtpWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
@@ -1058,7 +1038,7 @@
 				CODE_SIGN_ENTITLEMENTS = Otpeek/Otpeek.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1127,25 +1107,6 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		77F46F2735D3598E4487886F /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 12.0.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		0EC111A09BBB1C82D09C86C0 /* GoogleMobileAds */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 77F46F2735D3598E4487886F /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
-			productName = GoogleMobileAds;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F2B865E8FCA35A377835E00F /* Project object */;
 }

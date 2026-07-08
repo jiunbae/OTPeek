@@ -78,7 +78,6 @@ struct OtpeekApp: App {
                 .environmentObject(store)
                 // iOS 는 열린 문서를 .onOpenURL 로 받는다(문서/URL 스킴 모두 신뢰성 있음).
                 .onOpenURL { url in incoming.load(from: url) }
-                .task { AdSetup.startIfNeeded(adsRemoved: store.adsRemoved) }
         }
         #endif
     }
