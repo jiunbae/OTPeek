@@ -3,7 +3,6 @@ import SwiftUI
 #if os(macOS)
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
-    @Environment(\.openWindow) private var openWindow
     @State private var copiedAccountId: String?
     @State private var searchText = ""
     @FocusState private var searchIsFocused: Bool
@@ -140,7 +139,9 @@ struct MenuBarView: View {
     private func openMainWindow() {
         DockIconController.shared.showDockIconForWindow()
         if !DockIconController.shared.focusMainWindow() {
-            openWindow(id: DockIconController.mainWindowGroupID)
+            // `openWindow` doesn't resolve inside the detached status-item popover;
+            // use the action captured from the live main-window scene instead.
+            WindowActions.shared.openMain?()
             DockIconController.shared.focusMainWindowSoon()
         }
     }

@@ -39,6 +39,9 @@ struct OtpeekApp: App {
                 .environmentObject(appLock)
                 .environmentObject(store)
                 .background(DockManagedWindow(identifier: DockIconController.mainWindowIdentifier))
+                // Feeds the custom NSStatusItem the app's live objects + window-open
+                // action (SwiftUI creates this window at launch, so this runs early).
+                .background(MenuBarBridge(appState: appState, appLock: appLock))
                 .dockActivationPreferences(
                     showInMenuBar: showInMenuBar,
                     hideDockIconWhenNoWindows: hideDockIconWhenNoWindows
@@ -59,16 +62,10 @@ struct OtpeekApp: App {
                 )
         }
 
-        MenuBarExtra(isInserted: $showInMenuBar) {
-            MenuBarView()
-                .environmentObject(appState)
-                .environmentObject(appLock)
-        } label: {
-            // SwiftUI ignores .font() on a MenuBarExtra label, so build an
-            // explicitly-sized template NSImage to fill the menu bar height.
-            Image(nsImage: Self.menuBarIcon)
-        }
-        .menuBarExtraStyle(.window)
+        // The menu bar entry is a hand-rolled NSStatusItem (see StatusItemController),
+        // not a SwiftUI MenuBarExtra: MenuBarExtra's .window style has no way to add a
+        // right-click menu (Open / Settings / Quit). The status item is created and
+        // shown/hidden by MenuBarBridge in response to the `showInMenuBar` setting.
         #else
         WindowGroup {
             RootView()
@@ -114,6 +111,11 @@ final class DockIconController {
     private var showInMenuBar = true
     private var hideDockIconWhenNoWindows = true
     private var observers: [NSObjectProtocol] = []
+    /// While this is in the future, the app is pinned to `.regular` regardless of
+    /// window state. Set when we explicitly open a window from the menu bar so the
+    /// popover closing (which fires a policy update) can't demote us to `.accessory`
+    /// before the new window has a chance to become key.
+    private var suppressAccessoryUntil = Date.distantPast
 
     private init() {}
 
@@ -132,8 +134,18 @@ final class DockIconController {
     }
 
     func showDockIconForWindow() {
+        // Opening a window from the menu bar races with the popover closing (which
+        // fires a policy update). Pin to .regular now and refuse to demote back to
+        // .accessory for a short grace period, so the newly opened Settings/main
+        // window keeps key focus and menu-bar ownership.
+        suppressAccessoryUntil = Date().addingTimeInterval(1.0)
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
+        // Re-evaluate once the grace period ends, in case the window was closed
+        // again within it (otherwise the Dock icon could stay stuck).
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) { [weak self] in
+            self?.updateActivationPolicy()
+        }
     }
 
     @discardableResult
@@ -195,27 +207,186 @@ final class DockIconController {
             NSApp.setActivationPolicy(.regular)
             return
         }
-
-        NSApp.setActivationPolicy(hasVisibleManagedWindow ? .regular : .accessory)
-    }
-
-    private var hasVisibleManagedWindow: Bool {
-        NSApp.windows.contains { window in
-            isManagedWindow(window) &&
-                window.isVisible &&
-                !window.isMiniaturized &&
-                window.windowNumber > 0
+        if Date() < suppressAccessoryUntil {
+            NSApp.setActivationPolicy(.regular)
+            return
         }
+
+        NSApp.setActivationPolicy(hasVisibleStandardWindow ? .regular : .accessory)
     }
 
-    private func isManagedWindow(_ window: NSWindow) -> Bool {
-        window.identifier == Self.mainWindowIdentifier ||
-            window.identifier == Self.settingsWindowIdentifier
+    /// Whether a real, user-facing app window (main or Settings) is on screen.
+    /// We key off `.titled` — not our custom identifier — because the identifier is
+    /// attached asynchronously by `DockManagedWindow`, and the policy update can run
+    /// before it lands (the race that made the Settings window open-then-close). The
+    /// borderless MenuBarExtra popover has no `.titled` style, so it is excluded; the
+    /// identifier check stays as a fast path for windows we've already tagged.
+    private var hasVisibleStandardWindow: Bool {
+        NSApp.windows.contains { window in
+            guard window.isVisible, !window.isMiniaturized, window.windowNumber > 0 else {
+                return false
+            }
+            if window.identifier == Self.mainWindowIdentifier ||
+                window.identifier == Self.settingsWindowIdentifier {
+                return true
+            }
+            return window.styleMask.contains(.titled) && !(window is NSPanel)
+        }
     }
 
     private static func defaultedBool(forKey key: String, defaultValue: Bool) -> Bool {
         guard UserDefaults.standard.object(forKey: key) != nil else { return defaultValue }
         return UserDefaults.standard.bool(forKey: key)
+    }
+}
+
+/// Bridges SwiftUI window actions to AppKit call sites (the status item's popover
+/// and right-click menu) that live outside the scene graph and can't use
+/// `@Environment(\.openWindow)`. Captured once from the live main-window scene.
+@MainActor
+final class WindowActions {
+    static let shared = WindowActions()
+    /// Opens (or reuses) the main window. Set from `MenuBarBridge`.
+    var openMain: (() -> Void)?
+    private init() {}
+}
+
+/// Owns the menu bar entry: a custom `NSStatusItem` whose left-click toggles the
+/// account popover and whose right-click shows an Open / Settings / Quit menu —
+/// the right-click menu that SwiftUI's `MenuBarExtra` cannot provide.
+@MainActor
+final class StatusItemController {
+    static let shared = StatusItemController()
+
+    private var statusItem: NSStatusItem?
+    private let popover = NSPopover()
+    private weak var appState: OtpStore?
+    private weak var appLock: AppLock?
+
+    private init() {
+        popover.behavior = .transient
+        popover.animates = true
+    }
+
+    /// Supplies the app's live objects so the popover shows the same accounts as
+    /// the rest of the app. Safe to call repeatedly.
+    func configure(appState: OtpStore, appLock: AppLock) {
+        self.appState = appState
+        self.appLock = appLock
+    }
+
+    func setVisible(_ visible: Bool) {
+        visible ? install() : remove()
+    }
+
+    private func install() {
+        guard statusItem == nil else { return }
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        if let button = item.button {
+            button.image = OtpeekApp.menuBarIcon
+            button.image?.isTemplate = true
+            button.target = self
+            button.action = #selector(handleClick(_:))
+            // Receive both mouse buttons so we can branch left vs. right click.
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        }
+        statusItem = item
+    }
+
+    private func remove() {
+        if popover.isShown { popover.performClose(nil) }
+        if let statusItem { NSStatusBar.system.removeStatusItem(statusItem) }
+        statusItem = nil
+    }
+
+    @objc private func handleClick(_ sender: NSStatusBarButton) {
+        let event = NSApp.currentEvent
+        let isRight = event?.type == .rightMouseUp
+            || (event?.modifierFlags.contains(.control) ?? false)
+        isRight ? showMenu(from: sender) : togglePopover(sender)
+    }
+
+    private func togglePopover(_ sender: NSStatusBarButton) {
+        if popover.isShown {
+            popover.performClose(nil)
+            return
+        }
+        guard let appState, let appLock else { return }
+        let root = MenuBarView()
+            .environmentObject(appState)
+            .environmentObject(appLock)
+        let hosting = NSHostingController(rootView: root)
+        hosting.sizingOptions = [.preferredContentSize]
+        popover.contentViewController = hosting
+        popover.show(relativeTo: sender.bounds, of: sender, preferredEdge: .minY)
+        // Make the popover key so the search field can auto-focus, without
+        // promoting the whole app to .regular (which would flash the Dock icon).
+        DispatchQueue.main.async { [weak self] in
+            self?.popover.contentViewController?.view.window?.makeKey()
+        }
+    }
+
+    private func showMenu(from sender: NSStatusBarButton) {
+        let menu = NSMenu()
+
+        let open = NSMenuItem(title: "Open OTPeek",
+                              action: #selector(openMain), keyEquivalent: "")
+        open.target = self
+        menu.addItem(open)
+
+        let settings = NSMenuItem(title: "Settings…",
+                                  action: #selector(openSettings), keyEquivalent: ",")
+        settings.target = self
+        menu.addItem(settings)
+
+        menu.addItem(.separator())
+
+        menu.addItem(NSMenuItem(title: "Quit OTPeek",
+                                action: #selector(NSApplication.terminate(_:)),
+                                keyEquivalent: "q"))
+
+        // Pop up anchored under the status button; using popUp (not statusItem.menu)
+        // keeps left-click bound to the popover.
+        let origin = NSPoint(x: 0, y: sender.bounds.height + 4)
+        menu.popUp(positioning: nil, at: origin, in: sender)
+    }
+
+    @objc private func openMain() {
+        DockIconController.shared.showDockIconForWindow()
+        if !DockIconController.shared.focusMainWindow() {
+            WindowActions.shared.openMain?()
+            DockIconController.shared.focusMainWindowSoon()
+        }
+    }
+
+    @objc private func openSettings() {
+        DockIconController.shared.showDockIconForWindow()
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+}
+
+/// Lives in the main window scene: captures the app's objects and the SwiftUI
+/// window-open action for the status item, and shows/hides the status item to
+/// track the `showInMenuBar` setting (replacing MenuBarExtra's `isInserted:`).
+private struct MenuBarBridge: View {
+    let appState: OtpStore
+    let appLock: AppLock
+    @Environment(\.openWindow) private var openWindow
+    @AppStorage("showInMenuBar") private var showInMenuBar = true
+
+    var body: some View {
+        Color.clear
+            .onAppear {
+                WindowActions.shared.openMain = {
+                    openWindow(id: DockIconController.mainWindowGroupID)
+                }
+                StatusItemController.shared.configure(appState: appState, appLock: appLock)
+                StatusItemController.shared.setVisible(showInMenuBar)
+            }
+            .onChange(of: showInMenuBar) { _, visible in
+                StatusItemController.shared.setVisible(visible)
+            }
     }
 }
 
