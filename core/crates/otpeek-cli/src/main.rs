@@ -181,7 +181,7 @@ enum VaultCmd {
     /// Show the effective vault and how it was selected.
     Current,
     /// Persist a vault selection (`cli`, `macos`, or a file path).
-    Use { vault: String },
+    Use { target: String },
 }
 
 // ---------------------------------------------------------------------------
@@ -702,8 +702,8 @@ fn cmd_vault(flag: &Option<String>, action: VaultCmd) -> Result<()> {
             );
             Ok(())
         }
-        VaultCmd::Use { vault } => {
-            let path = vault_target_path(&vault)?;
+        VaultCmd::Use { target } => {
+            let path = vault_target_path(&target)?;
             let mut cfg = read_config()?;
             cfg.active_vault = Some(path.to_string_lossy().into_owned());
             write_config(&cfg)?;

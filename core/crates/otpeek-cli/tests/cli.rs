@@ -57,7 +57,8 @@ fn saved_vault_selection_becomes_the_default() {
         .args(["vault", "use", vault.to_str().unwrap()])
         .assert()
         .success()
-        .stdout(predicate::str::contains("Selected vault"));
+        .stdout(predicate::str::contains("Selected vault"))
+        .stdout(predicate::str::contains("--vault overrides").not());
     isolated(dir.path())
         .args(["vault", "current"])
         .assert()
