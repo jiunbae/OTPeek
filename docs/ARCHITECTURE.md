@@ -398,9 +398,12 @@ Change notification across processes (app ↔ widget) is platform-side
 
 - Binary name `otpeek`. Targets: `aarch64/x86_64-unknown-linux-{gnu,musl}`, macOS, Windows.
 - Depends only on `otpeek-core`, `otpeek-vault`, `otpeek-sync` (not otpeek-ffi).
-- Vault path: `$OTPEEK_VAULT` env → `--vault` flag → XDG default
-  `~/.local/share/otpeek/vault.otpvault`. Config: `~/.config/otpeek/config.toml`
-  (sync backend settings only — never secrets).
+- Vault path: `--vault` flag → `$OTPEEK_VAULT` env → saved `active_vault` →
+  platform data-dir default (`~/.local/share/otpeek/vault.otpvault` on Linux,
+  `~/Library/Application Support/otpeek/vault.otpvault` on macOS). Config:
+  platform config dir `otpeek/config.toml` (vault selection and sync backend
+  settings only — never secrets). The `macos` alias resolves to the native
+  app's App Group vault.
 - VMK storage: `keyring` crate (Secret Service / macOS Keychain / Windows Credential
   Manager), service `"otpeek"`, user = vault path. Fallback when no keystore
   (headless): prompt for master password (`rpassword`), or `$OTPEEK_VAULT_PASSWORD`.
@@ -409,23 +412,25 @@ Change notification across processes (app ↔ widget) is platform-side
 Commands (clap v4, kebab-case):
 
 ```
-otp init                                     # create vault (prompts password twice)
-otp add <otpauth-uri>                        # also accepts otpauth-migration://
-otp add --issuer GitHub --account me [--secret -] [--hotp] [--digits N] [--period N] [--algorithm sha256]
-otp list [--folder NAME] [--json]            # table: index, issuer, account, folder, fav
-otp code <query> [--copy] [--watch]          # query: index | fuzzy issuer/account match;
+otpeek init                                  # create vault (prompts password twice)
+otpeek add <otpauth-uri>                     # also accepts otpauth-migration://
+otpeek add --issuer GitHub --account me [--secret -] [--hotp] [--digits N] [--period N] [--algorithm sha256]
+otpeek list [--folder NAME] [--json]         # table: index, issuer, account, folder, fav
+otpeek code <query> [--copy] [--watch]       # query: index | fuzzy issuer/account match;
                                              #   ambiguous → list matches, exit 2
-otp uri <query>                              # print otpauth:// URI
-otp qr <query>                               # render QR to terminal (qrcode crate)
-otp rm <query> [--yes]
-otp edit <query> [--issuer X] [--account X] [--folder NAME|--no-folder] [--favorite|--no-favorite]
-otp folder list|add <name>|rm <name>
-otp export <file> [--password-stdin]         # v2 container
-otp import <file> [--merge] [--legacy]       # --legacy = v1 .otpbackup
-otp sync setup webdav <url> --user <u>       # prompts password, stores in keyring
-otp sync now | otp sync status
-otp restore <file-or-webdav-url>             # new-device bootstrap
-otp passwd                                   # change master password
+otpeek uri <query>                           # print otpauth:// URI
+otpeek qr <query>                            # render QR to terminal (qrcode crate)
+otpeek rm <query> [--yes]
+otpeek edit <query> [--issuer X] [--account X] [--folder NAME|--no-folder] [--favorite|--no-favorite]
+otpeek folder list|add <name>|rm <name>
+otpeek export <file> [--password-stdin]      # v2 container
+otpeek import <file> [--merge] [--legacy]    # --legacy = v1 .otpbackup
+otpeek sync setup webdav <url> --user <u>    # prompts password, stores in keyring
+otpeek sync now | otpeek sync status
+otpeek restore <file-or-webdav-url>          # new-device bootstrap
+otpeek passwd                                # change master password
+otpeek vault list|current|use <cli|macos|path>
+otpeek unlock | otpeek lock                  # add/remove active-vault VMK in keyring
 ```
 
 Output: human tables to stdout, errors to stderr, exit codes 0/1/2 (ok/error/ambiguous).

@@ -128,9 +128,17 @@ otpeek add 'otpauth://totp/GitHub:me?secret=JBSWY3DPEHPK3PXP&issuer=GitHub'
 otpeek code github --copy
 ```
 
-Vault: `~/.local/share/otpeek/vault.otpvault` (override with `$OTPEEK_VAULT`).
+Vault: `~/.local/share/otpeek/vault.otpvault` (macOS:
+`~/Library/Application Support/otpeek/vault.otpvault`). Select a persistent
+default with `otpeek vault use <cli|macos|path>`; inspect it with
+`otpeek vault list` / `otpeek vault current`. A per-command `--vault` takes
+priority over `$OTPEEK_VAULT`, which takes priority over the saved selection.
+On macOS, `otpeek vault use macos` selects the native app's App Group vault.
+
 The vault key lives in the OS keystore; headless environments can use
 `$OTPEEK_VAULT_PASSWORD` (and `$OTPEEK_BACKUP_PASSWORD` for export/import).
+Use `otpeek unlock` to explicitly cache the active vault key and `otpeek lock`
+to remove the CLI's cached key.
 Configure sync: `otpeek sync setup webdav <url> --user <name>`, then `otpeek sync now`.
 
 </details>

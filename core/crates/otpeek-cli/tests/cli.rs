@@ -14,7 +14,16 @@ const SECRET: &str = "JBSWY3DPEHPK3PXP";
 
 fn otp(vault: &Path) -> Command {
     let mut cmd = Command::cargo_bin("otpeek").expect("binary builds");
-    cmd.env("OTPEEK_VAULT", vault).env("OTPEEK_VAULT_PASSWORD", PW);
+    cmd.env("OTPEEK_VAULT", vault)
+        .env("OTPEEK_VAULT_PASSWORD", PW);
+    cmd
+}
+
+fn isolated(home: &Path) -> Command {
+    let mut cmd = Command::cargo_bin("otpeek").expect("binary builds");
+    cmd.env("HOME", home)
+        .env("OTPEEK_VAULT_PASSWORD", PW)
+        .env_remove("OTPEEK_VAULT");
     cmd
 }
 
@@ -33,6 +42,91 @@ fn init_creates_vault_and_lists_empty() {
     init(&v);
     assert!(v.exists(), "vault file should exist after init");
     otp(&v).arg("list").assert().success();
+}
+
+#[test]
+fn saved_vault_selection_becomes_the_default() {
+    let dir = TempDir::new().unwrap();
+    let vault = dir.path().join("shared").join("vault.otpvault");
+
+    isolated(dir.path())
+        .args(["--vault", vault.to_str().unwrap(), "init"])
+        .assert()
+        .success();
+    isolated(dir.path())
+        .args(["vault", "use", vault.to_str().unwrap()])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Selected vault"));
+    isolated(dir.path())
+        .args(["vault", "current"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(vault.to_str().unwrap()))
+        .stdout(predicate::str::contains("saved selection"));
+    isolated(dir.path()).arg("list").assert().success();
+}
+
+#[test]
+fn vault_flag_overrides_environment_and_saved_selection() {
+    let dir = TempDir::new().unwrap();
+    let configured = dir.path().join("configured.otpvault");
+    let from_env = dir.path().join("environment.otpvault");
+    let from_flag = dir.path().join("flag.otpvault");
+
+    isolated(dir.path())
+        .args(["vault", "use", configured.to_str().unwrap()])
+        .assert()
+        .success();
+    isolated(dir.path())
+        .env("OTPEEK_VAULT", &from_env)
+        .args(["--vault", from_flag.to_str().unwrap(), "vault", "current"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(from_flag.to_str().unwrap()))
+        .stdout(predicate::str::contains("--vault"))
+        .stdout(predicate::str::contains(from_env.to_str().unwrap()).not())
+        .stdout(predicate::str::contains(configured.to_str().unwrap()).not());
+}
+
+#[test]
+fn vault_list_marks_the_effective_vault() {
+    let dir = TempDir::new().unwrap();
+    let vault = dir.path().join("chosen.otpvault");
+    isolated(dir.path())
+        .args(["vault", "use", vault.to_str().unwrap()])
+        .assert()
+        .success();
+
+    isolated(dir.path())
+        .args(["vault", "list"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(
+            "Effective source: saved selection",
+        ))
+        .stdout(predicate::str::contains("* configured"))
+        .stdout(predicate::str::contains(vault.to_str().unwrap()));
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn macos_alias_selects_the_app_group_vault() {
+    let dir = TempDir::new().unwrap();
+    let expected = dir
+        .path()
+        .join("Library/Group Containers/group.com.otpeek.app/vault.otpvault");
+
+    isolated(dir.path())
+        .args(["vault", "use", "macos"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(expected.to_str().unwrap()));
+    isolated(dir.path())
+        .args(["vault", "current"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(expected.to_str().unwrap()));
 }
 
 #[test]

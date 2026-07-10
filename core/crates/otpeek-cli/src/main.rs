@@ -1,4 +1,4 @@
-//! `otp` — CLI for the OTPeek vault.
+//! `otpeek` — CLI for the OTPeek vault.
 //! See docs/ARCHITECTURE.md §8 (frozen contract).
 //!
 //! Depends only on otpeek-core / otpeek-vault / otpeek-sync (never otpeek-ffi).
@@ -23,7 +23,7 @@ const KEYRING_WEBDAV: &str = "otpeek-webdav";
 #[derive(Parser)]
 #[command(name = "otpeek", version, about = "OTPeek CLI")]
 struct Cli {
-    /// Path to the vault file (overridden by $OTPEEK_VAULT; default: XDG data dir).
+    /// Path to the vault file (overrides $OTPEEK_VAULT and the saved selection).
     #[arg(long, global = true)]
     vault: Option<String>,
     #[command(subcommand)]
@@ -80,6 +80,15 @@ enum Command {
     Restore { target: String },
     /// Change the master password.
     Passwd,
+    /// Select and inspect the active vault.
+    Vault {
+        #[command(subcommand)]
+        action: VaultCmd,
+    },
+    /// Unlock the active vault and cache its key in the OS keyring.
+    Unlock,
+    /// Remove the active vault's cached key from the OS keyring.
+    Lock,
 }
 
 #[derive(Args)]
@@ -165,12 +174,24 @@ enum SyncBackendCmd {
     },
 }
 
+#[derive(Subcommand)]
+enum VaultCmd {
+    /// List built-in and configured vault locations.
+    List,
+    /// Show the effective vault and how it was selected.
+    Current,
+    /// Persist a vault selection (`cli`, `macos`, or a file path).
+    Use { vault: String },
+}
+
 // ---------------------------------------------------------------------------
-// Config (sync settings only — never secrets)
+// Config (vault selection + sync settings — never secrets)
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 struct Config {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    active_vault: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     sync: Option<SyncConfig>,
 }
@@ -221,6 +242,9 @@ fn run(cli: Cli) -> Result<()> {
         Command::Sync { action } => cmd_sync(&vault_flag, action),
         Command::Restore { target } => cmd_restore(&vault_flag, &target),
         Command::Passwd => cmd_passwd(&vault_flag),
+        Command::Vault { action } => cmd_vault(&vault_flag, action),
+        Command::Unlock => cmd_unlock(&vault_flag),
+        Command::Lock => cmd_lock(&vault_flag),
     }
 }
 
@@ -228,17 +252,109 @@ fn run(cli: Cli) -> Result<()> {
 // Path / config helpers
 // ---------------------------------------------------------------------------
 
-fn resolve_vault_path(flag: &Option<String>) -> Result<PathBuf> {
-    if let Ok(p) = std::env::var("OTPEEK_VAULT") {
-        if !p.is_empty() {
-            return Ok(PathBuf::from(p));
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum VaultPathSource {
+    Flag,
+    Environment,
+    Config,
+    Default,
+}
+
+impl VaultPathSource {
+    fn label(self) -> &'static str {
+        match self {
+            Self::Flag => "--vault",
+            Self::Environment => "OTPEEK_VAULT",
+            Self::Config => "saved selection",
+            Self::Default => "CLI default",
         }
     }
-    if let Some(p) = flag {
-        return Ok(PathBuf::from(p));
+}
+
+struct ResolvedVaultPath {
+    path: PathBuf,
+    source: VaultPathSource,
+}
+
+fn resolve_vault(flag: &Option<String>) -> Result<ResolvedVaultPath> {
+    if let Some(p) = flag.as_deref().filter(|p| !p.is_empty()) {
+        return Ok(ResolvedVaultPath {
+            path: expand_vault_path(p)?,
+            source: VaultPathSource::Flag,
+        });
     }
+    if let Ok(p) = std::env::var("OTPEEK_VAULT") {
+        if !p.is_empty() {
+            return Ok(ResolvedVaultPath {
+                path: expand_vault_path(&p)?,
+                source: VaultPathSource::Environment,
+            });
+        }
+    }
+    if let Some(p) = read_config()?.active_vault {
+        return Ok(ResolvedVaultPath {
+            path: expand_vault_path(&p)?,
+            source: VaultPathSource::Config,
+        });
+    }
+    Ok(ResolvedVaultPath {
+        path: cli_vault_path()?,
+        source: VaultPathSource::Default,
+    })
+}
+
+fn resolve_vault_path(flag: &Option<String>) -> Result<PathBuf> {
+    Ok(resolve_vault(flag)?.path)
+}
+
+fn cli_vault_path() -> Result<PathBuf> {
     let base = dirs::data_dir().ok_or_else(|| anyhow!("cannot determine data directory"))?;
     Ok(base.join("otpeek").join("vault.otpvault"))
+}
+
+#[cfg(target_os = "macos")]
+fn macos_vault_path() -> Option<PathBuf> {
+    dirs::home_dir().map(|home| {
+        home.join("Library")
+            .join("Group Containers")
+            .join("group.com.otpeek.app")
+            .join("vault.otpvault")
+    })
+}
+
+#[cfg(not(target_os = "macos"))]
+fn macos_vault_path() -> Option<PathBuf> {
+    None
+}
+
+fn expand_vault_path(raw: &str) -> Result<PathBuf> {
+    let path = if raw == "~" {
+        dirs::home_dir().ok_or_else(|| anyhow!("cannot determine home directory"))?
+    } else if let Some(relative) = raw.strip_prefix("~/") {
+        dirs::home_dir()
+            .ok_or_else(|| anyhow!("cannot determine home directory"))?
+            .join(relative)
+    } else {
+        PathBuf::from(raw)
+    };
+
+    let absolute = if path.is_absolute() {
+        path
+    } else {
+        std::env::current_dir()
+            .context("determining current directory")?
+            .join(path)
+    };
+    Ok(absolute.canonicalize().unwrap_or(absolute))
+}
+
+fn vault_target_path(target: &str) -> Result<PathBuf> {
+    match target.to_ascii_lowercase().as_str() {
+        "cli" | "default" => cli_vault_path(),
+        "macos" | "app" => macos_vault_path()
+            .ok_or_else(|| anyhow!("the `macos` vault alias is only available on macOS")),
+        _ => expand_vault_path(target),
+    }
 }
 
 fn config_path() -> Result<PathBuf> {
@@ -366,6 +482,24 @@ fn keyring_store_vmk(path: &Path, vmk: &[u8]) {
     }
 }
 
+fn keyring_store_vmk_explicit(path: &Path, vmk: &[u8]) -> Result<()> {
+    let user = path.to_string_lossy();
+    let entry = keyring::Entry::new(KEYRING_SERVICE, &user).context("opening the OS keyring")?;
+    entry
+        .set_secret(vmk)
+        .context("storing the vault key in the OS keyring")
+}
+
+fn keyring_delete_vmk(path: &Path) -> Result<bool> {
+    let user = path.to_string_lossy();
+    let entry = keyring::Entry::new(KEYRING_SERVICE, &user).context("opening the OS keyring")?;
+    match entry.delete_credential() {
+        Ok(()) => Ok(true),
+        Err(keyring::Error::NoEntry) => Ok(false),
+        Err(error) => Err(error).context("removing the vault key from the OS keyring"),
+    }
+}
+
 fn webdav_password(url: &str) -> Result<String> {
     if let Ok(p) = std::env::var("OTP_WEBDAV_PASSWORD") {
         if !p.is_empty() {
@@ -400,7 +534,19 @@ impl Session {
 fn open_session(flag: &Option<String>) -> Result<Session> {
     let path = resolve_vault_path(flag)?;
     if !path.exists() {
-        bail!("vault not found at {} (run `otp init`)", path.display());
+        let macos_hint = macos_vault_path()
+            .filter(|candidate| candidate.exists() && candidate != &path)
+            .map(|candidate| {
+                format!(
+                    "; macOS app vault found at {} (select it with `otpeek vault use macos`)",
+                    candidate.display()
+                )
+            })
+            .unwrap_or_default();
+        bail!(
+            "vault not found at {} (run `otpeek init`){macos_hint}",
+            path.display()
+        );
     }
     let data = otpeek_vault::read_vault_file(&path)?;
 
@@ -510,6 +656,101 @@ fn resolve_query(accounts: &[OtpAccount], query: &str) -> Result<usize> {
 // ---------------------------------------------------------------------------
 // Commands
 // ---------------------------------------------------------------------------
+
+fn cmd_vault(flag: &Option<String>, action: VaultCmd) -> Result<()> {
+    match action {
+        VaultCmd::List => {
+            let resolved = resolve_vault(flag)?;
+            let configured = read_config()?.active_vault;
+            let mut candidates: Vec<(String, PathBuf)> = vec![("cli".into(), cli_vault_path()?)];
+            if let Some(path) = macos_vault_path() {
+                candidates.push(("macos".into(), path));
+            }
+            if let Some(path) = configured {
+                let path = expand_vault_path(&path)?;
+                if !candidates.iter().any(|(_, candidate)| candidate == &path) {
+                    candidates.push(("configured".into(), path));
+                }
+            }
+            if !candidates
+                .iter()
+                .any(|(_, candidate)| candidate == &resolved.path)
+            {
+                candidates.push(("override".into(), resolved.path.clone()));
+            }
+
+            println!("Effective source: {}", resolved.source.label());
+            println!("  Name        State      Path");
+            for (name, path) in candidates {
+                let current = if path == resolved.path { "*" } else { " " };
+                let state = if path.exists() { "exists" } else { "missing" };
+                println!("{current} {name:<10}  {state:<9}  {}", path.display());
+            }
+            Ok(())
+        }
+        VaultCmd::Current => {
+            let resolved = resolve_vault(flag)?;
+            println!("Path:   {}", resolved.path.display());
+            println!("Source: {}", resolved.source.label());
+            println!(
+                "State:  {}",
+                if resolved.path.exists() {
+                    "exists"
+                } else {
+                    "missing"
+                }
+            );
+            Ok(())
+        }
+        VaultCmd::Use { vault } => {
+            let path = vault_target_path(&vault)?;
+            let mut cfg = read_config()?;
+            cfg.active_vault = Some(path.to_string_lossy().into_owned());
+            write_config(&cfg)?;
+            println!("Selected vault: {}", path.display());
+            if !path.exists() {
+                println!("Vault does not exist yet; run `otpeek init` to create it.");
+            }
+            if std::env::var("OTPEEK_VAULT").is_ok_and(|value| !value.is_empty()) {
+                println!("Note: OTPEEK_VAULT currently overrides the saved selection.");
+            }
+            if flag.as_deref().is_some_and(|value| !value.is_empty()) {
+                println!("Note: --vault overrides the saved selection for this command.");
+            }
+            Ok(())
+        }
+    }
+}
+
+fn cmd_unlock(flag: &Option<String>) -> Result<()> {
+    let path = resolve_vault_path(flag)?;
+    if !path.exists() {
+        bail!("vault not found at {}", path.display());
+    }
+    let data = otpeek_vault::read_vault_file(&path)?;
+    if let Some(vmk) = keyring_get_vmk(&path) {
+        if Vault::open_with_key(&data, &vmk).is_ok() {
+            println!("Vault is already unlocked: {}", path.display());
+            return Ok(());
+        }
+    }
+
+    let password = open_password()?;
+    let vault = Vault::open_with_password(&data, &password)?;
+    keyring_store_vmk_explicit(&path, &vault.vmk())?;
+    println!("Unlocked vault: {}", path.display());
+    Ok(())
+}
+
+fn cmd_lock(flag: &Option<String>) -> Result<()> {
+    let path = resolve_vault_path(flag)?;
+    if keyring_delete_vmk(&path)? {
+        println!("Locked vault: {}", path.display());
+    } else {
+        println!("Vault was already locked: {}", path.display());
+    }
+    Ok(())
+}
 
 fn cmd_init(flag: &Option<String>) -> Result<()> {
     let path = resolve_vault_path(flag)?;
@@ -981,7 +1222,7 @@ fn cmd_sync(flag: &Option<String>, action: SyncCmd) -> Result<()> {
             let cfg = read_config()?;
             let sc = cfg
                 .sync
-                .ok_or_else(|| anyhow!("sync not configured (run `otp sync setup ...`)"))?;
+                .ok_or_else(|| anyhow!("sync not configured (run `otpeek sync setup ...`)"))?;
             let backend = build_backend(&sc)?;
             let mut session = open_session(flag)?;
             let outcome =
@@ -1033,7 +1274,7 @@ fn cmd_restore(flag: &Option<String>, target: &str) -> Result<()> {
             .map(|s| s.user.clone())
             .or_else(|| std::env::var("OTP_WEBDAV_USER").ok())
             .ok_or_else(|| {
-                anyhow!("WebDAV user unknown; run `otp sync setup` or set OTP_WEBDAV_USER")
+                anyhow!("WebDAV user unknown; run `otpeek sync setup` or set OTP_WEBDAV_USER")
             })?;
         let pw = webdav_password(target)?;
         let backend = otpeek_sync::webdav::WebDavBackend::new(target.to_string(), user, pw);
