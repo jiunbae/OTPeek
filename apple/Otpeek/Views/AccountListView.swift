@@ -87,76 +87,69 @@ struct AccountListView: View {
     }
 
     private var accountList: some View {
-        ScrollView {
-            // LazyVStack keeps only visible rows alive, so idle CPU stays minimal
-            // and drops to ~0 when the window is occluded (per-row TimelineViews pause).
-            LazyVStack(alignment: .leading, spacing: 0, pinnedViews: groupByFolder ? [.sectionHeaders] : []) {
-                if groupByFolder {
-                    // iOS 26 Photos-style: favorites pinned at the very top, then every
-                    // other account grouped into folder sections you scroll through.
-                    if !favorites.isEmpty {
-                        Section {
-                            rows(favorites)
-                        } header: {
-                            sectionHeader("Favorites", icon: "star.fill", count: favorites.count)
-                                .background(.background)
-                        }
-                    }
-                    folderSections
-                } else {
-                    if !showOnlyFavorites && !favorites.isEmpty {
+        // A native List gives iOS-standard section headers — the system's own sticky
+        // material headers, separators and insets — instead of the custom ones a
+        // ScrollView needs (which read as "floating"). List is lazy too, so off-screen
+        // rows (and their per-row TimelineViews) stay paused.
+        List {
+            if groupByFolder {
+                if !favorites.isEmpty {
+                    Section {
+                        listRows(favorites)
+                    } header: {
                         sectionHeader("Favorites", icon: "star.fill", count: favorites.count)
-                        rows(favorites)
-                    }
-
-                    // "All Accounts" header removed — redundant with the tab/nav title.
-                    // Favorites stay pinned above; the remaining accounts simply follow.
-                    let rest = showOnlyFavorites ? displayedAccounts : regular
-                    if !rest.isEmpty {
-                        rows(rest)
                     }
                 }
+                folderSections
+            } else {
+                if !showOnlyFavorites && !favorites.isEmpty {
+                    Section {
+                        listRows(favorites)
+                    } header: {
+                        sectionHeader("Favorites", icon: "star.fill", count: favorites.count)
+                    }
+                }
+                // "All Accounts" header removed — redundant with the tab/nav title.
+                let rest = showOnlyFavorites ? displayedAccounts : regular
+                if !rest.isEmpty {
+                    Section { listRows(rest) }
+                }
             }
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .listStyle(.plain)
     }
 
     /// Folder-grouped sections for the iOS All tab: each user folder, then
-    /// Uncategorized, with sticky headers you scroll past (favorites keep their star).
+    /// Uncategorized. List gives the section headers native sticky behavior.
     @ViewBuilder
     private var folderSections: some View {
         ForEach(appState.folders) { folder in
             let items = displayedAccounts.filter { $0.folderId == folder.id && !$0.isFavorite }
             if !items.isEmpty {
                 Section {
-                    rows(items)
+                    listRows(items)
                 } header: {
                     sectionHeader(folder.name, icon: folder.iconName, count: items.count)
-                        .background(.background)
                 }
             }
         }
         let uncategorized = displayedAccounts.filter { $0.folderId == nil && !$0.isFavorite }
         if !uncategorized.isEmpty {
             Section {
-                rows(uncategorized)
+                listRows(uncategorized)
             } header: {
                 sectionHeader("Uncategorized", icon: "tray", count: uncategorized.count)
-                    .background(.background)
             }
         }
     }
 
     @ViewBuilder
-    private func rows(_ accounts: [OtpAccount]) -> some View {
-        ForEach(Array(accounts.enumerated()), id: \.element.id) { index, account in
+    private func listRows(_ accounts: [OtpAccount]) -> some View {
+        ForEach(accounts) { account in
             AccountCardView(account: account)
-                .padding(.horizontal, 12)
+                .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 12))
+                .listRowSeparator(.visible)
                 .contextMenu { accountContextMenu(for: account) }
-            if index < accounts.count - 1 {
-                Divider().padding(.leading, 68).padding(.trailing, 16)
-            }
         }
     }
 
