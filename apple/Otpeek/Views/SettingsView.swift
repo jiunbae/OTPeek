@@ -481,6 +481,14 @@ struct SettingsView: View {
     /// showing a dead toggle) when the app lacks the iCloud entitlement/container
     /// or the user isn't signed into iCloud.
     private func checkICloudAvailability() async {
+        #if DEBUG
+        // The demo/screenshot build is unsigned and has no iCloud entitlement, so
+        // touching CloudKit would trap (not throw). Skip it in demo mode.
+        if ProcessInfo.processInfo.arguments.contains("-otpeekDemo") {
+            iCloudAvailable = false
+            return
+        }
+        #endif
         let container = CKContainer(identifier: CloudKitSyncBackend.containerIdentifier)
         do {
             let status = try await container.accountStatus()

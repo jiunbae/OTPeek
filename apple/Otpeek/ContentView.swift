@@ -1,118 +1,33 @@
 import SwiftUI
 
-#if os(iOS)
-/// iOS 계정 목록의 폴더 필터. macOS 는 사이드바가 담당한다.
-enum FolderFilter: Hashable {
-    case all, favorites, uncategorized, folder(String)
-}
-#endif
-
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
     #if os(iOS)
-    // iOS 는 설정을 담을 별도 씬(macOS Settings/MenuBar)이 없으므로 시트로 띄운다.
-    @State private var showingSettings = false
-    // iOS 폴더(그룹) 필터/편집 상태.
-    @State private var folderFilter: FolderFilter = .all
-    @State private var editingFolder: OtpFolder?
-
-    /// 선택된 폴더 칩에 맞춰 계정 목록을 필터링해서 보여준다.
-    @ViewBuilder private var filteredAccountList: some View {
-        switch folderFilter {
-        case .all:            AccountListView()
-        case .favorites:      AccountListView(showOnlyFavorites: true)
-        case .uncategorized:  AccountListView(folderId: "uncategorized")
-        case .folder(let id): AccountListView(folderId: id)
-        }
-    }
+    @State private var selectedTab: IOSTab = IOSTab.initialFromLaunchArguments
     #endif
 
     var body: some View {
         #if os(iOS)
-        NavigationStack {
-            VStack(spacing: 0) {
-                FolderChipBar(filter: $folderFilter, onEdit: { editingFolder = $0 })
-                filteredAccountList
+        iosTabs
+            .sheet(isPresented: $appState.showingAddAccount) {
+                AddAccountView().environmentObject(appState)
             }
-                .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button {
-                            showingSettings = true
-                        } label: {
-                            Image(systemName: "gearshape")
-                        }
-                    }
-                    ToolbarItem(placement: .primaryAction) {
-                        Menu {
-                            Button {
-                                appState.showingQRScanner = true
-                            } label: {
-                                Label("Scan QR Code", systemImage: "qrcode.viewfinder")
-                            }
-
-                            Button {
-                                appState.showingQRImageImport = true
-                            } label: {
-                                Label("Import from Image", systemImage: "photo")
-                            }
-
-                            Button {
-                                appState.showingAddAccount = true
-                            } label: {
-                                Label("Add Manually", systemImage: "plus")
-                            }
-
-                            Divider()
-
-                            Button {
-                                appState.showingAddFolder = true
-                            } label: {
-                                Label("New Folder", systemImage: "folder.badge.plus")
-                            }
-                        } label: {
-                            Image(systemName: "plus")
-                        }
-                    }
-                }
-                .sheet(isPresented: $appState.showingAddAccount) {
-                    AddAccountView()
-                        .environmentObject(appState)
-                }
-                .sheet(isPresented: $appState.showingQRScanner) {
-                    QRScannerView()
-                        .environmentObject(appState)
-                }
-                .sheet(isPresented: $appState.showingQRImageImport) {
-                    QRImageImportView()
-                        .environmentObject(appState)
-                }
-                .sheet(isPresented: $showingSettings) {
-                    NavigationStack {
-                        SettingsView()
-                            .environmentObject(appState)
-                            .navigationTitle("Settings")
-                            .navigationBarTitleDisplayMode(.inline)
-                            .toolbar {
-                                ToolbarItem(placement: .confirmationAction) {
-                                    Button("Done") { showingSettings = false }
-                                }
-                            }
-                    }
-                }
-                .sheet(isPresented: $appState.showingAddFolder) {
-                    AddFolderView()
-                        .environmentObject(appState)
-                }
-                .sheet(item: $editingFolder) { folder in
-                    EditFolderView(folder: folder)
-                        .environmentObject(appState)
-                }
-        }
+            .sheet(isPresented: $appState.showingQRScanner) {
+                QRScannerView().environmentObject(appState)
+            }
+            .sheet(isPresented: $appState.showingQRImageImport) {
+                QRImageImportView().environmentObject(appState)
+            }
+            .sheet(isPresented: $appState.showingAddFolder) {
+                AddFolderView().environmentObject(appState)
+            }
         #else
         NavigationSplitView {
             SidebarView()
         } detail: {
-            AccountListView()
+            // Unified with iOS: the main view is the favorites-on-top, folder-grouped
+            // list. The sidebar still filters to a single folder when you pick one.
+            AccountListView(groupByFolder: true)
         }
         .frame(minWidth: 700, minHeight: 450)
         .sheet(isPresented: $appState.showingAddAccount) {
@@ -129,6 +44,48 @@ struct ContentView: View {
         }
         #endif
     }
+
+    #if os(iOS)
+    /// iOS 26: a 2-tab bar (Accounts · Settings) plus a detached Search dot
+    /// (the `.search` role). iOS 17 falls back to three plain tabs.
+    @ViewBuilder private var iosTabs: some View {
+        if #available(iOS 18.0, *) {
+            TabView(selection: $selectedTab) {
+                Tab("Accounts", systemImage: "square.grid.2x2", value: IOSTab.all) { allTab }
+                Tab("Settings", systemImage: "gearshape", value: IOSTab.settings) { settingsTab }
+                Tab(value: IOSTab.search, role: .search) { searchTab }
+            }
+            .iOS26TabBar()
+        } else {
+            TabView(selection: $selectedTab) {
+                allTab.tabItem { Label("Accounts", systemImage: "square.grid.2x2") }.tag(IOSTab.all)
+                settingsTab.tabItem { Label("Settings", systemImage: "gearshape") }.tag(IOSTab.settings)
+                searchTab.tabItem { Label("Search", systemImage: "magnifyingglass") }.tag(IOSTab.search)
+            }
+        }
+    }
+
+    @ViewBuilder private var allTab: some View {
+        NavigationStack {
+            AllScreen()
+                // Inline title so "Accounts" shares the bar with "+" instead of
+                // taking its own large-title row.
+                .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+    @ViewBuilder private var settingsTab: some View {
+        NavigationStack {
+            SettingsView()
+                .environmentObject(appState)
+                .navigationTitle("Settings")
+        }
+    }
+    @ViewBuilder private var searchTab: some View {
+        NavigationStack {
+            AccountListView(searchable: true, titleOverride: "Search")
+        }
+    }
+    #endif
 }
 
 // MARK: - macOS Sidebar
@@ -515,71 +472,124 @@ struct EditFolderView: View {
     }
 }
 
-// MARK: - iOS Folder Chip Bar
+// MARK: - iOS Tab Navigation (Liquid Glass)
 
 #if os(iOS)
-/// 계정 목록 위 가로 스크롤 폴더(그룹) 칩 바. 탭으로 필터 전환, 롱프레스로 편집/삭제.
-struct FolderChipBar: View {
+/// Tab bar sections. On iOS 26 the tab bar is Liquid Glass and `.search` renders
+/// as a detached dot; the tab bar minimizes on scroll.
+enum IOSTab: Hashable {
+    case all, settings, search
+
+    /// DEBUG screenshot harness: `-otpeekTab settings|search` opens that tab first.
+    static var initialFromLaunchArguments: IOSTab {
+        #if DEBUG
+        let args = ProcessInfo.processInfo.arguments
+        if let i = args.firstIndex(of: "-otpeekTab"), i + 1 < args.count {
+            switch args[i + 1] {
+            case "settings": return .settings
+            case "search":   return .search
+            default:         break
+            }
+        }
+        #endif
+        return .all
+    }
+}
+
+private extension View {
+    /// Applies iOS 26 tab-bar behaviors (the glass look is automatic); no-op on iOS 17–25.
+    @ViewBuilder
+    func iOS26TabBar() -> some View {
+        if #available(iOS 26.0, *) {
+            self.tabBarMinimizeBehavior(.onScrollDown)
+        } else {
+            self
+        }
+    }
+}
+
+/// The Accounts tab: every account in one scroll, grouped into folder sections
+/// (iOS 26 Photos-style). The "+" menu also creates and edits folders.
+private struct AllScreen: View {
     @EnvironmentObject var appState: AppState
-    @Binding var filter: FolderFilter
-    var onEdit: (OtpFolder) -> Void
+    @State private var showingManageFolders = false
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                chip(title: "All", icon: "square.grid.2x2",
-                     count: appState.accounts.count, value: .all)
-
-                chip(title: "Favorites", icon: "star.fill",
-                     count: appState.accounts.filter { $0.isFavorite }.count, value: .favorites)
-
-                ForEach(appState.folders) { folder in
-                    chip(title: folder.name, icon: folder.iconName,
-                         count: appState.accountCount(inFolder: folder.id), value: .folder(folder.id))
-                        .contextMenu {
-                            Button { onEdit(folder) } label: { Label("Edit Folder", systemImage: "pencil") }
-                            Button(role: .destructive) {
-                                if filter == .folder(folder.id) { filter = .all }
-                                appState.deleteFolder(folder)
-                            } label: { Label("Delete Folder", systemImage: "trash") }
+        AccountListView(searchable: false, titleOverride: "Accounts", groupByFolder: true)
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Button { appState.showingQRScanner = true } label: {
+                            Label("Scan QR Code", systemImage: "qrcode.viewfinder")
                         }
+                        Button { appState.showingQRImageImport = true } label: {
+                            Label("Import from Image", systemImage: "photo")
+                        }
+                        Button { appState.showingAddAccount = true } label: {
+                            Label("Add Manually", systemImage: "plus")
+                        }
+                        Divider()
+                        Button { appState.showingAddFolder = true } label: {
+                            Label("New Folder", systemImage: "folder.badge.plus")
+                        }
+                        if !appState.folders.isEmpty {
+                            Button { showingManageFolders = true } label: {
+                                Label("Edit Folders…", systemImage: "slider.horizontal.3")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "plus")
+                    }
                 }
-
-                chip(title: "Uncategorized", icon: "tray",
-                     count: appState.unfolderedAccounts.count, value: .uncategorized)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-        }
-        .background(.bar)
+            .sheet(isPresented: $showingManageFolders) {
+                ManageFoldersView().environmentObject(appState)
+            }
     }
+}
 
-    @ViewBuilder
-    private func chip(title: String, icon: String, count: Int, value: FolderFilter) -> some View {
-        let selected = filter == value
-        Button {
-            filter = value
-        } label: {
-            HStack(spacing: 5) {
-                Image(systemName: icon)
-                    .font(.system(size: 11, weight: .semibold))
-                Text(title)
-                    .font(.system(size: 13, weight: .medium))
-                    .lineLimit(1)
-                if count > 0 {
-                    Text("\(count)")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(selected ? Color.white.opacity(0.9) : .secondary)
+/// Edit/delete folders — reached from the All screen's title menu.
+private struct ManageFoldersView: View {
+    @EnvironmentObject var appState: AppState
+    @Environment(\.dismiss) private var dismiss
+    @State private var editingFolder: OtpFolder?
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(appState.folders) { folder in
+                    Button {
+                        editingFolder = folder
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: folder.iconName)
+                                .foregroundStyle(Color(hex: folder.displayColor) ?? .blue)
+                                .frame(width: 26)
+                            Text(folder.name).foregroundStyle(.primary)
+                            Spacer()
+                            Text("\(appState.accountCount(inFolder: folder.id))")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .onDelete { offsets in
+                    offsets.map { appState.folders[$0] }.forEach { appState.deleteFolder($0) }
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
-            .background(
-                Capsule().fill(selected ? Color.accentColor : Color.secondary.opacity(0.15))
-            )
-            .foregroundStyle(selected ? Color.white : Color.primary)
+            .navigationTitle("Folders")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Button { appState.showingAddFolder = true } label: { Image(systemName: "plus") }
+                }
+            }
+            .sheet(item: $editingFolder) { folder in
+                EditFolderView(folder: folder).environmentObject(appState)
+            }
         }
-        .buttonStyle(.plain)
     }
 }
 #endif

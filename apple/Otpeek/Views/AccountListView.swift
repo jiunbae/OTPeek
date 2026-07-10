@@ -4,6 +4,9 @@ struct AccountListView: View {
     @EnvironmentObject var appState: AppState
     var showOnlyFavorites: Bool = false
     var folderId: String? = nil  // nil = all, "uncategorized" = no folder, other = specific folder
+    var searchable: Bool = true  // iOS puts search in its own tab, so the other tabs pass false
+    var titleOverride: String? = nil
+    var groupByFolder: Bool = false  // iOS All tab: one scroll, grouped into folder sections
 
     var displayedAccounts: [OtpAccount] {
         var accounts = appState.accounts
@@ -64,8 +67,8 @@ struct AccountListView: View {
                 accountList
             }
         }
-        .searchable(text: $appState.searchText, prompt: "Search accounts")
-        .navigationTitle(navigationTitle)
+        .modifier(ConditionalSearchable(active: searchable))
+        .navigationTitle(titleOverride ?? navigationTitle)
     }
 
     private var navigationTitle: String {
@@ -87,22 +90,61 @@ struct AccountListView: View {
         ScrollView {
             // LazyVStack keeps only visible rows alive, so idle CPU stays minimal
             // and drops to ~0 when the window is occluded (per-row TimelineViews pause).
-            LazyVStack(alignment: .leading, spacing: 0) {
-                if !showOnlyFavorites && !favorites.isEmpty {
-                    sectionHeader("Favorites", icon: "star.fill", count: favorites.count)
-                    rows(favorites)
-                }
-
-                let rest = showOnlyFavorites ? displayedAccounts : regular
-                if !rest.isEmpty {
-                    if !showOnlyFavorites && !favorites.isEmpty {
-                        sectionHeader("All Accounts", icon: "person.text.rectangle", count: rest.count)
+            LazyVStack(alignment: .leading, spacing: 0, pinnedViews: groupByFolder ? [.sectionHeaders] : []) {
+                if groupByFolder {
+                    // iOS 26 Photos-style: favorites pinned at the very top, then every
+                    // other account grouped into folder sections you scroll through.
+                    if !favorites.isEmpty {
+                        Section {
+                            rows(favorites)
+                        } header: {
+                            sectionHeader("Favorites", icon: "star.fill", count: favorites.count)
+                                .background(.background)
+                        }
                     }
-                    rows(rest)
+                    folderSections
+                } else {
+                    if !showOnlyFavorites && !favorites.isEmpty {
+                        sectionHeader("Favorites", icon: "star.fill", count: favorites.count)
+                        rows(favorites)
+                    }
+
+                    // "All Accounts" header removed — redundant with the tab/nav title.
+                    // Favorites stay pinned above; the remaining accounts simply follow.
+                    let rest = showOnlyFavorites ? displayedAccounts : regular
+                    if !rest.isEmpty {
+                        rows(rest)
+                    }
                 }
             }
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    /// Folder-grouped sections for the iOS All tab: each user folder, then
+    /// Uncategorized, with sticky headers you scroll past (favorites keep their star).
+    @ViewBuilder
+    private var folderSections: some View {
+        ForEach(appState.folders) { folder in
+            let items = displayedAccounts.filter { $0.folderId == folder.id && !$0.isFavorite }
+            if !items.isEmpty {
+                Section {
+                    rows(items)
+                } header: {
+                    sectionHeader(folder.name, icon: folder.iconName, count: items.count)
+                        .background(.background)
+                }
+            }
+        }
+        let uncategorized = displayedAccounts.filter { $0.folderId == nil && !$0.isFavorite }
+        if !uncategorized.isEmpty {
+            Section {
+                rows(uncategorized)
+            } header: {
+                sectionHeader("Uncategorized", icon: "tray", count: uncategorized.count)
+                    .background(.background)
+            }
         }
     }
 
@@ -176,6 +218,23 @@ struct AccountListView: View {
             appState.deleteAccount(account)
         } label: {
             Label("Delete", systemImage: "trash")
+        }
+    }
+}
+
+// MARK: - Conditional Searchable
+
+/// Applies `.searchable` only when requested. On iOS the search field lives in a
+/// dedicated tab, so the All/Favorites/Folders lists opt out; macOS keeps it.
+private struct ConditionalSearchable: ViewModifier {
+    @EnvironmentObject var appState: AppState
+    let active: Bool
+
+    func body(content: Content) -> some View {
+        if active {
+            content.searchable(text: $appState.searchText, prompt: "Search accounts")
+        } else {
+            content
         }
     }
 }

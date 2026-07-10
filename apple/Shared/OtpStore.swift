@@ -77,17 +77,25 @@ public final class OtpStore: ObservableObject {
     #if DEBUG
     private func seedDemoData() {
         let now = Int64(Date().timeIntervalSince1970 * 1000)
-        func a(_ issuer: String, _ name: String, _ secret: String, _ i: Int32, fav: Bool = false) -> OtpAccount {
+        func a(_ issuer: String, _ name: String, _ secret: String, _ i: Int32,
+               fav: Bool = false, folder: String? = nil) -> OtpAccount {
             OtpAccount(id: UUID().uuidString, otpType: .totp, secret: secret, issuer: issuer,
                        accountName: name, algorithm: .sha1, digits: 6, period: 30, counter: 0,
-                       folderId: nil, isFavorite: fav, sortOrder: i, icon: nil, color: nil,
+                       folderId: folder, isFavorite: fav, sortOrder: i, icon: nil, color: nil,
                        createdAt: now, updatedAt: now, deletedAt: nil)
         }
+        func f(_ name: String, _ icon: String, _ color: String, _ i: Int32) -> OtpFolder {
+            OtpFolder(id: UUID().uuidString, name: name, icon: icon, color: color,
+                      sortOrder: i, createdAt: now, updatedAt: now, deletedAt: nil)
+        }
+        let work = f("Work", "briefcase.fill", "#5856D6", 0)
+        let personal = f("Personal", "house.fill", "#34C759", 1)
+        folders = [work, personal]
         accounts = [
-            a("GitHub", "octocat", "JBSWY3DPEHPK3PXP", 0, fav: true),
-            a("Google", "you@gmail.com", "KRSXG5CTMVRXEZLU", 1, fav: true),
-            a("Amazon", "shopping@gmail.com", "MFRGGZDFMZTWQ2LK", 2),
-            a("Slack", "you@company.com", "NBSWY3DPO5XXE3DE", 3),
+            a("GitHub", "octocat", "JBSWY3DPEHPK3PXP", 0, fav: true, folder: work.id),
+            a("Amazon", "shopping@gmail.com", "MFRGGZDFMZTWQ2LK", 2, folder: work.id),
+            a("Google", "you@gmail.com", "KRSXG5CTMVRXEZLU", 1, fav: true, folder: personal.id),
+            a("Slack", "you@company.com", "NBSWY3DPO5XXE3DE", 3, folder: personal.id),
             a("Dropbox", "files@gmail.com", "GEZDGNBVGY3TQOJQ", 4),
             a("Notion", "team@notion.so", "ONXW2ZLUNBUW4ZY7", 5),
         ]
