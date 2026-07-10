@@ -163,6 +163,31 @@ fn add_from_uri_then_list_and_code() {
 }
 
 #[test]
+fn code_accepts_account_id_for_integrations() {
+    let dir = TempDir::new().unwrap();
+    let v = vault_in(&dir);
+    init(&v);
+    otp(&v)
+        .args([
+            "add",
+            "otpauth://totp/GitHub:me@example.com?secret=JBSWY3DPEHPK3PXP&issuer=GitHub",
+        ])
+        .assert()
+        .success();
+
+    let output = otp(&v).args(["list", "--json"]).output().unwrap();
+    assert!(output.status.success());
+    let accounts: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    let id = accounts[0]["id"].as_str().unwrap();
+
+    otp(&v)
+        .args(["code", id, "--json"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("validUntil"));
+}
+
+#[test]
 fn add_manual_and_code() {
     let dir = TempDir::new().unwrap();
     let v = vault_in(&dir);

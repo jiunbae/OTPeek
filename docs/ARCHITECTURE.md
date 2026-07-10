@@ -416,7 +416,7 @@ otpeek init                                  # create vault (prompts password tw
 otpeek add <otpauth-uri>                     # also accepts otpauth-migration://
 otpeek add --issuer GitHub --account me [--secret -] [--hotp] [--digits N] [--period N] [--algorithm sha256]
 otpeek list [--folder NAME] [--json]         # table: index, issuer, account, folder, fav
-otpeek code <query> [--copy] [--watch]       # query: index | fuzzy issuer/account match;
+otpeek code <query> [--copy] [--watch]       # query: index | exact id | fuzzy issuer/account;
                                              #   ambiguous → list matches, exit 2
 otpeek uri <query>                           # print otpauth:// URI
 otpeek qr <query>                            # render QR to terminal (qrcode crate)

@@ -122,6 +122,7 @@ struct ListArgs {
 
 #[derive(Args)]
 struct CodeArgs {
+    /// 1-based index, exact account ID, or fuzzy issuer/account match.
     query: String,
     #[arg(long)]
     copy: bool,
@@ -619,6 +620,9 @@ fn resolve_query(accounts: &[OtpAccount], query: &str) -> Result<usize> {
         if n >= 1 && n <= accounts.len() {
             return Ok(n - 1);
         }
+    }
+    if let Some(index) = accounts.iter().position(|account| account.id == query) {
+        return Ok(index);
     }
     let q = query.to_lowercase();
     let matches: Vec<usize> = accounts
