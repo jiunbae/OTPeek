@@ -91,32 +91,47 @@ struct AccountListView: View {
         // material headers, separators and insets — instead of the custom ones a
         // ScrollView needs (which read as "floating"). List is lazy too, so off-screen
         // rows (and their per-row TimelineViews) stay paused.
-        List {
-            if groupByFolder {
-                if !favorites.isEmpty {
-                    Section {
-                        listRows(favorites)
-                    } header: {
-                        sectionHeader("Favorites", icon: "star.fill", count: favorites.count)
+        ScrollViewReader { proxy in
+            List {
+                if groupByFolder {
+                    if !favorites.isEmpty {
+                        Section {
+                            listRows(favorites)
+                        } header: {
+                            sectionHeader("Favorites", icon: "star.fill", count: favorites.count)
+                        }
                     }
-                }
-                folderSections
-            } else {
-                if !showOnlyFavorites && !favorites.isEmpty {
-                    Section {
-                        listRows(favorites)
-                    } header: {
-                        sectionHeader("Favorites", icon: "star.fill", count: favorites.count)
+                    folderSections
+                } else {
+                    if !showOnlyFavorites && !favorites.isEmpty {
+                        Section {
+                            listRows(favorites)
+                        } header: {
+                            sectionHeader("Favorites", icon: "star.fill", count: favorites.count)
+                        }
                     }
-                }
-                // "All Accounts" header removed — redundant with the tab/nav title.
-                let rest = showOnlyFavorites ? displayedAccounts : regular
-                if !rest.isEmpty {
-                    Section { listRows(rest) }
+                    // "All Accounts" header removed — redundant with the tab/nav title.
+                    let rest = showOnlyFavorites ? displayedAccounts : regular
+                    if !rest.isEmpty {
+                        Section { listRows(rest) }
+                    }
                 }
             }
+            .listStyle(.plain)
+            #if DEBUG
+            // Screenshot harness: `-otpeekScroll` animates the list to a mid account so
+            // a captured frame shows the native sticky header pinned mid-scroll.
+            .task {
+                guard ProcessInfo.processInfo.arguments.contains("-otpeekScroll"),
+                      displayedAccounts.count > 3 else { return }
+                let target = displayedAccounts[displayedAccounts.count / 2].id
+                try? await Task.sleep(nanoseconds: 700_000_000)
+                withAnimation(.easeInOut(duration: 0.4)) {
+                    proxy.scrollTo(target, anchor: .top)
+                }
+            }
+            #endif
         }
-        .listStyle(.plain)
     }
 
     /// Folder-grouped sections for the iOS All tab: each user folder, then
@@ -147,6 +162,7 @@ struct AccountListView: View {
     private func listRows(_ accounts: [OtpAccount]) -> some View {
         ForEach(accounts) { account in
             AccountCardView(account: account)
+                .id(account.id)
                 .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 12))
                 .listRowSeparator(.visible)
                 .contextMenu { accountContextMenu(for: account) }
@@ -168,9 +184,14 @@ struct AccountListView: View {
             Spacer()
         }
         .foregroundColor(.secondary)
-        .padding(.horizontal, 20)
-        .padding(.top, 14)
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
         .padding(.bottom, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        // Opaque background so the pinned (sticky) header occludes rows scrolling
+        // under it — custom List headers don't get the system's background for free.
+        .background(.background)
+        .listRowInsets(EdgeInsets())
     }
 
     @ViewBuilder

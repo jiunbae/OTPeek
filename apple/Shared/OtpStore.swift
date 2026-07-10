@@ -93,11 +93,16 @@ public final class OtpStore: ObservableObject {
         folders = [work, personal]
         accounts = [
             a("GitHub", "octocat", "JBSWY3DPEHPK3PXP", 0, fav: true, folder: work.id),
-            a("Amazon", "shopping@gmail.com", "MFRGGZDFMZTWQ2LK", 2, folder: work.id),
             a("Google", "you@gmail.com", "KRSXG5CTMVRXEZLU", 1, fav: true, folder: personal.id),
-            a("Slack", "you@company.com", "NBSWY3DPO5XXE3DE", 3, folder: personal.id),
-            a("Dropbox", "files@gmail.com", "GEZDGNBVGY3TQOJQ", 4),
-            a("Notion", "team@notion.so", "ONXW2ZLUNBUW4ZY7", 5),
+            a("Amazon", "shopping@gmail.com", "MFRGGZDFMZTWQ2LK", 2, folder: work.id),
+            a("AWS", "ops@company.com", "NBSWY3DPO5XXE3DE", 3, folder: work.id),
+            a("GitLab", "dev@company.com", "GEZDGNBVGY3TQOJQ", 4, folder: work.id),
+            a("Slack", "you@company.com", "ONXW2ZLUNBUW4ZY7", 5, folder: personal.id),
+            a("Dropbox", "files@gmail.com", "JBSWY3DPEHPK3PXQ", 6, folder: personal.id),
+            a("Spotify", "music@gmail.com", "KRSXG5CTMVRXEZLV", 7, folder: personal.id),
+            a("Notion", "team@notion.so", "MFRGGZDFMZTWQ2LL", 8),
+            a("Reddit", "u/anon", "NBSWY3DPO5XXE3DF", 9),
+            a("Discord", "gamer", "GEZDGNBVGY3TQOJR", 10),
         ]
         vaultExists = true
         isReady = true
