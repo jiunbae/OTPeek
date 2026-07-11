@@ -42,6 +42,17 @@ public final class AppLock: ObservableObject {
         context.localizedFallbackTitle = "Enter Password"
         var error: NSError?
 
+        // Probe biometrics explicitly: `.deviceOwnerAuthentication` silently falls
+        // back to the passcode when Face ID is unavailable, so surface WHY on the
+        // lock screen (e.g. per-app Face ID permission denied, not enrolled, …).
+        var bioError: NSError?
+        if !context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &bioError) {
+            let detail = (bioError as? LAError).map { "LAError \($0.code.rawValue): \($0.localizedDescription)" }
+                ?? bioError?.localizedDescription
+                ?? "unknown"
+            authError = "Biometrics unavailable — \(detail) (biometryType=\(context.biometryType.rawValue))"
+        }
+
         // If the device can't authenticate at all, don't trap the user out.
         guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
             isLocked = false
