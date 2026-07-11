@@ -68,9 +68,9 @@ struct ContentView: View {
     @ViewBuilder private var allTab: some View {
         NavigationStack {
             AllScreen()
-                // Inline title so "Accounts" shares the bar with "+" instead of
-                // taking its own large-title row.
-                .navigationBarTitleDisplayMode(.inline)
+                // Photos-style: a large left-aligned title with the live section
+                // subtitle beneath it; scrolling collapses it into the glass bar.
+                .navigationBarTitleDisplayMode(.large)
         }
     }
     @ViewBuilder private var settingsTab: some View {

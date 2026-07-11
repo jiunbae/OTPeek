@@ -69,7 +69,15 @@ struct AccountListView: View {
         }
         .modifier(ConditionalSearchable(active: searchable))
         .navigationTitle(titleOverride ?? navigationTitle)
+        #if os(iOS)
+        // Photos-style: the nav bar subtitle live-updates to the folder section
+        // currently at the top of the viewport (nothing pins inside the content).
+        .modifier(NavSubtitleIfAvailable(text: groupByFolder ? currentSection : nil))
+        #endif
     }
+
+    /// Name of the folder section currently under the nav bar (groupByFolder only).
+    @State private var currentSection: String?
 
     private var navigationTitle: String {
         if showOnlyFavorites {
@@ -88,20 +96,27 @@ struct AccountListView: View {
 
     private var accountList: some View {
         // A native List, but with the section titles rendered as ordinary rows —
-        // Photos-style: only the nav-bar title ("Accounts") stays pinned, and the
-        // folder names scroll away with their content. (A .plain List's real section
-        // headers are sticky, which stacked oddly under the nav bar's edge blur.)
+        // Photos-style: only the nav bar stays pinned; folder names scroll away with
+        // their content, and the nav subtitle live-updates to the section on screen.
         // List is lazy, so off-screen rows and their TimelineViews stay paused.
+        GeometryReader { outer in
+        let navBarBottom = outer.frame(in: .global).minY
         ScrollViewReader { proxy in
             List {
                 if groupByFolder {
-                    if !favorites.isEmpty {
+                    ForEach(groupedSections) { section in
                         Section {
-                            sectionHeaderRow("Favorites", icon: "star.fill", count: favorites.count)
-                            listRows(favorites)
+                            sectionHeaderRow(section.name, icon: section.icon, count: section.accounts.count)
+                                .background(GeometryReader { g in
+                                    Color.clear.preference(
+                                        key: SectionHeaderPositionsKey.self,
+                                        value: [SectionHeaderPosition(index: section.index,
+                                                                      name: section.name,
+                                                                      minY: g.frame(in: .global).minY)])
+                                })
+                            listRows(section.accounts)
                         }
                     }
-                    folderSections
                 } else {
                     if !showOnlyFavorites && !favorites.isEmpty {
                         Section {
@@ -117,13 +132,31 @@ struct AccountListView: View {
                 }
             }
             .listStyle(.plain)
+            // Track which folder section sits under the nav bar and mirror it into
+            // the nav subtitle (Photos-style). A header has "passed" once its top
+            // crosses the nav bar's bottom edge; while no header is on screen the
+            // previous value simply stays — which is exactly right mid-section.
+            .onPreferenceChange(SectionHeaderPositionsKey.self) { [names = groupedSections.map(\.name)] headers in
+                let threshold = navBarBottom + 24
+                if let passed = headers.filter({ $0.minY < threshold }).max(by: { $0.index < $1.index }) {
+                    currentSection = passed.name
+                } else if let firstVisible = headers.min(by: { $0.index < $1.index }) {
+                    currentSection = firstVisible.index > 0 ? names[firstVisible.index - 1] : nil
+                }
+            }
             #if DEBUG
-            // Screenshot harness: `-otpeekScroll` animates the list to a mid account so
-            // a captured frame shows the native sticky header pinned mid-scroll.
+            // Screenshot harness: `-otpeekScroll [index]` animates the list to the
+            // given account (default: middle) so a headless capture shows a scrolled
+            // frame — used to verify the live nav subtitle.
             .task {
-                guard ProcessInfo.processInfo.arguments.contains("-otpeekScroll"),
+                let args = ProcessInfo.processInfo.arguments
+                guard let flag = args.firstIndex(of: "-otpeekScroll"),
                       displayedAccounts.count > 3 else { return }
-                let target = displayedAccounts[displayedAccounts.count / 2].id
+                var index = displayedAccounts.count / 2
+                if flag + 1 < args.count, let n = Int(args[flag + 1]) {
+                    index = min(max(n, 0), displayedAccounts.count - 1)
+                }
+                let target = displayedAccounts[index].id
                 try? await Task.sleep(nanoseconds: 700_000_000)
                 withAnimation(.easeInOut(duration: 0.4)) {
                     proxy.scrollTo(target, anchor: .top)
@@ -131,28 +164,26 @@ struct AccountListView: View {
             }
             #endif
         }
+        }
     }
 
-    /// Folder-grouped sections for the iOS All tab: each user folder, then
-    /// Uncategorized. Titles are plain rows, so they scroll away (nothing pins).
-    @ViewBuilder
-    private var folderSections: some View {
-        ForEach(appState.folders) { folder in
-            let items = displayedAccounts.filter { $0.folderId == folder.id && !$0.isFavorite }
-            if !items.isEmpty {
-                Section {
-                    sectionHeaderRow(folder.name, icon: folder.iconName, count: items.count)
-                    listRows(items)
-                }
-            }
+    /// The grouped list's sections in display order: favorites first, then each
+    /// user folder, then Uncategorized (favorites appear only in Favorites).
+    private var groupedSections: [GroupedSection] {
+        var sections: [GroupedSection] = []
+        func add(_ id: String, _ name: String, _ icon: String, _ accounts: [OtpAccount]) {
+            guard !accounts.isEmpty else { return }
+            sections.append(GroupedSection(id: id, index: sections.count,
+                                           name: name, icon: icon, accounts: accounts))
         }
-        let uncategorized = displayedAccounts.filter { $0.folderId == nil && !$0.isFavorite }
-        if !uncategorized.isEmpty {
-            Section {
-                sectionHeaderRow("Uncategorized", icon: "tray", count: uncategorized.count)
-                listRows(uncategorized)
-            }
+        add("favorites", "Favorites", "star.fill", favorites)
+        for folder in appState.folders {
+            add(folder.id, folder.name, folder.iconName,
+                displayedAccounts.filter { $0.folderId == folder.id && !$0.isFavorite })
         }
+        add("uncategorized", "Uncategorized", "tray",
+            displayedAccounts.filter { $0.folderId == nil && !$0.isFavorite })
+        return sections
     }
 
     @ViewBuilder
@@ -232,6 +263,47 @@ struct AccountListView: View {
         }
     }
 }
+
+// MARK: - Folder-grouped section support
+
+/// One display section of the grouped account list.
+private struct GroupedSection: Identifiable {
+    let id: String
+    let index: Int
+    let name: String
+    let icon: String
+    let accounts: [OtpAccount]
+}
+
+/// A section-title row's live position, reported so the nav subtitle can follow
+/// the section currently under the nav bar (Photos-style).
+private struct SectionHeaderPosition: Equatable, Sendable {
+    let index: Int
+    let name: String
+    let minY: CGFloat
+}
+
+private struct SectionHeaderPositionsKey: PreferenceKey {
+    static let defaultValue: [SectionHeaderPosition] = []
+    static func reduce(value: inout [SectionHeaderPosition], nextValue: () -> [SectionHeaderPosition]) {
+        value.append(contentsOf: nextValue())
+    }
+}
+
+#if os(iOS)
+/// Applies the iOS 26 nav-bar subtitle when available; no-op on iOS 17–25.
+private struct NavSubtitleIfAvailable: ViewModifier {
+    let text: String?
+
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content.navigationSubtitle(text ?? "")
+        } else {
+            content
+        }
+    }
+}
+#endif
 
 // MARK: - Conditional Searchable
 
