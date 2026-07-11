@@ -3,6 +3,7 @@ import SwiftUI
 #if os(macOS)
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var appLock: AppLock
     @State private var copiedAccountId: String?
     @State private var searchText = ""
     @FocusState private var searchIsFocused: Bool
@@ -19,14 +20,44 @@ struct MenuBarView: View {
     private var others: [OtpAccount] { matches.filter { !$0.isFavorite } }
 
     var body: some View {
-        VStack(spacing: 0) {
-            toolbar
-            Divider()
-            content
+        Group {
+            if appLock.isLocked {
+                // Lock gate: the popover is its own window, so it must honor the
+                // app lock too — otherwise codes stay visible after "Lock Now".
+                lockedContent
+            } else {
+                VStack(spacing: 0) {
+                    toolbar
+                    Divider()
+                    content
+                }
+                .background(MenuBarFocusObserver { focusSearchField() })
+                .onAppear { focusSearchField() }
+            }
         }
         .frame(width: 320)
-        .background(MenuBarFocusObserver { focusSearchField() })
-        .onAppear { focusSearchField() }
+    }
+
+    private var lockedContent: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "lock.fill")
+                .font(.system(size: 30))
+                .foregroundColor(.secondary)
+            Text("OTPeek is locked")
+                .font(.system(size: 13, weight: .medium))
+            if let error = appLock.authError {
+                Text(error)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16)
+            }
+            Button("Unlock") { appLock.authenticate() }
+                .keyboardShortcut(.defaultAction)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 32)
+        .onAppear { appLock.authenticate() }
     }
 
     // MARK: - Compact toolbar (search + actions on one row)
@@ -147,9 +178,9 @@ struct MenuBarView: View {
     }
 
     private func openSettingsWindow() {
-        DockIconController.shared.showDockIconForWindow()
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        NSApp.activate(ignoringOtherApps: true)
+        // SwiftUI's openSettings action (captured from the main scene) — the
+        // legacy showSettingsWindow: selector stopped working on current macOS.
+        WindowActions.shared.openSettingsWindow()
     }
 
     private func focusSearchField() {

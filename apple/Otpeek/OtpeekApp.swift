@@ -248,7 +248,22 @@ final class WindowActions {
     static let shared = WindowActions()
     /// Opens (or reuses) the main window. Set from `MenuBarBridge`.
     var openMain: (() -> Void)?
+    /// Opens the Settings scene via SwiftUI's `openSettings` action. Set from
+    /// `MenuBarBridge`. (The legacy `showSettingsWindow:` selector is private
+    /// and no longer reliable on current macOS.)
+    var openSettings: (() -> Void)?
     private init() {}
+
+    /// Settings via the SwiftUI action when available, else the legacy selector.
+    func openSettingsWindow() {
+        DockIconController.shared.showDockIconForWindow()
+        if let openSettings {
+            openSettings()
+        } else {
+            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        }
+        NSApp.activate(ignoringOtherApps: true)
+    }
 }
 
 /// Owns the menu bar entry: a custom `NSStatusItem` whose left-click toggles the
@@ -360,9 +375,7 @@ final class StatusItemController {
     }
 
     @objc private func openSettings() {
-        DockIconController.shared.showDockIconForWindow()
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        NSApp.activate(ignoringOtherApps: true)
+        WindowActions.shared.openSettingsWindow()
     }
 }
 
@@ -373,6 +386,7 @@ private struct MenuBarBridge: View {
     let appState: OtpStore
     let appLock: AppLock
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.openSettings) private var openSettingsAction
     @AppStorage("showInMenuBar") private var showInMenuBar = true
 
     var body: some View {
@@ -380,6 +394,9 @@ private struct MenuBarBridge: View {
             .onAppear {
                 WindowActions.shared.openMain = {
                     openWindow(id: DockIconController.mainWindowGroupID)
+                }
+                WindowActions.shared.openSettings = {
+                    openSettingsAction()
                 }
                 StatusItemController.shared.configure(appState: appState, appLock: appLock)
                 StatusItemController.shared.setVisible(showInMenuBar)
@@ -526,8 +543,10 @@ struct RootView: View {
                 }
             }
 
-            // Biometric lock gate — fully covers the UI (codes never shown while locked).
-            if appLock.isEnabled && appLock.isLocked {
+            // Lock gate — fully covers the UI (codes never shown while locked).
+            // Keyed on isLocked alone so "Lock Now" also works with the biometric
+            // toggle off (unlock then falls back to the device password).
+            if appLock.isLocked {
                 LockView()
                     .environmentObject(appLock)
                     .transition(.opacity)
@@ -552,7 +571,7 @@ struct RootView: View {
     /// otpeek:// 딥링크로 대기 중인 otpauth URI 를, 볼트가 열리고 잠금이 풀린 뒤 추가한다.
     private func applyPendingAdd() {
         guard appState.isReady,
-              !(appLock.isEnabled && appLock.isLocked),
+              !appLock.isLocked,
               let uri = incoming.pendingAddURI else { return }
         incoming.pendingAddURI = nil
         appState.addFromUri(uri)

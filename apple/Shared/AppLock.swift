@@ -109,9 +109,10 @@ public final class AppLock: ObservableObject {
         }
     }
 
-    /// Lock immediately (e.g. from a menu action).
+    /// Lock immediately (e.g. from a menu action). Works even when the biometric
+    /// toggle is off — unlocking then falls back to the device password.
     public func lockNow() {
-        if isEnabled { isLocked = true }
+        isLocked = true
     }
 
     /// Re-lock when the feature is toggled on in settings.
