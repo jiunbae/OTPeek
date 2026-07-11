@@ -111,10 +111,11 @@ targets:
       properties:
         CFBundleDisplayName: OTPeek
         CFBundleShortVersionString: "1.0"
-        CFBundleVersion: "19"
+        CFBundleVersion: "20"
         LSApplicationCategoryType: public.app-category.utilities
         ITSAppUsesNonExemptEncryption: false
         NSCameraUsageDescription: Camera access is needed to scan QR codes for adding accounts.
+        NSFaceIDUsageDescription: Face ID unlocks your one-time codes.
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait

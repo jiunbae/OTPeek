@@ -45,7 +45,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>18</string>
+	<string>19</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSApplicationCategoryType</key>
@@ -54,6 +54,8 @@
 	<false/>
 	<key>NSCameraUsageDescription</key>
 	<string>Camera access is needed to scan QR codes for adding accounts.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Face ID unlocks your one-time codes.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

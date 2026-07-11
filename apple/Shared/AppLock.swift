@@ -46,7 +46,12 @@ public final class AppLock: ObservableObject {
         // back to the passcode when Face ID is unavailable, so surface WHY on the
         // lock screen (e.g. per-app Face ID permission denied, not enrolled, …).
         var bioError: NSError?
-        if !context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &bioError) {
+        let canBio = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &bioError)
+        #if DEBUG
+        print("[AppLock] biometry probe: canBio=\(canBio) type=\(context.biometryType.rawValue) " +
+              "error=\((bioError as? LAError).map { "LAError \($0.code.rawValue) \($0.localizedDescription)" } ?? "none")")
+        #endif
+        if !canBio {
             let detail = (bioError as? LAError).map { "LAError \($0.code.rawValue): \($0.localizedDescription)" }
                 ?? bioError?.localizedDescription
                 ?? "unknown"
@@ -59,15 +64,46 @@ public final class AppLock: ObservableObject {
             return
         }
 
-        context.evaluatePolicy(.deviceOwnerAuthentication,
-                               localizedReason: "Unlock OTPeek") { [weak self] success, err in
+        // Biometrics-first, two-step: the combined `.deviceOwnerAuthentication`
+        // policy sometimes skips straight to the passcode sheet; evaluating the
+        // biometrics-only policy first guarantees the Face ID / Touch ID prompt,
+        // and we chain to the passcode policy on fallback or biometric failure.
+        let policy: LAPolicy = canBio ? .deviceOwnerAuthenticationWithBiometrics
+                                      : .deviceOwnerAuthentication
+        context.evaluatePolicy(policy, localizedReason: "Unlock OTPeek") { [weak self] success, err in
             Task { @MainActor in
                 guard let self else { return }
+                #if DEBUG
+                print("[AppLock] evaluate(\(policy == .deviceOwnerAuthenticationWithBiometrics ? "bio" : "combined")) " +
+                      "success=\(success) error=\((err as? LAError).map { "LAError \($0.code.rawValue) \($0.localizedDescription)" } ?? String(describing: err))")
+                #endif
                 if success {
                     self.authError = nil
                     self.isLocked = false
-                } else if let err = err as? LAError, err.code != .userCancel {
-                    self.authError = err.localizedDescription
+                    return
+                }
+                let laCode = (err as? LAError)?.code
+                if laCode == .userCancel { return }
+                // Face ID failed / user tapped the fallback → offer the passcode.
+                if policy == .deviceOwnerAuthenticationWithBiometrics {
+                    let passcode = LAContext()
+                    passcode.evaluatePolicy(.deviceOwnerAuthentication,
+                                            localizedReason: "Unlock OTPeek") { ok, err2 in
+                        Task { @MainActor in
+                            #if DEBUG
+                            print("[AppLock] evaluate(passcode) success=\(ok) " +
+                                  "error=\((err2 as? LAError).map { "LAError \($0.code.rawValue) \($0.localizedDescription)" } ?? String(describing: err2))")
+                            #endif
+                            if ok {
+                                self.authError = nil
+                                self.isLocked = false
+                            } else if let e = err2 as? LAError, e.code != .userCancel {
+                                self.authError = e.localizedDescription
+                            }
+                        }
+                    }
+                } else if let e = err as? LAError {
+                    self.authError = e.localizedDescription
                 }
             }
         }
