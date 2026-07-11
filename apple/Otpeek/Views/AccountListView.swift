@@ -87,27 +87,26 @@ struct AccountListView: View {
     }
 
     private var accountList: some View {
-        // A native List gives iOS-standard section headers — the system's own sticky
-        // material headers, separators and insets — instead of the custom ones a
-        // ScrollView needs (which read as "floating"). List is lazy too, so off-screen
-        // rows (and their per-row TimelineViews) stay paused.
+        // A native List, but with the section titles rendered as ordinary rows —
+        // Photos-style: only the nav-bar title ("Accounts") stays pinned, and the
+        // folder names scroll away with their content. (A .plain List's real section
+        // headers are sticky, which stacked oddly under the nav bar's edge blur.)
+        // List is lazy, so off-screen rows and their TimelineViews stay paused.
         ScrollViewReader { proxy in
             List {
                 if groupByFolder {
                     if !favorites.isEmpty {
                         Section {
+                            sectionHeaderRow("Favorites", icon: "star.fill", count: favorites.count)
                             listRows(favorites)
-                        } header: {
-                            sectionHeader("Favorites", icon: "star.fill", count: favorites.count)
                         }
                     }
                     folderSections
                 } else {
                     if !showOnlyFavorites && !favorites.isEmpty {
                         Section {
+                            sectionHeaderRow("Favorites", icon: "star.fill", count: favorites.count)
                             listRows(favorites)
-                        } header: {
-                            sectionHeader("Favorites", icon: "star.fill", count: favorites.count)
                         }
                     }
                     // "All Accounts" header removed — redundant with the tab/nav title.
@@ -135,25 +134,23 @@ struct AccountListView: View {
     }
 
     /// Folder-grouped sections for the iOS All tab: each user folder, then
-    /// Uncategorized. List gives the section headers native sticky behavior.
+    /// Uncategorized. Titles are plain rows, so they scroll away (nothing pins).
     @ViewBuilder
     private var folderSections: some View {
         ForEach(appState.folders) { folder in
             let items = displayedAccounts.filter { $0.folderId == folder.id && !$0.isFavorite }
             if !items.isEmpty {
                 Section {
+                    sectionHeaderRow(folder.name, icon: folder.iconName, count: items.count)
                     listRows(items)
-                } header: {
-                    sectionHeader(folder.name, icon: folder.iconName, count: items.count)
                 }
             }
         }
         let uncategorized = displayedAccounts.filter { $0.folderId == nil && !$0.isFavorite }
         if !uncategorized.isEmpty {
             Section {
+                sectionHeaderRow("Uncategorized", icon: "tray", count: uncategorized.count)
                 listRows(uncategorized)
-            } header: {
-                sectionHeader("Uncategorized", icon: "tray", count: uncategorized.count)
             }
         }
     }
@@ -169,7 +166,9 @@ struct AccountListView: View {
         }
     }
 
-    private func sectionHeader(_ title: String, icon: String, count: Int) -> some View {
+    /// Section title as a regular (non-sticky) row: scrolls with its section like
+    /// Photos' year/month titles. No opaque background needed since nothing pins.
+    private func sectionHeaderRow(_ title: String, icon: String, count: Int) -> some View {
         HStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.system(size: 11, weight: .semibold))
@@ -185,13 +184,11 @@ struct AccountListView: View {
         }
         .foregroundColor(.secondary)
         .padding(.horizontal, 16)
-        .padding(.top, 12)
-        .padding(.bottom, 6)
+        .padding(.top, 18)
+        .padding(.bottom, 4)
         .frame(maxWidth: .infinity, alignment: .leading)
-        // Opaque background so the pinned (sticky) header occludes rows scrolling
-        // under it — custom List headers don't get the system's background for free.
-        .background(.background)
         .listRowInsets(EdgeInsets())
+        .listRowSeparator(.hidden, edges: .top)
     }
 
     @ViewBuilder
