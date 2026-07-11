@@ -54,6 +54,8 @@
 	<false/>
 	<key>NSCameraUsageDescription</key>
 	<string>Camera access is needed to scan QR codes for adding accounts.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>OTPeek uses Face ID to unlock your one-time codes.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
