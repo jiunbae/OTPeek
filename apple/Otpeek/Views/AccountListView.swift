@@ -138,10 +138,26 @@ struct AccountListView: View {
             // previous value simply stays — which is exactly right mid-section.
             .onPreferenceChange(SectionHeaderPositionsKey.self) { [names = groupedSections.map(\.name)] headers in
                 let threshold = navBarBottom + 24
+                let newValue: String?
                 if let passed = headers.filter({ $0.minY < threshold }).max(by: { $0.index < $1.index }) {
-                    currentSection = passed.name
+                    newValue = passed.name
                 } else if let firstVisible = headers.min(by: { $0.index < $1.index }) {
-                    currentSection = firstVisible.index > 0 ? names[firstVisible.index - 1] : nil
+                    // Before any header passes the bar we're still in the first
+                    // on-screen section — never nil, so the subtitle can't blink
+                    // in and out (that re-layout fought the large-title expansion
+                    // animation and stuttered the bar at the top).
+                    newValue = names.indices.contains(firstVisible.index - 1)
+                        ? names[firstVisible.index - 1]
+                        : names.first
+                } else {
+                    newValue = nil // no headers on screen → keep the current value
+                }
+                // Write only real changes, and without an implicit animation so the
+                // update doesn't restart the system's title collapse/expand.
+                if let newValue, newValue != currentSection {
+                    var t = Transaction()
+                    t.disablesAnimations = true
+                    withTransaction(t) { currentSection = newValue }
                 }
             }
             #if DEBUG
@@ -160,6 +176,14 @@ struct AccountListView: View {
                 try? await Task.sleep(nanoseconds: 700_000_000)
                 withAnimation(.easeInOut(duration: 0.4)) {
                     proxy.scrollTo(target, anchor: .top)
+                }
+                // `-otpeekScrollBounce`: scroll back up after a beat, to exercise the
+                // return-to-top transition (large-title re-expansion + subtitle).
+                if args.contains("-otpeekScrollBounce"), let first = displayedAccounts.first {
+                    try? await Task.sleep(nanoseconds: 1_200_000_000)
+                    withAnimation(.easeInOut(duration: 0.6)) {
+                        proxy.scrollTo(first.id, anchor: .top)
+                    }
                 }
             }
             #endif
