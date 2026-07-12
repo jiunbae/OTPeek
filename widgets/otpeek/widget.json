@@ -1,0 +1,75 @@
+{
+  "$schema": "https://barshelf.dev/schema/widget-0.1.json",
+  "schemaVersion": 1,
+  "id": "dev.barshelf.otpeek",
+  "name": "OTP Codes",
+  "version": "0.1.0",
+  "icon": "key.fill",
+  "bucket": { "group": "Security", "order": 10, "size": "M" },
+
+  "entry": { "kind": "exec" },
+  "source": {
+    "kind": "exec",
+    "command": ["otpeek", "list", "--json"],
+    "discover": ["$OTPEEK_BIN", "~/.cargo/bin/otpeek", "/opt/homebrew/bin/otpeek", "/usr/local/bin/otpeek", "PATH"],
+    "timeoutMs": 10000,
+    "output": "data",
+    "adapter": "otpeek"
+  },
+
+  "refresh": { "onOpen": true, "interval": null, "staleAfterSec": 5, "watchPaths": [], "runInBackground": false },
+
+  "statusItem": { "mode": "none" },
+
+  "permissions": {
+    "exec": [
+      {
+        "command": "otpeek",
+        "allowedArgs": [
+          ["list", "--json"],
+          ["list", "--folder", "*", "--json"],
+          ["code", "*", "--json"]
+        ],
+        "env": ["OTPEEK_BIN", "OTPEEK_VAULT_PASSWORD"],
+        "maxOutputBytes": 262144,
+        "sensitiveOutput": true
+      }
+    ],
+    "network": ["www.google.com"],
+    "readPaths": [],
+    "env": ["OTPEEK_BIN", "OTPEEK_VAULT_PASSWORD"],
+    "keychain": true
+  },
+
+  "settings": [
+    {
+      "key": "showIcons",
+      "type": "boolean",
+      "title": "Show service icons",
+      "default": true
+    },
+    {
+      "key": "favoritesOnly",
+      "type": "boolean",
+      "title": "Favorites only",
+      "default": false
+    },
+    {
+      "key": "favoritesFirst",
+      "type": "boolean",
+      "title": "Show favorites first",
+      "default": false
+    },
+    {
+      "key": "folder",
+      "type": "string",
+      "title": "Folder name (optional)",
+      "default": ""
+    }
+  ],
+
+  "appearance": {
+    "accent": "purple",
+    "cardStyle": "tinted"
+  }
+}
