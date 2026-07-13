@@ -4,130 +4,96 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OTPeek — Your codes, at a peek</title>
-<meta name="description" content="OTPeek is a fast, private two-factor authentication app for iPhone, Mac, and Windows. Codes on your home screen, one-tap copy, encrypted sync.">
+<meta name="description" content="OTPeek is a fast, private two-factor authentication app for iPhone, Mac, and Windows. Codes on your home screen, one-tap copy, encrypted sync — built on a shared Rust core.">
 <meta property="og:title" content="OTPeek — Your codes, at a peek">
 <meta property="og:description" content="Fast, private 2FA for iPhone, Mac, and Windows. Widgets, one-tap copy, end-to-end encrypted sync.">
 <meta property="og:image" content="https://jiun.dev/OTPeek/assets/icon-512.png">
 <meta property="og:url" content="https://jiun.dev/OTPeek/">
 <link rel="icon" href="assets/icon-180.png">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
-<style>
-  :root {
-    --accent: #0a84ff;
-    --bg: #ffffff; --bg2: #f5f5f7; --fg: #1d1d1f; --fg2: #6e6e73;
-    --card: #ffffff; --border: rgba(0,0,0,.08);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#000; --bg2:#161617; --fg:#f5f5f7; --fg2:#a1a1a6; --card:#1c1c1e; --border:rgba(255,255,255,.12); }
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-         background:var(--bg); color:var(--fg); line-height:1.6; -webkit-font-smoothing:antialiased; }
-  a { color:var(--accent); text-decoration:none; }
-  .wrap { max-width:1080px; margin:0 auto; padding:0 24px; }
-
-  /* Hero */
-  header { text-align:center; padding:88px 0 56px; }
-  .icon { width:128px; height:128px; border-radius:28px; box-shadow:0 12px 40px rgba(10,132,255,.25); }
-  h1 { font-size:clamp(40px,7vw,64px); font-weight:800; letter-spacing:-.02em; margin:28px 0 8px; }
-  .tag { font-size:clamp(19px,3vw,25px); color:var(--fg2); font-weight:500; }
-  .sub { max-width:640px; margin:16px auto 0; color:var(--fg2); font-size:17px; }
-
-  /* Download buttons */
-  .dl { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:36px; }
-  .btn { display:inline-flex; align-items:center; gap:10px; padding:13px 24px; border-radius:14px;
-         font-size:16px; font-weight:600; transition:transform .15s, box-shadow .15s; border:1px solid var(--border); }
-  .btn:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.12); }
-  .btn.primary { background:var(--accent); color:#fff; border-color:transparent; }
-  .btn.ghost { background:var(--card); color:var(--fg); }
-  .btn svg { width:20px; height:20px; fill:currentColor; }
-  .note { margin-top:14px; font-size:13px; color:var(--fg2); }
-
-  /* Sections */
-  section { padding:64px 0; }
-  section.alt { background:var(--bg2); }
-  h2 { font-size:clamp(28px,4.5vw,40px); font-weight:700; letter-spacing:-.015em; text-align:center; margin-bottom:12px; }
-  .lead { text-align:center; color:var(--fg2); max-width:620px; margin:0 auto 44px; font-size:17px; }
-
-  /* Feature grid */
-  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:18px; }
-  .card { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:26px; }
-  .card .emoji { font-size:30px; }
-  .card h3 { font-size:18px; margin:12px 0 6px; }
-  .card p { font-size:15px; color:var(--fg2); }
-
-  /* Screenshots */
-  .shots { display:flex; gap:20px; justify-content:center; flex-wrap:wrap; }
-  .shots img.ios { width:240px; border-radius:24px; border:1px solid var(--border); box-shadow:0 16px 48px rgba(0,0,0,.18); }
-  .shot-mac { width:min(880px,100%); border-radius:12px; border:1px solid var(--border); box-shadow:0 16px 48px rgba(0,0,0,.18); display:block; margin:36px auto 0; }
-
-  /* Open source / support strip */
-  .strip { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; align-items:center; }
-  .bmc { background:#FFDD00; color:#000 !important; border-color:transparent; }
-
-  footer { padding:44px 0 64px; text-align:center; color:var(--fg2); font-size:14px; }
-  footer nav { display:flex; gap:22px; justify-content:center; flex-wrap:wrap; margin-bottom:14px; }
-</style>
+<link rel="alternate" hreflang="ko" href="https://jiun.dev/OTPeek/ko/">
+<link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
 
-<header class="wrap">
-  <img class="icon" src="assets/icon-512.png" alt="OTPeek app icon" width="128" height="128">
-  <h1>OTPeek</h1>
-  <p class="tag">Your codes, at a peek.</p>
-  <p class="sub">A fast, private two-factor authentication app for iPhone, Mac, and Windows.
-     Codes on your home screen, one-tap copy, and end-to-end encrypted sync — built on a shared Rust core.</p>
-  <div class="dl">
-    <a class="btn primary" href="https://apps.apple.com/app/otpeek/id6787845951">
-      <svg viewBox="0 0 24 24"><path d="M18.7 12.9c0-2.5 2-3.7 2.1-3.7-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.7.9-.8 0-2-.9-3.3-.9-1.7 0-3.2 1-4.1 2.5-1.7 3-.4 7.5 1.3 9.9.8 1.2 1.8 2.5 3.1 2.5 1.2-.1 1.7-.8 3.2-.8s1.9.8 3.3.8c1.3 0 2.2-1.2 3-2.4.9-1.4 1.3-2.7 1.3-2.8-.1 0-2.6-1-2.6-4zM16.2 5.2c.7-.8 1.1-1.9 1-3-1 0-2.1.7-2.8 1.5-.6.7-1.2 1.9-1 3 1 .1 2.1-.6 2.8-1.5z"/></svg>
-      App Store</a>
-    <a class="btn ghost" href="https://github.com/jiunbae/OTPeek/releases">
-      <svg viewBox="0 0 24 24"><path d="M3 5.5 10.5 4.4v7.1H3V5.5zm0 13 7.5 1.1v-7H3v5.9zm8.5 1.2 9.5 1.3v-8.5h-9.5v7.2zm0-15.4v7.2H21V3L11.5 4.3z"/></svg>
-      Windows</a>
-    <a class="btn ghost" href="https://github.com/jiunbae/OTPeek">
-      <svg viewBox="0 0 24 24"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.4-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0C17 4.7 18 5 18 5c.6 1.6.2 2.8.1 3.1.7.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.2c0 .3.2.7.8.6a11.5 11.5 0 0 0 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
-      GitHub</a>
+<nav class="lang"><a class="on" href="./">EN</a><a href="ko/">한국어</a></nav>
+
+<header class="wrap hero">
+  <div>
+    <div class="brand">
+      <img src="assets/icon-512.png" alt="OTPeek icon" width="52" height="52">
+      <span>OTPeek</span>
+    </div>
+    <p class="eyebrow">Two-factor, the fast way</p>
+    <h1>Your codes,<br><span class="grad">at a peek.</span></h1>
+    <p class="sub">A fast, private authenticator for iPhone, Mac, and Windows — codes on your home
+       screen, one-tap copy, and end-to-end encrypted sync.</p>
+    <div class="dl">
+      <a class="btn primary" href="https://apps.apple.com/app/otpeek/id6787845951">
+        <svg viewBox="0 0 24 24"><path d="M18.7 12.9c0-2.5 2-3.7 2.1-3.7-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.7.9-.8 0-2-.9-3.3-.9-1.7 0-3.2 1-4.1 2.5-1.7 3-.4 7.5 1.3 9.9.8 1.2 1.8 2.5 3.1 2.5 1.2-.1 1.7-.8 3.2-.8s1.9.8 3.3.8c1.3 0 2.2-1.2 3-2.4.9-1.4 1.3-2.7 1.3-2.8-.1 0-2.6-1-2.6-4zM16.2 5.2c.7-.8 1.1-1.9 1-3-1 0-2.1.7-2.8 1.5-.6.7-1.2 1.9-1 3 1 .1 2.1-.6 2.8-1.5z"/></svg>
+        App Store</a>
+      <a class="btn" href="https://github.com/jiunbae/OTPeek/releases">
+        <svg viewBox="0 0 24 24"><path d="M3 5.5 10.5 4.4v7.1H3V5.5zm0 13 7.5 1.1v-7H3v5.9zm8.5 1.2 9.5 1.3v-8.5h-9.5v7.2zm0-15.4v7.2H21V3L11.5 4.3z"/></svg>
+        Windows</a>
+      <a class="btn" href="https://github.com/jiunbae/OTPeek">
+        <svg viewBox="0 0 24 24"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.4-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0C17 4.7 18 5 18 5c.6 1.6.2 2.8.1 3.1.7.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.2c0 .3.2.7.8.6a11.5 11.5 0 0 0 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+        GitHub</a>
+    </div>
+    <p class="note">Free &amp; open source · iOS 17+ / macOS 14+ / Windows 11</p>
   </div>
-  <p class="note">Free &amp; open source · iOS 17+ / macOS 14+ / Windows 11</p>
+
+  <div class="demo" id="demo" aria-hidden="true">
+    <div class="demo-bar"><i></i><i></i><i></i><b>OTPeek</b></div>
+    <div class="row"><div class="av" style="background:#1f2328">GH</div>
+      <div class="who"><div class="n">GitHub</div><div class="e">octocat</div></div>
+      <div class="code"><svg class="ring" viewBox="0 0 36 36"><circle class="trk" cx="18" cy="18" r="15" fill="none" stroke-width="3"/><circle class="prg" cx="18" cy="18" r="15" fill="none" stroke-width="3" stroke-linecap="round"/></svg><span class="digits">207 662</span></div></div>
+    <div class="row"><div class="av" style="background:#4285f4">G</div>
+      <div class="who"><div class="n">Google</div><div class="e">you@gmail.com</div></div>
+      <div class="code"><svg class="ring" viewBox="0 0 36 36"><circle class="trk" cx="18" cy="18" r="15" fill="none" stroke-width="3"/><circle class="prg" cx="18" cy="18" r="15" fill="none" stroke-width="3" stroke-linecap="round"/></svg><span class="digits">377 724</span></div></div>
+    <div class="row"><div class="av" style="background:#ff6a3d">AWS</div>
+      <div class="who"><div class="n">Amazon</div><div class="e">shopping@gmail.com</div></div>
+      <div class="code"><svg class="ring" viewBox="0 0 36 36"><circle class="trk" cx="18" cy="18" r="15" fill="none" stroke-width="3"/><circle class="prg" cx="18" cy="18" r="15" fill="none" stroke-width="3" stroke-linecap="round"/></svg><span class="digits">181 935</span></div></div>
+  </div>
 </header>
 
 <section class="alt">
   <div class="wrap">
-    <h2>Why OTPeek?</h2>
-    <p class="lead">Most authenticator apps make you unlock, scroll, and squint. OTPeek puts your codes one glance away — without giving up security.</p>
+    <h2>Most authenticators make you work for it</h2>
+    <p class="lead">Unlock, scroll, squint, tap. OTPeek puts your codes one glance away — without giving up an inch of security.</p>
     <div class="grid">
-      <div class="card"><div class="emoji">⚡️</div><h3>Codes at a glance</h3><p>Home-screen and desktop widgets show live codes with a countdown — no need to even open the app.</p></div>
-      <div class="card"><div class="emoji">📋</div><h3>One-tap copy</h3><p>Tap a code anywhere — the list, a widget, the menu bar, the system tray — and it's on your clipboard.</p></div>
-      <div class="card"><div class="emoji">🔐</div><h3>Encrypted vault</h3><p>Secrets live in an AES-256-GCM vault protected by your master password (Argon2id). Face ID / Touch ID app lock built in.</p></div>
-      <div class="card"><div class="emoji">☁️</div><h3>Private sync</h3><p>iCloud sync between iPhone and Mac moves only the encrypted vault — codes and secrets never leave your device in the clear.</p></div>
-      <div class="card"><div class="emoji">🖼</div><h3>Recognize at a glance</h3><p>Real service logos on every account, with folders, favorites, and instant search to keep big collections tidy.</p></div>
-      <div class="card"><div class="emoji">🦀</div><h3>One Rust core</h3><p>iOS, macOS, and Windows share the same audited Rust engine — identical crypto and backup format everywhere, fully open source.</p></div>
+      <div class="card-f"><div class="emoji">⚡️</div><h3>Codes at a glance</h3><p>Home-screen and desktop widgets show live codes with a countdown — you rarely open the app at all.</p></div>
+      <div class="card-f"><div class="emoji">📋</div><h3>One-tap copy</h3><p>Tap a code anywhere — the list, a widget, the menu bar, the system tray — and it's on your clipboard.</p></div>
+      <div class="card-f"><div class="emoji">🔐</div><h3>Encrypted vault</h3><p>Secrets live in an AES-256-GCM vault behind your master password (Argon2id). Face ID / Touch ID lock built in.</p></div>
+      <div class="card-f"><div class="emoji">☁️</div><h3>Private sync</h3><p>iCloud sync between iPhone and Mac moves only the encrypted vault — codes never leave your device in the clear.</p></div>
+      <div class="card-f"><div class="emoji">🗂</div><h3>Tidy at any size</h3><p>Real service logos, folders, favorites, and instant search keep even a large collection easy to scan.</p></div>
+      <div class="card-f"><div class="emoji">🦀</div><h3>One Rust core</h3><p>iOS, macOS, and Windows share the same audited Rust engine — identical crypto and backup format, fully open source.</p></div>
     </div>
   </div>
 </section>
 
 <section>
   <div class="wrap">
-    <h2>Designed for speed</h2>
-    <p class="lead">The same clean experience on every screen you own.</p>
+    <h2>The same clean experience, everywhere</h2>
+    <p class="lead">Redesigned for iOS 26 and macOS — favorites on top, folder-grouped accounts, and a search that's always a tap away.</p>
     <div class="shots">
-      <img class="ios" src="assets/ios-1_glance.png" alt="OTPeek on iPhone — account list with live codes" loading="lazy">
-      <img class="ios" src="assets/ios-2_copy.png" alt="OTPeek on iPhone — one-tap copy" loading="lazy">
-      <img class="ios" src="assets/ios-3_encrypted.png" alt="OTPeek on iPhone — encrypted vault" loading="lazy">
+      <img class="ios" src="assets/ios-list.png" alt="OTPeek on iPhone — accounts grouped by folder with live codes" loading="lazy">
+      <img class="ios" src="assets/ios-folders.png" alt="OTPeek on iPhone — folder-grouped account list" loading="lazy">
+      <img class="ios" src="assets/ios-search.png" alt="OTPeek on iPhone — instant search" loading="lazy">
     </div>
-    <img class="shot-mac" src="assets/mac-1_glance.png" alt="OTPeek on Mac" loading="lazy">
+    <img class="shot-mac" src="assets/mac-window.png" alt="OTPeek on Mac — sidebar and account list" loading="lazy">
   </div>
 </section>
 
 <section class="alt">
-  <div class="wrap" style="text-align:center">
+  <div class="wrap support">
     <h2>Free, open source, no lock-in</h2>
-    <p class="lead">Every line of code is public. Your data exports to an open, documented format any time.
-       If OTPeek saves you a few seconds every day, you can support its development.</p>
+    <p class="lead">Every line is public and your data exports to an open, documented format any time.
+       If OTPeek earns a place on your home screen, a star or a review means a lot.</p>
     <div class="strip">
-      <a class="btn ghost" href="https://github.com/jiunbae/OTPeek">⭐️&ensp;Star on GitHub</a>
-      <a class="btn bmc" href="https://buymeacoffee.com/jiunbae">☕️&ensp;Buy me a coffee</a>
+      <a class="btn" href="https://github.com/jiunbae/OTPeek">⭐️&ensp;Star on GitHub</a>
+      <a class="btn primary" href="https://apps.apple.com/app/otpeek/id6787845951">💜&ensp;Rate on the App Store</a>
     </div>
+    <p class="note">Optional tips live inside the app — voluntary, and they never unlock features.</p>
   </div>
 </section>
 
@@ -137,9 +103,11 @@
     <a href="support.html">Support</a>
     <a href="https://github.com/jiunbae/OTPeek">GitHub</a>
     <a href="https://github.com/jiunbae/OTPeek/issues">Report an issue</a>
+    <a href="ko/">한국어</a>
   </nav>
   © 2026 Jiun Bae · OTPeek is open-source software.
 </footer>
 
+<script src="assets/demo.js"></script>
 </body>
 </html>

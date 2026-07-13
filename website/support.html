@@ -4,64 +4,70 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Support — OTPeek</title>
+<meta name="description" content="Get help with OTPeek — FAQs, contact, and how to move or import your two-factor codes.">
 <link rel="icon" href="assets/icon-180.png">
-<style>
-  :root { --accent:#0a84ff; --bg:#fff; --fg:#1d1d1f; --fg2:#6e6e73; --card:#f5f5f7; --border:rgba(0,0,0,.08); }
-  @media (prefers-color-scheme: dark) { :root { --bg:#000; --fg:#f5f5f7; --fg2:#a1a1a6; --card:#1c1c1e; --border:rgba(255,255,255,.12); } }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--fg); line-height:1.7; }
-  .wrap { max-width:760px; margin:0 auto; padding:56px 24px 80px; }
-  a { color:var(--accent); text-decoration:none; }
-  h1 { font-size:36px; letter-spacing:-.02em; margin-bottom:28px; }
-  h2 { font-size:20px; margin:30px 0 8px; }
-  p, li { font-size:16px; margin-bottom:10px; }
-  .back { display:inline-block; margin-bottom:28px; font-size:15px; }
-  details { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 18px; margin-bottom:10px; }
-  summary { font-weight:600; cursor:pointer; }
-  details p { margin-top:10px; color:var(--fg2); }
-</style>
+<link rel="alternate" hreflang="ko" href="https://jiun.dev/OTPeek/ko/support.html">
+<link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
-<div class="wrap">
-  <a class="back" href="index.html">← OTPeek</a>
+
+<nav class="lang"><a class="on" href="support.html">EN</a><a href="ko/support.html">한국어</a></nav>
+
+<div class="doc">
+  <a class="back" href="./">← OTPeek</a>
   <h1>Support</h1>
+  <p class="updated">We usually reply within a couple of days.</p>
 
   <h2>Get help</h2>
-  <p>• <a href="https://github.com/jiunbae/OTPeek/issues">Open a GitHub issue</a> — fastest way to report bugs or request features.<br>
-     • Email: <a href="mailto:jiunbae.623@gmail.com">jiunbae.623@gmail.com</a></p>
+  <ul>
+    <li><a href="https://github.com/jiunbae/OTPeek/issues">Open a GitHub issue</a> — the fastest way to report a bug or request a feature.</li>
+    <li>Email <a href="mailto:jiunbae.dev@gmail.com">jiunbae.dev@gmail.com</a> — for anything you'd rather not post publicly.</li>
+    <li>Security issue? Please report it privately — see <a href="https://github.com/jiunbae/OTPeek/security/policy">the security policy</a> instead of a public issue.</li>
+  </ul>
 
   <h2>Frequently asked questions</h2>
 
   <details><summary>I forgot my master password. Can you reset it?</summary>
-    <p>No — and that's by design. Your master password derives the encryption key and is never sent
-       anywhere, so nobody (including us) can recover it. If you're still signed in on another device,
-       export a backup there and restore with a new password.</p></details>
+    <p>No — and that's by design. Your master password derives the encryption key and never leaves your
+       device, so nobody (including us) can recover it. If you're still signed in on another device,
+       export a backup there and restore it with a new password.</p></details>
 
   <details><summary>How do I move my codes to a new phone?</summary>
-    <p>Either enable iCloud Sync on both devices (Apple), or export an encrypted backup
-       (Settings → Export Encrypted Backup), AirDrop/copy the .otpvault file to the new device, and
-       open it with OTPeek.</p></details>
+    <p>Either enable iCloud Sync on both devices, or export an encrypted backup
+       (Settings → Export Encrypted Backup), AirDrop or copy the <code>.otpvault</code> file to the new
+       device, and open it with OTPeek.</p></details>
 
   <details><summary>Can I import from Google Authenticator or other apps?</summary>
     <p>Yes — scan the QR codes from Google Authenticator's "Transfer accounts" export
-       (otpauth-migration links are supported), scan any standard otpauth:// QR, or add secrets manually.</p></details>
+       (<code>otpauth-migration</code> links are supported), scan any standard <code>otpauth://</code> QR,
+       or add secrets manually.</p></details>
 
   <details><summary>Codes don't match / are rejected by the website</summary>
-    <p>TOTP codes depend on the clock. Make sure your device time is set automatically; a drift of
-       more than ~30 seconds produces wrong codes.</p></details>
+    <p>TOTP codes depend on the clock. Make sure your device time is set automatically — a drift of more
+       than about 30 seconds produces wrong codes.</p></details>
 
   <details><summary>The widget shows "No accounts"</summary>
     <p>Open the app once after installing so the widget can read the shared vault, and check that the
-       account you want is favorited (widgets prefer favorites first).</p></details>
+       account you want is favorited (widgets show favorites first).</p></details>
 
   <details><summary>Is OTPeek really open source?</summary>
     <p>Yes — the entire app (Rust core, iOS/macOS, Windows) is at
-       <a href="https://github.com/jiunbae/OTPeek">github.com/jiunbae/OTPeek</a>. Audits and PRs welcome.</p></details>
+       <a href="https://github.com/jiunbae/OTPeek">github.com/jiunbae/OTPeek</a>. Audits and pull requests welcome.</p></details>
 
-  <h2>Love OTPeek?</h2>
-  <p>⭐️ <a href="https://github.com/jiunbae/OTPeek">Star the repo</a> ·
-     ☕️ <a href="https://buymeacoffee.com/jiunbae">Buy me a coffee</a> ·
-     💜 Leave a review on the App Store</p>
+  <h2>Enjoying OTPeek?</h2>
+  <p class="muted">⭐️ <a href="https://github.com/jiunbae/OTPeek">Star the repo</a> ·
+     💜 <a href="https://apps.apple.com/app/otpeek/id6787845951">Leave a review on the App Store</a></p>
 </div>
+
+<footer>
+  <nav>
+    <a href="./">Home</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="https://github.com/jiunbae/OTPeek">GitHub</a>
+    <a href="ko/support.html">한국어</a>
+  </nav>
+  © 2026 Jiun Bae · OTPeek is open-source software.
+</footer>
+
 </body>
 </html>
