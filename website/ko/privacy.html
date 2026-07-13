@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>개인정보 처리방침 — OTPeek</title>
+<meta name="description" content="OTPeek 개인정보 처리방침 — 2FA 시크릿은 암호화되지 않은 채로 기기를 떠나지 않으며, 서버도 분석도 없습니다.">
+<link rel="icon" href="../assets/icon-180.png">
+<link rel="alternate" hreflang="en" href="https://jiun.dev/OTPeek/privacy.html">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="lang"><a href="../privacy.html">EN</a><a class="on" href="privacy.html">한국어</a></nav>
+
+<div class="doc">
+  <a class="back" href="./">← OTPeek</a>
+  <h1>개인정보 처리방침</h1>
+  <p class="updated">시행일: 2026년 7월 7일</p>
+
+  <div class="tldr">
+    <strong>요약:</strong> 2FA 시크릿은 암호화되지 않은 채로 기기를 떠나지 않고, 우리는 서버를 운영하지
+    않으며 어떤 분석 데이터도 수집하지 않습니다. 우리는 당신의 계정이나 코드를 결코 볼 수 없습니다.
+  </div>
+
+  <h2>1. OTPeek이 저장하는 것</h2>
+  <p>OTPeek은 2단계 인증 계정(발급자, 계정 이름, 코드 생성에 쓰이는 공유 시크릿)을 기기 내 암호화 볼트에
+     저장합니다. 볼트는 AES-256-GCM으로 암호화되며, 키는 마스터 암호에서 Argon2id로 파생되거나 기기의
+     보안 키 저장소(Apple 플랫폼의 Keychain, Windows의 DPAPI)에 보관됩니다. 개발자인 우리는 여기에
+     접근할 수 없습니다.</p>
+
+  <h2>2. iCloud 동기화 (선택)</h2>
+  <p>Apple 기기에서 iCloud 동기화를 켜면, OTPeek은 <em>이미 암호화된</em> 볼트의 사본을 당신의 개인
+     iCloud(CloudKit 개인 데이터베이스)에 저장합니다. 당신의 마스터 암호/키를 사용하는 당신의 기기만
+     이를 복호화할 수 있습니다. iCloud 데이터에 대한 Apple의 처리는
+     <a href="https://www.apple.com/legal/privacy/">Apple 개인정보 처리방침</a>을 따릅니다. Windows의
+     선택적 WebDAV 동기화도 마찬가지로, 당신이 선택한 서버에 암호화된 볼트만 업로드됩니다.</p>
+
+  <h2>3. 서비스 로고 (파비콘)</h2>
+  <p>각 계정 옆에 알아보기 쉬운 로고를 표시하기 위해, OTPeek은 계정의 발급자 이름에서 웹 도메인을 유추하고
+     (예: 발급자 “GitHub” → <code>github.com</code>) 해당 도메인의 로고를 서드파티 아이콘 서비스(Clearbit
+     Logo API, icon.horse, Google 파비콘 서비스)에 요청합니다. 유추된 <em>도메인 이름</em>만 전송되며 —
+     계정 이름, 이메일, 시크릿, 코드는 절대 전송되지 않습니다. 아이콘은 이후 기기에 캐시됩니다. 설정 →
+     “웹사이트 아이콘 표시”에서 언제든 끌 수 있고, 그러면 이런 요청이 발생하지 않습니다.</p>
+
+  <h2>4. 광고 없음</h2>
+  <p>OTPeek에는 어떤 플랫폼에도 광고나 광고 SDK가 없습니다.</p>
+
+  <h2>5. 구매</h2>
+  <p>선택적 인앱 팁은 전적으로 Apple이 처리합니다. 우리는 결제 정보를 받지 않으며 — 익명 영수증만 받습니다.
+     팁은 자발적인 후원이며 어떤 기능도 잠금 해제하지 않습니다.</p>
+
+  <h2>6. 우리가 하지 않는 것</h2>
+  <ul>
+    <li>계정, 회원가입, 개발자 운영 서버가 없습니다.</li>
+    <li>분석, 텔레메트리, 크래시 리포팅 SDK가 없습니다.</li>
+    <li>데이터를 판매·공유·수익화하지 않습니다 — 애초에 우리가 볼 수 없습니다.</li>
+  </ul>
+
+  <h2>7. 당신의 데이터, 당신의 통제</h2>
+  <p>언제든 볼트를
+     <a href="https://github.com/jiunbae/OTPeek/blob/main/docs/BACKUP_FORMAT.md">공개된, 문서화된 형식</a>의
+     암호화 백업으로 내보낼 수 있고, 계정을 삭제하거나 앱을 제거하여(동기화를 켰다면 설정에서 iCloud 사본까지
+     제거하여) 모든 데이터를 삭제할 수 있습니다.</p>
+
+  <h2>8. 아동</h2>
+  <p>OTPeek은 인증 코드를 관리하는 유틸리티이며 만 13세 미만 아동을 대상으로 하지 않습니다.</p>
+
+  <h2>9. 변경 및 문의</h2>
+  <p>정책이 변경되면 이 페이지를 업데이트하며, 위의 시행일은 항상 최신 개정을 반영합니다. 문의는
+     <a href="https://github.com/jiunbae/OTPeek/issues">GitHub</a>에 이슈를 열거나
+     <a href="mailto:jiunbae.dev@gmail.com">jiunbae.dev@gmail.com</a>으로 이메일 주세요.</p>
+</div>
+
+<footer>
+  <nav>
+    <a href="./">홈</a>
+    <a href="support.html">지원</a>
+    <a href="https://github.com/jiunbae/OTPeek">GitHub</a>
+    <a href="../privacy.html">English</a>
+  </nav>
+  © 2026 Jiun Bae · OTPeek은 오픈소스 소프트웨어입니다.
+</footer>
+
+</body>
+</html>
