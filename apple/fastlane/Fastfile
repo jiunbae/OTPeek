@@ -166,6 +166,7 @@ platform :mac do
       pkg: pkg_path,
       app_identifier: APP_IDENTIFIER,
       app_platform: "osx",
+      groups: ["Internal Testers"],
       uses_non_exempt_encryption: false,
       skip_waiting_for_build_processing: false
     )
