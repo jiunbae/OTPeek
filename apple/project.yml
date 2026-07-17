@@ -140,7 +140,7 @@ targets:
         CURRENT_PROJECT_VERSION: "21"
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Apple Distribution"
-        PROVISIONING_PROFILE_SPECIFIER: "OTPeek iOS AppStore"
+        PROVISIONING_PROFILE_SPECIFIER: "OTPeek iOS AppStore 2026-07"
         ENABLE_DEBUG_DYLIB: NO
 
   # macOS App
@@ -221,7 +221,7 @@ targets:
         SKIP_INSTALL: YES
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Apple Distribution"
-        PROVISIONING_PROFILE_SPECIFIER: "OTPeek Widget iOS AppStore"
+        PROVISIONING_PROFILE_SPECIFIER: "OTPeek Widget iOS AppStore 2026-07"
 
   # macOS Widget Extension
   OtpWidgetExtension-macOS:

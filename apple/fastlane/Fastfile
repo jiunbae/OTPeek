@@ -85,8 +85,8 @@ platform :ios do
       export_options: {
         signingStyle: "manual",
         provisioningProfiles: {
-          "com.otpeek.app" => "OTPeek iOS AppStore",
-          "com.otpeek.app.widget" => "OTPeek Widget iOS AppStore"
+          "com.otpeek.app" => "OTPeek iOS AppStore 2026-07",
+          "com.otpeek.app.widget" => "OTPeek Widget iOS AppStore 2026-07"
         }
       }
     )
