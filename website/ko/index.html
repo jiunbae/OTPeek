@@ -42,19 +42,43 @@
     <p class="note">무료 &amp; 오픈소스 · iOS 17+ / macOS 14+ / Windows 11</p>
   </div>
 
-  <div class="demo" id="demo" aria-hidden="true">
-    <div class="demo-bar"><i></i><i></i><i></i><b>OTPeek</b></div>
-    <div class="row"><div class="av" style="background:#1f2328">GH</div>
-      <div class="who"><div class="n">GitHub</div><div class="e">octocat</div></div>
-      <div class="code"><svg class="ring" viewBox="0 0 36 36"><circle class="trk" cx="18" cy="18" r="15" fill="none" stroke-width="3"/><circle class="prg" cx="18" cy="18" r="15" fill="none" stroke-width="3" stroke-linecap="round"/></svg><span class="digits">207 662</span></div></div>
-    <div class="row"><div class="av" style="background:#4285f4">G</div>
-      <div class="who"><div class="n">Google</div><div class="e">you@gmail.com</div></div>
-      <div class="code"><svg class="ring" viewBox="0 0 36 36"><circle class="trk" cx="18" cy="18" r="15" fill="none" stroke-width="3"/><circle class="prg" cx="18" cy="18" r="15" fill="none" stroke-width="3" stroke-linecap="round"/></svg><span class="digits">377 724</span></div></div>
-    <div class="row"><div class="av" style="background:#ff6a3d">AWS</div>
-      <div class="who"><div class="n">Amazon</div><div class="e">shopping@gmail.com</div></div>
-      <div class="code"><svg class="ring" viewBox="0 0 36 36"><circle class="trk" cx="18" cy="18" r="15" fill="none" stroke-width="3"/><circle class="prg" cx="18" cy="18" r="15" fill="none" stroke-width="3" stroke-linecap="round"/></svg><span class="digits">181 935</span></div></div>
+  <div class="hero-gallery" aria-label="Mac과 iPhone에서 실행 중인 실제 OTPeek 화면">
+    <figure class="hero-shot hero-shot-mac">
+      <figcaption><span>macOS</span><b>실제 앱 화면</b></figcaption>
+      <img src="../assets/mac-window.png" alt="즐겨찾기, 폴더, 빠른 작업과 실시간 코드가 보이는 Mac용 OTPeek" width="1624" height="1228">
+    </figure>
+    <figure class="hero-shot hero-shot-phone">
+      <img src="../assets/ios-list.png" alt="즐겨찾기와 폴더별 계정이 보이는 iPhone용 OTPeek" width="1206" height="2622">
+      <figcaption><span>iPhone</span><b>한눈에 보는 코드</b></figcaption>
+    </figure>
   </div>
 </header>
+
+<section class="screen-tour">
+  <div class="wrap">
+    <p class="eyebrow section-kicker">목업이 아닌 실제 앱</p>
+    <h2>많은 계정도 언제나 손이 닿는 곳에</h2>
+    <p class="lead">실제 OTPeek 화면입니다. 폴더는 긴 목록을 정돈하고, 검색은 코드가 바뀌기 전에 원하는 계정을 찾아냅니다.</p>
+    <div class="tour-grid">
+      <figure class="tour-card">
+        <div class="tour-copy">
+          <span class="tour-label">폴더</span>
+          <h3>업무와 개인 계정을 분명하게.</h3>
+          <p>내가 생각하는 방식으로 계정을 묶고, 자주 쓰는 계정은 언제나 맨 위에서 확인하세요.</p>
+        </div>
+        <img src="../assets/ios-folders.png" alt="업무와 개인 계정이 나뉜 OTPeek iPhone 폴더 화면" width="1206" height="2622" loading="lazy">
+      </figure>
+      <figure class="tour-card tour-card-search">
+        <div class="tour-copy">
+          <span class="tour-label">검색</span>
+          <h3>한 번 탭하면, 어떤 계정이든.</h3>
+          <p>엄지손가락 가까이에 있는 검색창이 암호화된 볼트를 즉시 필터링합니다.</p>
+        </div>
+        <img src="../assets/ios-search.png" alt="계정 결과를 즉시 보여주는 OTPeek iPhone 검색 화면" width="1206" height="2622" loading="lazy">
+      </figure>
+    </div>
+  </div>
+</section>
 
 <section class="alt">
   <div class="wrap">
@@ -72,19 +96,6 @@
 </section>
 
 <section>
-  <div class="wrap">
-    <h2>어느 화면에서나 같은 경험</h2>
-    <p class="lead">iOS 26과 macOS에 맞춰 새로워졌습니다 — 즐겨찾기는 맨 위에, 폴더로 묶인 계정, 그리고 언제나 한 번 탭이면 열리는 검색.</p>
-    <div class="shots">
-      <img class="ios" src="../assets/ios-list.png" alt="iPhone의 OTPeek — 폴더로 묶인 계정과 실시간 코드" loading="lazy">
-      <img class="ios" src="../assets/ios-folders.png" alt="iPhone의 OTPeek — 폴더별 계정 목록" loading="lazy">
-      <img class="ios" src="../assets/ios-search.png" alt="iPhone의 OTPeek — 즉시 검색" loading="lazy">
-    </div>
-    <img class="shot-mac" src="../assets/mac-window.png" alt="Mac의 OTPeek — 사이드바와 계정 목록" loading="lazy">
-  </div>
-</section>
-
-<section class="alt">
   <div class="wrap support">
     <h2>무료, 오픈소스, 종속 없음</h2>
     <p class="lead">모든 코드가 공개되어 있고, 데이터는 언제든 공개된 형식으로 내보낼 수 있습니다.
@@ -108,6 +119,5 @@
   © 2026 Jiun Bae · OTPeek은 오픈소스 소프트웨어입니다.
 </footer>
 
-<script src="../assets/demo.js"></script>
 </body>
 </html>
