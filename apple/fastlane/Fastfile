@@ -154,6 +154,12 @@ platform :mac do
     archive_path = lane_context[SharedValues::XCODEBUILD_ARCHIVE]
     app_path = File.join(archive_path, "Products/Applications/OTPeek.app")
     UI.user_error!("Archived macOS app not found at #{app_path}") unless File.directory?(app_path)
+    # App Store validation rejects a package if any sealed resource is readable
+    # only by the build user (90255). A restrictive caller umask can make
+    # _CodeSignature/CodeResources mode 0600, so normalize bundle readability
+    # and verify that the signature still seals the resulting app before pkg.
+    sh("chmod", "-R", "a+rX", app_path)
+    sh("codesign", "--verify", "--deep", "--strict", app_path)
     keychain = release_keychain_path
     UI.user_error!("macOS installer keychain not found at #{keychain}") unless File.exist?(keychain)
     pkg_path = File.expand_path("../build/OTPeek.pkg", __dir__)
