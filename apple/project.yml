@@ -111,7 +111,7 @@ targets:
       properties:
         CFBundleDisplayName: OTPeek
         CFBundleShortVersionString: "1.0"
-        CFBundleVersion: "20"
+        CFBundleVersion: "21"
         LSApplicationCategoryType: public.app-category.utilities
         ITSAppUsesNonExemptEncryption: false
         NSCameraUsageDescription: Camera access is needed to scan QR codes for adding accounts.
@@ -137,7 +137,7 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         PRODUCT_NAME: OTPeek
         MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "20"
+        CURRENT_PROJECT_VERSION: "21"
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Apple Distribution"
         PROVISIONING_PROFILE_SPECIFIER: "OTPeek iOS AppStore"
@@ -174,7 +174,7 @@ targets:
       properties:
         CFBundleDisplayName: OTPeek
         CFBundleShortVersionString: "1.0"
-        CFBundleVersion: "20"
+        CFBundleVersion: "21"
         LSApplicationCategoryType: public.app-category.utilities
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
         ITSAppUsesNonExemptEncryption: false
@@ -188,10 +188,10 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         PRODUCT_NAME: OTPeek
         MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "20"
+        CURRENT_PROJECT_VERSION: "21"
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Apple Distribution"
-        PROVISIONING_PROFILE_SPECIFIER: "OTPeek macOS AppStore"
+        PROVISIONING_PROFILE_SPECIFIER: "OTPeek macOS AppStore 1784287691"
         ENABLE_DEBUG_DYLIB: NO
 
   # iOS Widget Extension
@@ -217,7 +217,7 @@ targets:
         CODE_SIGN_ENTITLEMENTS: OtpWidgetExtension/OtpWidgetExtension.entitlements
         PRODUCT_NAME: OtpWidget
         MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "20"
+        CURRENT_PROJECT_VERSION: "21"
         SKIP_INSTALL: YES
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Apple Distribution"
@@ -246,11 +246,11 @@ targets:
         CODE_SIGN_ENTITLEMENTS: OtpWidgetExtension/OtpWidgetExtension.entitlements
         PRODUCT_NAME: OtpWidget
         MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "20"
+        CURRENT_PROJECT_VERSION: "21"
         SKIP_INSTALL: YES
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Apple Distribution"
-        PROVISIONING_PROFILE_SPECIFIER: "OTPeek Widget macOS AppStore"
+        PROVISIONING_PROFILE_SPECIFIER: "OTPeek Widget macOS AppStore 1784287697"
 
 schemes:
   Otpeek-iOS:

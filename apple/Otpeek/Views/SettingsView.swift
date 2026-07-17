@@ -32,6 +32,8 @@ struct SettingsView: View {
     @State private var showingImportPassword = false
     @State private var backupPassword = ""
     @State private var pendingImportData: Data?
+    @State private var importPasswordMessage = "Enter the password used to encrypt this backup."
+    @State private var backupFeedback: BackupFeedback?
     // iOS: 문서 선택기(.fileImporter) 표시 여부. macOS 는 NSOpenPanel 을 직접 띄운다.
     @State private var showingImportPicker = false
     // 기존 iCloud 볼트를 이 기기로 받아오기(로컬 교체). 볼트가 이미 있어도 쓸 수 있는 진입점.
@@ -41,6 +43,11 @@ struct SettingsView: View {
     // 내보내기 대상: 파일로 저장할지 / 공유 시트(AirDrop 등)로 보낼지.
     private enum ExportDestination { case save, share }
     @State private var exportDestination: ExportDestination = .save
+
+    private struct BackupFeedback {
+        let message: String
+        let isError: Bool
+    }
 
     var body: some View {
         content
@@ -55,17 +62,23 @@ struct SettingsView: View {
             #endif
             .alert("Backup Password", isPresented: $showingExportPassword) {
                 SecureField("Password", text: $backupPassword)
-                Button("Cancel", role: .cancel) {}
+                Button("Cancel", role: .cancel) { backupPassword = "" }
                 Button("Export") { exportBackup() }
+                    .disabled(backupPassword.isEmpty)
             } message: {
                 Text("Choose a password to encrypt the backup file.")
             }
             .alert("Backup Password", isPresented: $showingImportPassword) {
                 SecureField("Password", text: $backupPassword)
-                Button("Cancel", role: .cancel) { pendingImportData = nil }
+                Button("Cancel", role: .cancel) {
+                    pendingImportData = nil
+                    backupPassword = ""
+                    importPasswordMessage = "Enter the password used to encrypt this backup."
+                }
                 Button("Import") { importBackup() }
+                    .disabled(backupPassword.isEmpty)
             } message: {
-                Text("Enter the password used to encrypt this backup.")
+                Text(importPasswordMessage)
             }
             .alert("Restore from iCloud", isPresented: $showingICloudRestore) {
                 SecureField("Master Password", text: $icloudRestorePassword)
@@ -357,6 +370,18 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var backupSection: some View {
+        if let feedback = backupFeedback {
+            Section {
+                Label(feedback.message,
+                      systemImage: feedback.isError
+                          ? "exclamationmark.triangle.fill"
+                          : "checkmark.circle.fill")
+                    .font(.callout)
+                    .foregroundStyle(feedback.isError ? Color.red : Color.green)
+                    .textSelection(.enabled)
+            }
+        }
+
         Section {
             #if os(macOS)
             Button { showingQRImport = true } label: {
@@ -377,6 +402,7 @@ struct SettingsView: View {
             Button {
                 exportDestination = .save
                 backupPassword = ""
+                backupFeedback = nil
                 showingExportPassword = true
             } label: {
                 actionRow("Export Encrypted Backup", "square.and.arrow.up")
@@ -386,6 +412,7 @@ struct SettingsView: View {
             Button {
                 exportDestination = .share
                 backupPassword = ""
+                backupFeedback = nil
                 showingExportPassword = true
             } label: {
                 actionRow("Share Backup (AirDrop…)", "paperplane")
@@ -501,10 +528,24 @@ struct SettingsView: View {
     // MARK: - Backup export/import (v2 encrypted container)
 
     private func exportBackup() {
-        guard let data = appState.exportBackup(password: backupPassword) else { return }
-        switch exportDestination {
-        case .save:  saveBackup(data)
-        case .share: shareBackup(data)
+        let password = backupPassword
+        let destination = exportDestination
+        backupPassword = ""
+        showingExportPassword = false
+
+        // AppKit cannot reliably begin a save/share modal while SwiftUI is still
+        // dismissing the password alert. Wait for that modal transition to finish.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            guard let data = appState.exportBackup(password: password) else {
+                backupFeedback = BackupFeedback(
+                    message: appState.lastError ?? "The encrypted backup could not be created.",
+                    isError: true)
+                return
+            }
+            switch destination {
+            case .save:  saveBackup(data)
+            case .share: shareBackup(data)
+            }
         }
     }
 
@@ -517,6 +558,9 @@ struct SettingsView: View {
             try data.write(to: url, options: .atomic)
             return url
         } catch {
+            backupFeedback = BackupFeedback(
+                message: "The temporary backup file could not be written: \(error.localizedDescription)",
+                isError: true)
             return nil
         }
     }
@@ -528,8 +572,18 @@ struct SettingsView: View {
         if let type = UTType(filenameExtension: "otpvault") {
             panel.allowedContentTypes = [type]
         }
-        if panel.runModal() == .OK, let url = panel.url {
-            try? data.write(to: url)
+        presentPanel(panel) { response in
+            guard response == .OK, let url = panel.url else { return }
+            do {
+                try data.write(to: url, options: .atomic)
+                backupFeedback = BackupFeedback(
+                    message: "Encrypted backup saved as \(url.lastPathComponent).",
+                    isError: false)
+            } catch {
+                backupFeedback = BackupFeedback(
+                    message: "The backup file could not be saved: \(error.localizedDescription)",
+                    isError: true)
+            }
         }
         #else
         // iOS 에는 저장 패널이 없다: 공유 시트의 "파일에 저장"으로 저장한다.
@@ -541,8 +595,12 @@ struct SettingsView: View {
         guard let url = writeTempBackup(data) else { return }
         #if os(macOS)
         let picker = NSSharingServicePicker(items: [url])
-        if let view = NSApp.keyWindow?.contentView {
+        if let view = presentationWindow?.contentView {
             picker.show(relativeTo: view.bounds, of: view, preferredEdge: .minY)
+        } else {
+            backupFeedback = BackupFeedback(
+                message: "No active window is available to present the share sheet.",
+                isError: true)
         }
         #else
         let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
@@ -559,19 +617,54 @@ struct SettingsView: View {
 
     private func pickImportFile() {
         #if os(macOS)
+        backupFeedback = nil
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
-        if panel.runModal() == .OK, let url = panel.url,
-           let data = try? Data(contentsOf: url) {
-            pendingImportData = data
-            backupPassword = ""
-            presentImportPasswordAfterDismiss()
+        let backupTypes = ["otpvault", "otpbackup"]
+            .compactMap { UTType(filenameExtension: $0) }
+        panel.allowedContentTypes = backupTypes.isEmpty ? [.data] : backupTypes
+        presentPanel(panel) { response in
+            guard response == .OK, let url = panel.url else { return }
+            let didAccess = url.startAccessingSecurityScopedResource()
+            defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
+            do {
+                pendingImportData = try Data(contentsOf: url)
+                backupPassword = ""
+                importPasswordMessage = "Enter the password used to encrypt this backup."
+                presentImportPasswordAfterDismiss()
+            } catch {
+                pendingImportData = nil
+                backupFeedback = BackupFeedback(
+                    message: "The selected backup file could not be read: \(error.localizedDescription)",
+                    isError: true)
+            }
         }
         #else
+        backupFeedback = nil
         showingImportPicker = true
         #endif
     }
+
+    #if os(macOS)
+    /// Presents an AppKit file panel asynchronously. A sheet is preferred so the
+    /// Settings window remains the modal owner; menu-bar-only mode can fall back
+    /// to an app-modal panel when no key/main window is available.
+    private func presentPanel(_ panel: NSSavePanel,
+                              completion: @escaping (NSApplication.ModalResponse) -> Void) {
+        if let window = presentationWindow {
+            panel.beginSheetModal(for: window, completionHandler: completion)
+        } else {
+            panel.begin(completionHandler: completion)
+        }
+    }
+
+    private var presentationWindow: NSWindow? {
+        NSApp.keyWindow
+            ?? NSApp.mainWindow
+            ?? NSApp.windows.first(where: { $0.isVisible && $0.canBecomeKey })
+    }
+    #endif
 
     /// Presents the backup-password prompt on the next runloop. Presenting an
     /// `.alert` synchronously from a file-picker completion collides with the
@@ -584,8 +677,28 @@ struct SettingsView: View {
 
     private func importBackup() {
         guard let data = pendingImportData else { return }
-        _ = appState.importBackup(data: data, password: backupPassword, merge: true)
-        pendingImportData = nil
+        let password = backupPassword
+        backupPassword = ""
+        showingImportPassword = false
+
+        switch appState.importBackupChecked(data: data, password: password, merge: true) {
+        case .success(let count):
+            pendingImportData = nil
+            importPasswordMessage = "Enter the password used to encrypt this backup."
+            backupFeedback = BackupFeedback(
+                message: "Imported \(count) account\(count == 1 ? "" : "s") successfully.",
+                isError: false)
+        case .wrongPassword:
+            importPasswordMessage = "Incorrect backup password. Please try again."
+            backupFeedback = BackupFeedback(
+                message: "The backup password was incorrect.",
+                isError: true)
+            presentImportPasswordAfterDismiss()
+        case .failure(let message):
+            importPasswordMessage = message
+            backupFeedback = BackupFeedback(message: message, isError: true)
+            presentImportPasswordAfterDismiss()
+        }
     }
 }
 

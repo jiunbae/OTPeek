@@ -55,6 +55,7 @@ public final class OtpStore: ObservableObject {
     private let migratedAccountsKey = "migrated_otp_accounts"
     private let migratedFoldersKey = "migrated_otp_folders"
     private let syncEnabledKey = "icloudSyncEnabled"
+    private static let legacyBackupMagic = Data("OTPB".utf8)
 
     private var legacyDefaults: UserDefaults? {
         UserDefaults(suiteName: VaultAccess.appGroupId)
@@ -323,15 +324,29 @@ public final class OtpStore: ObservableObject {
     // MARK: - 백업 (SettingsView)
 
     public func exportBackup(password: String) -> Data? {
-        guard let client = client else { return nil }
-        return try? client.exportBackup(password: password)
+        guard let client = client else {
+            lastError = "Vault is not open."
+            return nil
+        }
+        do {
+            let data = try client.exportBackup(password: password)
+            lastError = nil
+            return data
+        } catch {
+            lastError = describe(error)
+            return nil
+        }
     }
 
     @discardableResult
     public func importBackup(data: Data, password: String, merge: Bool = true) -> Bool {
         guard let client = client else { return false }
         do {
-            _ = try client.importBackup(data: data, password: password, merge: merge)
+            if data.starts(with: Self.legacyBackupMagic) {
+                _ = try client.importBackupV1(data: data, password: password, merge: merge)
+            } else {
+                _ = try client.importBackup(data: data, password: password, merge: merge)
+            }
             refresh()
             VaultAccess.notifyChange()
             return true
@@ -353,7 +368,16 @@ public final class OtpStore: ObservableObject {
     public func importBackupChecked(data: Data, password: String, merge: Bool) -> ImportOutcome {
         guard let client = client else { return .failure("Vault is not open.") }
         do {
-            let count = try client.importBackup(data: data, password: password, merge: merge)
+            // v2 containers begin with "OTPVAULT"; legacy v1 `.otpbackup`
+            // files begin with "OTPB". The picker accepts both formats, so
+            // route legacy data to its compatible decoder instead of reporting
+            // a misleading corrupt-v2 error.
+            let count: UInt32
+            if data.starts(with: Self.legacyBackupMagic) {
+                count = try client.importBackupV1(data: data, password: password, merge: merge)
+            } else {
+                count = try client.importBackup(data: data, password: password, merge: merge)
+            }
             refresh()
             VaultAccess.notifyChange()
             return .success(Int(count))

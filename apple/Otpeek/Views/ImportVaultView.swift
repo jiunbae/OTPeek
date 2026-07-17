@@ -39,12 +39,12 @@ struct ImportVaultView: View {
                     .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.return)
             } else {
-                Text("Enter the master password for this backup file to import its accounts.")
+                Text("Enter the password that protects this file: the backup password for an exported backup, or the master password for a live vault.")
                     .font(.callout)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
 
-                SecureField("Master Password", text: $password)
+                SecureField("File Password", text: $password)
                     .textFieldStyle(.roundedBorder)
                     .frame(maxWidth: 300)
                     .onSubmit(runImport)
