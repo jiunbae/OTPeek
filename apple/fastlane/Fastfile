@@ -161,16 +161,13 @@ platform :mac do
     File.delete(pkg_path) if File.exist?(pkg_path)
     sh("productbuild", "--component", app_path, "/Applications",
        "--sign", MAC_INSTALLER_CERT, "--keychain", keychain, pkg_path)
-    upload_to_app_store(
+    upload_to_testflight(
       api_key: api_key,
       pkg: pkg_path,
-      skip_screenshots: true,
-      skip_metadata: true,
-      submit_for_review: false,
-      precheck_include_in_app_purchases: false,
-      run_precheck_before_submit: false,
-      platform: "osx",
-      force: true
+      app_identifier: APP_IDENTIFIER,
+      app_platform: "osx",
+      uses_non_exempt_encryption: false,
+      skip_waiting_for_build_processing: false
     )
   end
 end
