@@ -4,78 +4,74 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Otpeek.App.Views"
-    xmlns:vm="using:Otpeek.App.ViewModels"
     Title="OTPeek">
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
-        <!-- Title Bar -->
-        <Grid Grid.Row="0" Height="48" Background="{ThemeResource LayerFillColorDefaultBrush}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="16,0">
-                <FontIcon Glyph="&#xE8D7;" FontSize="20" Margin="0,0,12,0" />
-                <TextBlock Text="OTPeek"
-                           VerticalAlignment="Center"
-                           Style="{StaticResource SubtitleTextBlockStyle}" />
-            </StackPanel>
-
-            <!-- Search Box -->
-            <AutoSuggestBox Grid.Column="1"
-                            PlaceholderText="Search accounts..."
-                            QueryIcon="Find"
-                            Width="300"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center" />
-        </Grid>
-
-        <!-- Main Content -->
-        <NavigationView Grid.Row="1"
-                        x:Name="NavigationViewControl"
+    <Grid Background="Transparent">
+        <NavigationView x:Name="NavigationViewControl"
+                        Background="Transparent"
                         IsBackButtonVisible="Collapsed"
                         IsSettingsVisible="True"
+                        AlwaysShowHeader="False"
                         PaneDisplayMode="Left"
-                        OpenPaneLength="240">
+                        OpenPaneLength="248"
+                        CompactPaneLength="48">
 
             <NavigationView.MenuItems>
-                <!-- Library Section -->
+                <!-- Keep the high-frequency actions in the sidebar, matching macOS. -->
+                <NavigationViewItemHeader Content="Quick Actions" />
+                <NavigationViewItem x:Name="ImportQrNavItem"
+                                    Content="Import QR Image"
+                                    SelectsOnInvoked="False">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xED14;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem x:Name="AddAccountNavItem"
+                                    Content="Add Manually"
+                                    SelectsOnInvoked="False">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE710;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem x:Name="PasteUriNavItem"
+                                    Content="Paste from Clipboard"
+                                    SelectsOnInvoked="False">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE77F;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
+                <NavigationViewItemSeparator />
                 <NavigationViewItemHeader Content="Library" />
-                <NavigationViewItem Content="All Accounts" Tag="accounts">
+                <NavigationViewItem x:Name="AllAccountsNavItem"
+                                    Content="All Accounts"
+                                    Tag="accounts">
                     <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE77B;" />
+                        <FontIcon Glyph="&#xE8FD;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Favorites" Tag="favorites">
+                <NavigationViewItem x:Name="FavoritesNavItem"
+                                    Content="Favorites"
+                                    Tag="favorites">
                     <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE734;" Foreground="Gold" />
+                        <FontIcon Glyph="&#xE735;" Foreground="{StaticResource FavoriteBrush}" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Uncategorized" Tag="uncategorized">
+                <NavigationViewItem x:Name="UncategorizedNavItem"
+                                    Content="Uncategorized"
+                                    Tag="uncategorized">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE8B7;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
 
                 <NavigationViewItemSeparator />
-
-                <!-- Folders Section -->
                 <NavigationViewItemHeader Content="Folders" />
-
-                <!-- Folder items will be added dynamically -->
+                <!-- Folder items are inserted here at runtime. -->
 
                 <NavigationViewItemSeparator />
-
-                <!-- Tools Section -->
                 <NavigationViewItemHeader Content="Tools" />
-                <NavigationViewItem Content="Backup" Tag="backup">
+                <NavigationViewItem Content="Backup &amp; Restore" Tag="backup">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE74E;" />
                     </NavigationViewItem.Icon>
@@ -83,27 +79,48 @@
             </NavigationView.MenuItems>
 
             <NavigationView.FooterMenuItems>
-                <NavigationViewItem x:Name="AddFolderNavItem" Content="Add Folder" SelectsOnInvoked="False">
+                <NavigationViewItem x:Name="AddFolderNavItem"
+                                    Content="New Folder"
+                                    SelectsOnInvoked="False">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE8F4;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
             </NavigationView.FooterMenuItems>
 
+            <NavigationView.PaneFooter>
+                <StackPanel Margin="8,8,8,4" Spacing="2">
+                    <StackPanel Orientation="Horizontal" Spacing="7">
+                        <FontIcon Glyph="&#xE72E;"
+                                  FontSize="11"
+                                  Foreground="{ThemeResource OtpeekSecondaryTextBrush}" />
+                        <TextBlock Text="Encrypted on this device"
+                                   Style="{StaticResource OtpeekDetailTextStyle}" />
+                    </StackPanel>
+                </StackPanel>
+            </NavigationView.PaneFooter>
+
             <NavigationView.Content>
-                <Frame x:Name="ContentFrame" />
+                <Border Background="{ThemeResource OtpeekWindowBrush}"
+                        BorderBrush="{ThemeResource OtpeekStrokeBrush}"
+                        BorderThickness="1,0,0,0"
+                        CornerRadius="12,0,0,0">
+                    <Frame x:Name="ContentFrame" />
+                </Border>
             </NavigationView.Content>
         </NavigationView>
 
-        <!-- Account Edit Panel (Overlay) -->
+        <!-- Editor is modal but remains in the same window and theme context. -->
         <Grid x:Name="EditOverlay"
-              Grid.RowSpan="2"
+              Canvas.ZIndex="10"
               Visibility="Collapsed"
-              Background="{ThemeResource LayerOnAcrylicFillColorDefaultBrush}">
+              Background="{ThemeResource OtpeekOverlayBrush}">
             <local:AccountEditView x:Name="AccountEditView"
+                                   Width="520"
+                                   MaxHeight="620"
+                                   Margin="24"
                                    HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   Width="450" />
+                                   VerticalAlignment="Center" />
         </Grid>
     </Grid>
 </Window>

@@ -3,19 +3,33 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Primary Brushes -->
+    <!-- Neutral translucent tokens remain legible over both light and dark Mica. -->
+    <SolidColorBrush x:Key="OtpeekWindowBrush" Color="Transparent" />
+    <SolidColorBrush x:Key="OtpeekPaneBrush" Color="Transparent" />
+    <SolidColorBrush x:Key="OtpeekSurfaceBrush" Color="#14A0A0A0" />
+    <SolidColorBrush x:Key="OtpeekSurfaceSecondaryBrush" Color="#0CA0A0A0" />
+    <SolidColorBrush x:Key="OtpeekSurfaceHoverBrush" Color="#20A0A0A0" />
+    <SolidColorBrush x:Key="OtpeekStrokeBrush" Color="#38A0A0A0" />
+    <SolidColorBrush x:Key="OtpeekDividerBrush" Color="#28A0A0A0" />
+    <SolidColorBrush x:Key="OtpeekOverlayBrush" Color="#78000000" />
+    <SolidColorBrush x:Key="OtpeekCodePillBrush" Color="#160078D4" />
+    <SolidColorBrush x:Key="OtpeekSubtleFillBrush" Color="#12A0A0A0" />
+    <SolidColorBrush x:Key="OtpeekSecondaryTextBrush" Color="#FF808080" />
+    <SolidColorBrush x:Key="OtpCodeBrush" Color="#FF808080" />
+    <SolidColorBrush x:Key="OtpCodeBrushDark" Color="#FFF2F2F2" />
+
+    <!-- Compatibility names used by existing dialogs and converters. -->
     <SolidColorBrush x:Key="PrimaryBrush" Color="#0078D4" />
     <SolidColorBrush x:Key="PrimaryLightBrush" Color="#4DA3E0" />
     <SolidColorBrush x:Key="PrimaryDarkBrush" Color="#005A9E" />
-
-    <!-- Accent Brushes -->
-    <SolidColorBrush x:Key="AccentBrush" Color="#00B4D8" />
-    <SolidColorBrush x:Key="SuccessBrush" Color="#107C10" />
-    <SolidColorBrush x:Key="WarningBrush" Color="#FF8C00" />
-    <SolidColorBrush x:Key="ErrorBrush" Color="#E81123" />
-
-    <!-- OTP Code Brushes -->
-    <SolidColorBrush x:Key="OtpCodeBrush" Color="#1A1A1A" />
-    <SolidColorBrush x:Key="OtpCodeBrushDark" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#0078D4" />
+    <SolidColorBrush x:Key="OtpeekAccentSoftBrush" Color="#1F0078D4" />
+    <SolidColorBrush x:Key="SuccessBrush" Color="#2E9D55" />
+    <SolidColorBrush x:Key="SuccessSoftBrush" Color="#1F2E9D55" />
+    <SolidColorBrush x:Key="WarningBrush" Color="#E89525" />
+    <SolidColorBrush x:Key="WarningSoftBrush" Color="#1FE89525" />
+    <SolidColorBrush x:Key="ErrorBrush" Color="#D94A4A" />
+    <SolidColorBrush x:Key="ErrorSoftBrush" Color="#1FD94A4A" />
+    <SolidColorBrush x:Key="FavoriteBrush" Color="#E6AA24" />
 
 </ResourceDictionary>

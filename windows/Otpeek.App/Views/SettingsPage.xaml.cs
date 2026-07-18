@@ -11,6 +11,7 @@ namespace Otpeek.App.Views;
 public sealed partial class SettingsPage : Page
 {
     public SettingsViewModel ViewModel { get; }
+    private bool _isUpdatingUi;
 
     public SettingsPage()
     {
@@ -18,17 +19,37 @@ public sealed partial class SettingsPage : Page
         ViewModel = App.Services.GetRequiredService<SettingsViewModel>();
 
         // 이벤트 연결
-        ResetButton.Click += async (s, e) => await ViewModel.ResetSettingsCommand.ExecuteAsync(null);
+        ResetButton.Click += async (s, e) =>
+        {
+            await ViewModel.ResetSettingsCommand.ExecuteAsync(null);
+            UpdateUI();
+        };
         ThemeCombo.SelectionChanged += OnThemeChanged;
-        StartWithWindowsToggle.Toggled += (s, e) => ViewModel.StartWithWindows = StartWithWindowsToggle.IsOn;
-        StartMinimizedToggle.Toggled += (s, e) => ViewModel.StartMinimized = StartMinimizedToggle.IsOn;
-        MinimizeToTrayToggle.Toggled += (s, e) => ViewModel.MinimizeToTray = MinimizeToTrayToggle.IsOn;
-        EnableWidgetToggle.Toggled += (s, e) => ViewModel.EnableWidgetProvider = EnableWidgetToggle.IsOn;
-        RequireAuthToggle.Toggled += (s, e) => ViewModel.RequireAuthentication = RequireAuthToggle.IsOn;
-        ShowFaviconsToggle.Toggled += (s, e) => ViewModel.ShowFavicons = ShowFaviconsToggle.IsOn;
+        StartWithWindowsToggle.Toggled += (s, e) =>
+        {
+            if (!_isUpdatingUi) ViewModel.StartWithWindows = StartWithWindowsToggle.IsOn;
+        };
+        StartMinimizedToggle.Toggled += (s, e) =>
+        {
+            if (!_isUpdatingUi) ViewModel.StartMinimized = StartMinimizedToggle.IsOn;
+        };
+        MinimizeToTrayToggle.Toggled += (s, e) =>
+        {
+            if (!_isUpdatingUi) ViewModel.MinimizeToTray = MinimizeToTrayToggle.IsOn;
+        };
+        CopyCodeOnClickToggle.Toggled += (s, e) =>
+        {
+            if (!_isUpdatingUi) ViewModel.AutoCopyToClipboard = CopyCodeOnClickToggle.IsOn;
+        };
+        ShowFaviconsToggle.Toggled += (s, e) =>
+        {
+            if (!_isUpdatingUi) ViewModel.ShowFavicons = ShowFaviconsToggle.IsOn;
+        };
         ClipboardClearCombo.SelectionChanged += OnClipboardClearChanged;
 
         // WebDAV 동기화
+        WebDavAutoSyncToggle.Toggled += (s, e) =>
+            WebDavSyncIntervalCombo.IsEnabled = WebDavAutoSyncToggle.IsOn;
         SaveWebDavButton.Click += OnSaveWebDavClick;
         SyncNowButton.Click += OnSyncNowClick;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
@@ -44,22 +65,31 @@ public sealed partial class SettingsPage : Page
 
     private async void OnSaveWebDavClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        ViewModel.WebDavEnabled = WebDavEnabledToggle.IsOn;
-        ViewModel.WebDavUrl = WebDavUrlTextBox.Text;
-        ViewModel.WebDavUsername = WebDavUserTextBox.Text;
-        ViewModel.WebDavPassword = WebDavPasswordBox.Password;
+        ApplyWebDavInputs();
         await ViewModel.SaveSettingsCommand.ExecuteAsync(null);
     }
 
     private async void OnSyncNowClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
         // 최신 입력값을 먼저 저장한 뒤 동기화
+        ApplyWebDavInputs();
+        await ViewModel.SaveSettingsCommand.ExecuteAsync(null);
+        await ViewModel.SyncNowCommand.ExecuteAsync(null);
+    }
+
+    private void ApplyWebDavInputs()
+    {
         ViewModel.WebDavEnabled = WebDavEnabledToggle.IsOn;
         ViewModel.WebDavUrl = WebDavUrlTextBox.Text;
         ViewModel.WebDavUsername = WebDavUserTextBox.Text;
         ViewModel.WebDavPassword = WebDavPasswordBox.Password;
-        await ViewModel.SaveSettingsCommand.ExecuteAsync(null);
-        await ViewModel.SyncNowCommand.ExecuteAsync(null);
+        ViewModel.WebDavAutoSync = WebDavAutoSyncToggle.IsOn;
+
+        if (WebDavSyncIntervalCombo.SelectedItem is ComboBoxItem item &&
+            int.TryParse(item.Tag?.ToString(), out int minutes))
+        {
+            ViewModel.WebDavSyncIntervalMinutes = minutes;
+        }
     }
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -71,22 +101,37 @@ public sealed partial class SettingsPage : Page
 
     private void UpdateUI()
     {
-        StartWithWindowsToggle.IsOn = ViewModel.StartWithWindows;
-        StartMinimizedToggle.IsOn = ViewModel.StartMinimized;
-        MinimizeToTrayToggle.IsOn = ViewModel.MinimizeToTray;
-        EnableWidgetToggle.IsOn = ViewModel.EnableWidgetProvider;
-        RequireAuthToggle.IsOn = ViewModel.RequireAuthentication;
-        ShowFaviconsToggle.IsOn = ViewModel.ShowFavicons;
+        _isUpdatingUi = true;
+        try
+        {
+            StartWithWindowsToggle.IsOn = ViewModel.StartWithWindows;
+            StartMinimizedToggle.IsOn = ViewModel.StartMinimized;
+            MinimizeToTrayToggle.IsOn = ViewModel.MinimizeToTray;
+            CopyCodeOnClickToggle.IsOn = ViewModel.AutoCopyToClipboard;
+            ShowFaviconsToggle.IsOn = ViewModel.ShowFavicons;
 
-        // ComboBox 선택
-        SelectComboBoxItem(ClipboardClearCombo, ViewModel.ClipboardClearSeconds.ToString());
-        SelectComboBoxItem(ThemeCombo, ViewModel.SelectedTheme);
+            // ComboBox 선택
+            SelectComboBoxItem(ClipboardClearCombo, ViewModel.ClipboardClearSeconds.ToString());
+            SelectComboBoxItem(ThemeCombo, ViewModel.SelectedTheme);
 
-        // WebDAV
-        WebDavEnabledToggle.IsOn = ViewModel.WebDavEnabled;
-        WebDavUrlTextBox.Text = ViewModel.WebDavUrl;
-        WebDavUserTextBox.Text = ViewModel.WebDavUsername;
-        WebDavPasswordBox.Password = ViewModel.WebDavPassword;
+            // WebDAV
+            WebDavEnabledToggle.IsOn = ViewModel.WebDavEnabled;
+            WebDavUrlTextBox.Text = ViewModel.WebDavUrl;
+            WebDavUserTextBox.Text = ViewModel.WebDavUsername;
+            WebDavPasswordBox.Password = ViewModel.WebDavPassword;
+            WebDavAutoSyncToggle.IsOn = ViewModel.WebDavAutoSync;
+            WebDavSyncIntervalCombo.IsEnabled = ViewModel.WebDavAutoSync;
+            SelectComboBoxItem(WebDavSyncIntervalCombo, ViewModel.WebDavSyncIntervalMinutes.ToString());
+            SyncStatusText.Text = ViewModel.SyncStatus ?? string.Empty;
+
+            VersionText.Text = $"Version {ViewModel.AppVersion}";
+            AccountCountText.Text = $"Accounts: {ViewModel.AccountCount}";
+            FolderCountText.Text = $"Folders: {ViewModel.FolderCount}";
+        }
+        finally
+        {
+            _isUpdatingUi = false;
+        }
     }
 
     private void SelectComboBoxItem(ComboBox comboBox, string tag)
@@ -103,6 +148,7 @@ public sealed partial class SettingsPage : Page
 
     private void OnThemeChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (_isUpdatingUi) return;
         if (ThemeCombo.SelectedItem is ComboBoxItem item && item.Tag is string theme)
         {
             ViewModel.SelectedTheme = theme;
@@ -111,6 +157,7 @@ public sealed partial class SettingsPage : Page
 
     private void OnClipboardClearChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (_isUpdatingUi) return;
         if (ClipboardClearCombo.SelectedItem is ComboBoxItem item && item.Tag is string tag)
         {
             if (int.TryParse(tag, out int seconds))

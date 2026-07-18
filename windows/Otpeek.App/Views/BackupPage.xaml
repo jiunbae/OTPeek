@@ -3,82 +3,100 @@
     x:Class="Otpeek.App.Views.BackupPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Otpeek.App.Views">
+    Background="Transparent">
 
-    <ScrollViewer Padding="24">
-        <StackPanel MaxWidth="800" Spacing="4">
+    <ScrollViewer Padding="32,24,32,48" VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="760" HorizontalAlignment="Stretch" Spacing="0">
             <TextBlock Text="Backup &amp; Restore"
-                       Style="{StaticResource TitleTextBlockStyle}"
-                       Margin="0,0,0,24" />
+                       Style="{StaticResource OtpeekPageTitleStyle}" />
+            <TextBlock Text="Move your encrypted vault safely between devices without exposing account secrets."
+                       Style="{StaticResource OtpeekPageSubtitleStyle}"
+                       Margin="0,4,0,4" />
 
-            <!-- Export -->
-            <TextBlock Text="Export"
-                       Style="{StaticResource SectionHeaderStyle}" />
-
-            <Border Style="{StaticResource AccountCardStyle}">
+            <TextBlock Text="EXPORT" Style="{StaticResource SectionHeaderStyle}" />
+            <Border Style="{StaticResource OtpeekSettingsCardStyle}">
                 <StackPanel Spacing="16">
-                    <TextBlock Text="Create an encrypted backup of all your accounts."
-                               TextWrapping="Wrap"
-                               Opacity="0.7" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="48" Height="48" CornerRadius="14"
+                                Background="{ThemeResource OtpeekAccentSoftBrush}">
+                            <FontIcon Glyph="&#xE898;" FontSize="22"
+                                      Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="Create an encrypted backup"
+                                       Style="{StaticResource OtpeekCardTitleStyle}" />
+                            <TextBlock Text="Exports all accounts and folders as a password-protected .otpvault file."
+                                       Style="{StaticResource OtpeekDetailTextStyle}" />
+                        </StackPanel>
+                    </Grid>
 
-                    <InfoBar Title="Important"
-                             Message="Your backup will be encrypted with a password. Make sure to remember this password - without it, you cannot restore your accounts."
+                    <InfoBar Title="Keep the password safe"
+                             Message="The backup cannot be opened or restored without its password."
                              Severity="Warning"
                              IsOpen="True"
                              IsClosable="False" />
 
-                    <ToggleSwitch x:Name="IncludeSettingsToggle"
-                                  Header="Include app settings"
-                                  IsOn="True"
-                                  OffContent="No"
-                                  OnContent="Yes" />
-
                     <Button x:Name="ExportButton"
-                            Content="Export Backup"
                             Style="{StaticResource AccentButtonStyle}"
-                            HorizontalAlignment="Left" />
+                            HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE74E;" FontSize="14" />
+                            <TextBlock Text="Export Backup" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Border>
 
-            <!-- Import -->
-            <TextBlock Text="Import"
-                       Style="{StaticResource SectionHeaderStyle}" />
-
-            <Border Style="{StaticResource AccountCardStyle}">
+            <TextBlock Text="IMPORT" Style="{StaticResource SectionHeaderStyle}" />
+            <Border Style="{StaticResource OtpeekSettingsCardStyle}">
                 <StackPanel Spacing="16">
-                    <TextBlock Text="Restore accounts from an encrypted backup file."
-                               TextWrapping="Wrap"
-                               Opacity="0.7" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="48" Height="48" CornerRadius="14"
+                                Background="{StaticResource SuccessSoftBrush}">
+                            <FontIcon Glyph="&#xE896;" FontSize="22"
+                                      Foreground="{StaticResource SuccessBrush}"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="Restore an encrypted vault"
+                                       Style="{StaticResource OtpeekCardTitleStyle}" />
+                            <TextBlock Text="Choose whether imported accounts are merged with or replace this vault."
+                                       Style="{StaticResource OtpeekDetailTextStyle}" />
+                        </StackPanel>
+                    </Grid>
 
                     <InfoBar x:Name="ImportInfoBar"
                              IsOpen="False"
                              IsClosable="True" />
 
-                    <ToggleSwitch x:Name="RestoreSettingsToggle"
-                                  Header="Restore app settings"
-                                  IsOn="False"
-                                  OffContent="No"
-                                  OnContent="Yes" />
+                    <Border Style="{StaticResource OtpeekFormSectionStyle}">
+                        <RadioButtons x:Name="ImportModeRadioButtons"
+                                      Header="Import mode"
+                                      SelectedIndex="0">
+                            <RadioButton x:Name="MergeImportRadio"
+                                         Content="Merge — keep current accounts and add or update from the backup" />
+                            <RadioButton Content="Replace — remove the current vault and restore only the backup" />
+                        </RadioButtons>
+                    </Border>
 
-                    <Button x:Name="ImportButton"
-                            Content="Import Backup"
-                            HorizontalAlignment="Left" />
-                </StackPanel>
-            </Border>
+                    <TextBlock Text="Merge is recommended. Replace removes accounts and folders that are not present in the backup."
+                               Style="{StaticResource OtpeekDetailTextStyle}" />
 
-            <!-- QR Export -->
-            <TextBlock Text="QR Code Export"
-                       Style="{StaticResource SectionHeaderStyle}" />
-
-            <Border Style="{StaticResource AccountCardStyle}">
-                <StackPanel Spacing="16">
-                    <TextBlock Text="Export individual accounts as QR codes for easy transfer to other devices."
-                               TextWrapping="Wrap"
-                               Opacity="0.7" />
-
-                    <Button x:Name="ExportQrButton"
-                            Content="Export as QR Codes"
-                            HorizontalAlignment="Left" />
+                    <Button x:Name="ImportButton" HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE8B5;" FontSize="14" />
+                            <TextBlock Text="Import Backup" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Border>
         </StackPanel>

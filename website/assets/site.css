@@ -88,6 +88,73 @@ h2 { font-size:clamp(28px,4vw,42px); font-weight:800; letter-spacing:-.02em; tex
 .mac-screen { max-width:940px; margin:0 auto; }
 .mac-screen img { display:block; width:100%; height:auto; filter:drop-shadow(0 30px 44px rgba(5,12,24,.24)); }
 
+/* ---- Windows product preview (demo accounts only) ---- */
+.windows-tour { background:linear-gradient(180deg,var(--bg2),var(--bg)); }
+.windows-showcase { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr); gap:28px; align-items:center; }
+.windows-product { min-width:0; margin:0; text-align:center; }
+.windows-product figcaption { display:grid; gap:2px; margin-top:18px; }
+.windows-product figcaption strong { font-size:15px; }
+.windows-product figcaption span { color:var(--fg2); font-size:13px; }
+.windows-screenshot-frame { overflow:hidden; border:1px solid rgba(255,255,255,.13); border-radius:14px;
+  background:#161a22; box-shadow:0 30px 64px -24px rgba(4,10,24,.58); }
+.windows-screenshot { display:block; width:100%; height:auto; }
+.windows-window, .windows-desktop { overflow:hidden; color:#f4f7fb; text-align:left; font-family:"Segoe UI",sans-serif;
+  border:1px solid rgba(255,255,255,.13); box-shadow:0 30px 64px -24px rgba(4,10,24,.58); }
+.windows-window { min-height:438px; border-radius:14px; background:#161a22; }
+.windows-titlebar { height:42px; display:flex; align-items:center; justify-content:space-between; padding-left:14px;
+  background:#11141a; border-bottom:1px solid rgba(255,255,255,.07); font-size:12px; }
+.windows-brand, .widget-heading span { display:flex; align-items:center; gap:8px; font-weight:600; }
+.windows-brand img, .widget-heading img { border-radius:6px; }
+.windows-caption { align-self:stretch; display:flex; align-items:center; }
+.windows-caption span { width:42px; height:100%; display:grid; place-items:center; color:#aeb6c4; font-size:13px; }
+.windows-caption span:last-child { font-size:18px; }
+.windows-app { min-height:396px; display:grid; grid-template-columns:148px 1fr; }
+.windows-sidebar { display:flex; flex-direction:column; gap:5px; padding:18px 10px 12px; background:#12161d; border-right:1px solid rgba(255,255,255,.07); }
+.windows-nav { display:flex; align-items:center; gap:9px; min-height:36px; padding:0 10px; border-radius:7px; color:#aab3c2; font-size:11px; }
+.windows-nav span { width:16px; color:#cfd6e1; font-size:15px; text-align:center; }
+.windows-nav.active { color:#fff; background:rgba(10,132,255,.19); }
+.windows-nav.settings { margin-top:auto; }
+.windows-content { min-width:0; padding:24px 26px 26px; background:radial-gradient(circle at 90% 0,rgba(10,132,255,.12),transparent 42%),#191e27; }
+.windows-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; }
+.windows-heading div { display:grid; gap:2px; }
+.windows-heading small { color:#6caeff; font-size:8px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+.windows-heading strong { font-size:23px; letter-spacing:-.02em; }
+.windows-add-button { border-radius:7px; padding:8px 11px; color:#fff; background:#0a84ff; font:600 9px "Segoe UI",sans-serif; }
+.windows-search { height:35px; display:flex; align-items:center; margin-top:18px; padding:0 12px; color:#8791a1; background:#10141b;
+  border:1px solid rgba(255,255,255,.10); border-radius:7px; font-size:10px; }
+.windows-section-label { display:flex; justify-content:space-between; margin:20px 2px 8px; color:#9ba5b5; font-size:9px; font-weight:600; }
+.windows-account-list { display:grid; gap:7px; }
+.windows-account { min-width:0; display:grid; grid-template-columns:34px minmax(74px,1fr) auto 29px; align-items:center; gap:10px;
+  min-height:59px; padding:9px 11px; background:#222833; border:1px solid rgba(255,255,255,.07); border-radius:9px; }
+.windows-avatar { width:32px; height:32px; display:grid; place-items:center; flex:0 0 32px; border-radius:9px; color:#fff; font-size:13px; font-weight:800; }
+.windows-avatar.github { background:#333946; }
+.windows-avatar.google { background:linear-gradient(135deg,#4285f4,#34a853 48%,#fbbc05 49%,#ea4335); }
+.windows-avatar.aws { background:#26313f; color:#ffad32; }
+.windows-avatar.microsoft { background:#1473e6; }
+.windows-avatar.cloudflare { background:#f48120; }
+.windows-account-name, .widget-name, .widget-code { min-width:0; display:grid; }
+.windows-account-name strong, .widget-name strong { overflow:hidden; font-size:10px; white-space:nowrap; text-overflow:ellipsis; }
+.windows-account-name small, .widget-name small { overflow:hidden; color:#8e98a8; font-size:8px; white-space:nowrap; text-overflow:ellipsis; }
+.windows-code { font:700 17px ui-monospace,"SFMono-Regular",Consolas,monospace; letter-spacing:.035em; white-space:nowrap; }
+.windows-time { color:#6caeff; font-size:8px; text-align:right; }
+
+.windows-desktop { min-height:438px; display:flex; align-items:center; padding:32px 23px; border-radius:18px;
+  background:radial-gradient(circle at 25% 18%,rgba(28,113,216,.55),transparent 33%),
+             radial-gradient(circle at 75% 82%,rgba(53,41,139,.55),transparent 38%),#09111e; }
+.windows-widget { width:100%; overflow:hidden; padding:18px; border:1px solid rgba(255,255,255,.15); border-radius:17px;
+  background:linear-gradient(145deg,rgba(35,42,57,.96),rgba(19,24,34,.96)); box-shadow:0 22px 42px -20px #000; }
+.widget-heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; font-size:12px; }
+.widget-heading b { color:#9ca6b7; font-size:9px; letter-spacing:2px; }
+.widget-hint { display:flex; justify-content:space-between; gap:10px; margin:14px 0 9px; color:#a9b3c3; font-size:8px; }
+.widget-hint small { flex:0 0 auto; color:#6caeff; }
+.widget-accounts { display:grid; gap:7px; }
+.widget-account { min-width:0; display:grid; grid-template-columns:32px minmax(55px,1fr) auto; align-items:center; gap:9px; min-height:48px;
+  padding:7px 9px; background:rgba(255,255,255,.055); border:1px solid rgba(255,255,255,.075); border-radius:10px; }
+.widget-account:hover { background:rgba(10,132,255,.13); border-color:rgba(10,132,255,.38); }
+.widget-code { gap:1px; text-align:right; }
+.widget-code strong { font:700 15px ui-monospace,"SFMono-Regular",Consolas,monospace; letter-spacing:.025em; white-space:nowrap; }
+.widget-code small { color:#6caeff; font-size:7px; white-space:nowrap; }
+
 .support { text-align:center; }
 .strip { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:8px; }
 
@@ -120,6 +187,8 @@ details p { margin:11px 0 2px; color:var(--fg2); }
   .hero .brand, .dl { justify-content:center; }
   .hero .sub { max-width:none; }
   .hero-devices { width:min(680px,100%); min-height:600px; margin:0 auto; }
+  .windows-showcase { grid-template-columns:1fr; max-width:680px; margin:0 auto; gap:44px; }
+  .widget-product { width:min(430px,100%); justify-self:center; }
 }
 @media (max-width:560px) {
   .hero { padding-top:82px; }
@@ -129,5 +198,17 @@ details p { margin:11px 0 2px; color:var(--fg2); }
   section { padding:62px 0; }
   .phone-shots { gap:48px; }
   .mac-tour { padding-top:26px; }
+  .windows-window { min-height:360px; }
+  .windows-app { min-height:318px; grid-template-columns:1fr; }
+  .windows-sidebar { display:none; }
+  .windows-content { padding:19px 15px 20px; }
+  .windows-account { grid-template-columns:32px minmax(64px,1fr) auto; gap:8px; }
+  .windows-time { display:none; }
+  .windows-code { font-size:14px; }
+  .windows-desktop { min-height:384px; padding:20px 12px; }
+  .windows-widget { padding:14px 12px; }
+  .widget-account { grid-template-columns:30px minmax(46px,1fr) auto; gap:7px; padding:8px 7px; }
+  .widget-code strong { font-size:13px; }
+  .widget-code small { font-size:6.5px; }
 }
 @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }

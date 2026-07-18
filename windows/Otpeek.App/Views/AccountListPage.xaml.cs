@@ -3,6 +3,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using Otpeek.App.ViewModels;
+using Otpeek.Core.Windows.Services;
+using Uniffi.Otpeek;
 
 namespace Otpeek.App.Views;
 
@@ -12,11 +14,13 @@ namespace Otpeek.App.Views;
 public sealed partial class AccountListPage : Page
 {
     public AccountListViewModel ViewModel { get; }
+    private readonly IOtpClientService _client;
 
     public AccountListPage()
     {
         this.InitializeComponent();
         ViewModel = App.Services.GetRequiredService<AccountListViewModel>();
+        _client = App.Services.GetRequiredService<IOtpClientService>();
 
         // 이벤트 연결
         AddButton.Click += OnAddButtonClick;
@@ -28,6 +32,8 @@ public sealed partial class AccountListPage : Page
 
         // Add Account 이벤트 연결
         ViewModel.AddRequested += OnAddRequested;
+        ViewModel.EditRequested += OnEditRequested;
+        ViewModel.DeleteRequested += OnDeleteRequested;
     }
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -40,6 +46,7 @@ public sealed partial class AccountListPage : Page
             ViewModel.FilterFolderId = args.FolderId;
             ViewModel.ShowFavoritesOnly = args.ShowFavoritesOnly;
             ViewModel.ShowUncategorizedOnly = args.ShowUncategorizedOnly;
+            ViewModel.PageTitle = string.IsNullOrWhiteSpace(args.Title) ? "Accounts" : args.Title;
         }
         else
         {
@@ -47,15 +54,22 @@ public sealed partial class AccountListPage : Page
             ViewModel.FilterFolderId = null;
             ViewModel.ShowFavoritesOnly = false;
             ViewModel.ShowUncategorizedOnly = false;
+            ViewModel.PageTitle = "All Accounts";
         }
 
+        PageTitle.Text = ViewModel.PageTitle;
         await ViewModel.LoadAccountsAsync();
+        UpdateCollectionState();
     }
 
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
         base.OnNavigatedFrom(e);
-        // 리소스 정리하지 않음 (다시 돌아올 수 있으므로)
+        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        ViewModel.AddRequested -= OnAddRequested;
+        ViewModel.EditRequested -= OnEditRequested;
+        ViewModel.DeleteRequested -= OnDeleteRequested;
+        ViewModel.Cleanup();
     }
 
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -63,14 +77,19 @@ public sealed partial class AccountListPage : Page
         switch (e.PropertyName)
         {
             case nameof(ViewModel.IsEmpty):
-                EmptyState.Visibility = ViewModel.IsEmpty ? Visibility.Visible : Visibility.Collapsed;
-                AccountListView.Visibility = ViewModel.IsEmpty ? Visibility.Collapsed : Visibility.Visible;
+                UpdateCollectionState();
                 break;
 
             case nameof(ViewModel.IsLoading):
                 LoadingRing.IsActive = ViewModel.IsLoading;
                 break;
         }
+    }
+
+    private void UpdateCollectionState()
+    {
+        EmptyState.Visibility = ViewModel.IsEmpty ? Visibility.Visible : Visibility.Collapsed;
+        AccountListView.Visibility = ViewModel.IsEmpty ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private async void OnAddButtonClick(object sender, RoutedEventArgs e)
@@ -95,7 +114,49 @@ public sealed partial class AccountListPage : Page
         await ShowManualAddDialogAsync();
     }
 
-    private async Task ShowQrScannerDialogAsync()
+    private void OnEditRequested(object? sender, OtpAccount account)
+    {
+        if (App.MainWindow is MainWindow window)
+            window.ShowAccountEditor(account);
+    }
+
+    private async void OnDeleteRequested(object? sender, OtpAccount account)
+    {
+        var displayName = string.IsNullOrWhiteSpace(account.issuer)
+            ? account.accountName
+            : $"{account.issuer} ({account.accountName})";
+
+        var dialog = new ContentDialog
+        {
+            Title = "Delete account?",
+            Content = $"{displayName} will be removed from this vault on every synced device.",
+            PrimaryButtonText = "Delete",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = XamlRoot
+        };
+
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+            return;
+
+        try
+        {
+            _client.DeleteAccount(account.id);
+        }
+        catch (Exception ex)
+        {
+            var error = new ContentDialog
+            {
+                Title = "Could not delete account",
+                Content = ex.Message,
+                CloseButtonText = "OK",
+                XamlRoot = XamlRoot
+            };
+            await error.ShowAsync();
+        }
+    }
+
+    public async Task ShowQrScannerDialogAsync()
     {
         var dialog = new QrScannerDialog
         {
@@ -110,7 +171,7 @@ public sealed partial class AccountListPage : Page
         }
     }
 
-    private async Task ShowManualAddDialogAsync()
+    public async Task ShowManualAddDialogAsync()
     {
         var dialog = new ManualAddDialog
         {

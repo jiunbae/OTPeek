@@ -22,7 +22,6 @@ public sealed partial class BackupPage : Page
 
         ExportButton.Click += OnExportClick;
         ImportButton.Click += OnImportClick;
-        ExportQrButton.Click += OnExportQrClick;
     }
 
     private async void OnExportClick(object sender, RoutedEventArgs e)
@@ -75,10 +74,13 @@ public sealed partial class BackupPage : Page
         if (string.IsNullOrEmpty(password))
             return;
 
+        bool merge = MergeImportRadio.IsChecked == true;
+        if (!merge && !await ConfirmReplaceAsync())
+            return;
+
         try
         {
             byte[] data = await File.ReadAllBytesAsync(file.Path);
-            bool merge = RestoreSettingsToggle.IsOn;
 
             uint count;
             try
@@ -113,9 +115,19 @@ public sealed partial class BackupPage : Page
         }
     }
 
-    private async void OnExportQrClick(object sender, RoutedEventArgs e)
+    private async Task<bool> ConfirmReplaceAsync()
     {
-        await ShowMessageAsync("Coming Soon", "QR code export will be available in a future update.");
+        var dialog = new ContentDialog
+        {
+            Title = "Replace Current Vault?",
+            Content = "This removes current accounts and folders that are not in the backup. This action cannot be undone.",
+            PrimaryButtonText = "Replace",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = this.XamlRoot
+        };
+
+        return await dialog.ShowAsync() == ContentDialogResult.Primary;
     }
 
     private async Task<string?> ShowPasswordDialogAsync(string title, string message)

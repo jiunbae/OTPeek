@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Otpeek.App.ViewModels;
 using Otpeek.App.Views;
 using Otpeek.Core.Extensions;
@@ -20,7 +21,12 @@ namespace Otpeek.App;
 public partial class App : Application
 {
     private const int MaxTrayOtpItems = 10;
+    private const int TrayContextMenuNameMaxLength = 18;
     private TaskbarIcon? _trayIcon;
+    private TrayPopupWindow? _trayPopupWindow;
+    private MenuFlyout? _trayContextMenu;
+    private Microsoft.UI.Dispatching.DispatcherQueueTimer? _autoSyncTimer;
+    private bool _autoSyncRunning;
 
     /// <summary>
     /// 파일 연결(.otpvault)로 앱이 활성화될 때 열린 파일 경로.
@@ -38,10 +44,21 @@ public partial class App : Application
 
     public App()
     {
-        this.InitializeComponent();
+        UnhandledException += (_, eventArgs) =>
+            LogStartup("WinUI unhandled exception", eventArgs.Exception);
 
-        // DI 컨테이너 설정
-        Services = ConfigureServices();
+        try
+        {
+            this.InitializeComponent();
+
+            // DI 컨테이너 설정
+            Services = ConfigureServices();
+        }
+        catch (Exception ex)
+        {
+            LogStartup("App construction failed", ex);
+            throw;
+        }
     }
 
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
@@ -87,6 +104,7 @@ public partial class App : Application
 
         // WebDAV 동기화 백엔드 구성 (설정에 활성화되어 있으면)
         ConfigureSyncFromSettings(settingsService);
+        ConfigureAutoSync(settingsService);
 
         // 파일 연결로 실행되었고 볼트가 열려 있으면 가져오기 다이얼로그 표시
         await HandlePendingFileAsync();
@@ -98,6 +116,26 @@ public partial class App : Application
         if (settingsService.Settings.StartMinimized)
         {
             MainWindow.Hide();
+        }
+    }
+
+    internal static void LogStartup(string message, Exception? exception = null)
+    {
+        try
+        {
+            var logDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Otpeek");
+            Directory.CreateDirectory(logDirectory);
+
+            var details = exception == null ? string.Empty : Environment.NewLine + exception;
+            File.AppendAllText(
+                Path.Combine(logDirectory, "startup.log"),
+                $"{DateTimeOffset.Now:O} {message}{details}{Environment.NewLine}");
+        }
+        catch
+        {
+            // Diagnostics must never become another startup failure.
         }
     }
 
@@ -231,7 +269,7 @@ public partial class App : Application
     {
         var client = Services.GetRequiredService<IOtpClientService>();
         var migration = Services.GetRequiredService<ILegacyMigrationService>();
-        var xamlRoot = MainWindow?.Content?.XamlRoot;
+        var xamlRoot = await WaitForMainXamlRootAsync();
 
         try
         {
@@ -292,6 +330,23 @@ public partial class App : Application
         }
     }
 
+    private async Task<XamlRoot?> WaitForMainXamlRootAsync()
+    {
+        // Window.Activate() returns before the first WinUI content tree is guaranteed
+        // to have a XamlRoot. Without this short wait, a fresh install can silently
+        // skip the create/unlock dialog and leave the visible page in a locked state.
+        for (int attempt = 0; attempt < 50; attempt++)
+        {
+            if (MainWindow?.Content?.XamlRoot is { } xamlRoot)
+                return xamlRoot;
+
+            await Task.Delay(20);
+        }
+
+        LogStartup("The main window did not acquire a XamlRoot for the vault dialog.");
+        return null;
+    }
+
     private static async Task OpenWithPasswordLoopAsync(IOtpClientService client, XamlRoot? xamlRoot)
     {
         for (int attempt = 0; attempt < 5; attempt++)
@@ -320,8 +375,14 @@ public partial class App : Application
         var secure = Services.GetRequiredService<ISecureStorageService>();
         var webdav = settingsService.Settings.WebDav;
 
-        if (!client.IsUnlocked || !webdav.Enabled || string.IsNullOrWhiteSpace(webdav.Url))
+        if (!client.IsUnlocked)
             return;
+
+        if (!webdav.Enabled || string.IsNullOrWhiteSpace(webdav.Url))
+        {
+            client.ClearSync();
+            return;
+        }
 
         string? password = secure.UnprotectString(webdav.ProtectedPassword);
         try
@@ -331,6 +392,65 @@ public partial class App : Application
         catch
         {
             // 동기화 구성 실패는 앱 시작을 막지 않음
+        }
+    }
+
+    /// <summary>
+    /// Reconfigures the lightweight in-process WebDAV schedule after Settings changes.
+    /// The timer only lives while OTPeek is running; all merge/encryption work remains in
+    /// the shared core and the UI thread is not blocked by network I/O.
+    /// </summary>
+    internal void RefreshAutoSyncSchedule()
+    {
+        var settingsService = Services.GetRequiredService<ISettingsService>();
+        ConfigureSyncFromSettings(settingsService);
+        ConfigureAutoSync(settingsService);
+    }
+
+    private void ConfigureAutoSync(ISettingsService settingsService)
+    {
+        if (MainWindow == null) return;
+
+        _autoSyncTimer ??= MainWindow.DispatcherQueue.CreateTimer();
+        _autoSyncTimer.Stop();
+        _autoSyncTimer.Tick -= OnAutoSyncTick;
+
+        var webDav = settingsService.Settings.WebDav;
+        if (!webDav.Enabled || !webDav.AutoSync || string.IsNullOrWhiteSpace(webDav.Url))
+            return;
+
+        _autoSyncTimer.Interval = TimeSpan.FromMinutes(Math.Clamp(webDav.SyncIntervalMinutes, 5, 60));
+        _autoSyncTimer.IsRepeating = true;
+        _autoSyncTimer.Tick += OnAutoSyncTick;
+        _autoSyncTimer.Start();
+    }
+
+    private async void OnAutoSyncTick(
+        Microsoft.UI.Dispatching.DispatcherQueueTimer sender,
+        object args)
+    {
+        if (_autoSyncRunning) return;
+
+        var settingsService = Services.GetRequiredService<ISettingsService>();
+        var webDav = settingsService.Settings.WebDav;
+        var client = Services.GetRequiredService<IOtpClientService>();
+        if (!webDav.Enabled || !webDav.AutoSync || !client.IsUnlocked)
+            return;
+
+        _autoSyncRunning = true;
+        try
+        {
+            await Task.Run(client.Sync);
+            webDav.LastSyncTime = DateTime.UtcNow;
+            await settingsService.SaveAsync();
+        }
+        catch
+        {
+            // A transient network failure must not interrupt codes or the tray surface.
+        }
+        finally
+        {
+            _autoSyncRunning = false;
         }
     }
 
@@ -375,9 +495,9 @@ public partial class App : Application
 
         dialog.PrimaryButtonClick += (s, e) =>
         {
-            if (string.IsNullOrEmpty(passwordBox.Password))
+            if (passwordBox.Password.Length < 8)
             {
-                errorText.Text = "Password cannot be empty.";
+                errorText.Text = "Use at least 8 characters.";
                 errorText.Visibility = Visibility.Visible;
                 e.Cancel = true;
             }
@@ -660,12 +780,10 @@ public partial class App : Application
             _trayIcon = new TaskbarIcon
             {
                 ToolTipText = "OTPeek",
-                IconSource = new H.NotifyIcon.GeneratedIconSource
-                {
-                    Text = "OTP",
-                    Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White),
-                    Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.DodgerBlue)
-                }
+                // Use the same multi-resolution artwork as the packaged executable.
+                // The previous generated "OTP" tile looked unrelated to the app icon.
+                IconSource = new BitmapImage(
+                    new Uri("ms-appx:///Assets/Logo/app.ico", UriKind.Absolute))
             };
         }
         catch (Exception ex)
@@ -681,133 +799,165 @@ public partial class App : Application
         // 좌클릭: 팝업 표시
         _trayIcon.LeftClickCommand = new RelayCommand(ShowTrayPopup);
 
+        // Right-click stays a native Win32 menu. H.NotifyIcon invokes this command
+        // immediately before it materializes PopupMenu, so rebuilding the lightweight
+        // XAML model here gives the native menu fresh values without creating a Window.
+        _trayContextMenu = new MenuFlyout();
+        _trayIcon.ContextMenuMode = ContextMenuMode.PopupMenu;
+        _trayIcon.ContextFlyout = _trayContextMenu;
+        _trayIcon.RightClickCommand = new RelayCommand(RefreshTrayContextMenu);
+
         // 더블클릭: 메인 창 표시
         _trayIcon.DoubleClickCommand = new RelayCommand(ShowMainWindow);
-
-        // 우클릭 컨텍스트 메뉴 설정
-        _trayIcon.ContextMenuMode = ContextMenuMode.SecondWindow;
-        _trayIcon.ContextFlyout = CreateContextMenu();
 
         // 트레이 아이콘 강제 생성
         _trayIcon.ForceCreate();
     }
 
-    private MenuFlyout CreateContextMenu()
+    private void RefreshTrayContextMenu()
     {
-        var menu = new MenuFlyout();
-        menu.Opening += (s, e) => PopulateContextMenu(menu);
-        PopulateContextMenu(menu);
-        return menu;
-    }
+        if (_trayContextMenu == null)
+            return;
 
-    private void PopulateContextMenu(MenuFlyout menu)
-    {
-        menu.Items.Clear();
+        _trayContextMenu.Items.Clear();
 
-        var codes = GetTrayOtpCodes();
-        if (codes.Count > 0)
+        long nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var codes = GetLiveTrayOtpCodes(nowMs);
+        if (codes.Count == 0)
         {
-            foreach (var code in codes)
+            _trayContextMenu.Items.Add(new MenuFlyoutItem
             {
-                var item = new MenuFlyoutItem
-                {
-                    Text = GetTrayOtpMenuText(code),
-                    Icon = new FontIcon { Glyph = "\uE8C8" }
-                };
-                item.Click += async (s, e) => await CopyTrayOtpAsync(code.Code);
-                menu.Items.Add(item);
-            }
-
-            menu.Items.Add(new MenuFlyoutSeparator());
+                Text = "No OTP codes available",
+                IsEnabled = false
+            });
         }
         else
         {
-            menu.Items.Add(new MenuFlyoutItem
+            foreach (var accountCode in codes)
             {
-                Text = "No OTP codes available",
-                IsEnabled = false,
-                Icon = new FontIcon { Glyph = "\uE946" }
-            });
-            menu.Items.Add(new MenuFlyoutSeparator());
+                string accountId = accountCode.account.id;
+                _trayContextMenu.Items.Add(new MenuFlyoutItem
+                {
+                    Text = GetTrayOtpMenuText(accountCode, nowMs),
+                    Command = new RelayCommand(() => _ = CopyTrayOtpAsync(accountId))
+                });
+            }
         }
 
-        var openItem = new MenuFlyoutItem
+        _trayContextMenu.Items.Add(new MenuFlyoutSeparator());
+        _trayContextMenu.Items.Add(new MenuFlyoutItem
         {
             Text = "Open OTPeek",
-            Icon = new FontIcon { Glyph = "\uE8A7" }
-        };
-        openItem.Click += (s, e) => ShowMainWindow();
-        menu.Items.Add(openItem);
-
-        // 설정
-        var settingsItem = new MenuFlyoutItem
+            Command = new RelayCommand(ShowMainWindow)
+        });
+        _trayContextMenu.Items.Add(new MenuFlyoutItem
         {
             Text = "Settings",
-            Icon = new FontIcon { Glyph = "\uE713" }
-        };
-        settingsItem.Click += (s, e) => OpenSettings();
-        menu.Items.Add(settingsItem);
-
-        // 구분선
-        menu.Items.Add(new MenuFlyoutSeparator());
-
-        // 종료
-        var exitItem = new MenuFlyoutItem
+            Command = new RelayCommand(OpenSettings)
+        });
+        _trayContextMenu.Items.Add(new MenuFlyoutSeparator());
+        _trayContextMenu.Items.Add(new MenuFlyoutItem
         {
             Text = "Exit",
-            Icon = new FontIcon { Glyph = "\uE7E8" }
-        };
-        exitItem.Click += (s, e) => Exit();
-        menu.Items.Add(exitItem);
+            Command = new RelayCommand(Exit)
+        });
     }
 
-    private static IReadOnlyList<QuickOtpCode> GetTrayOtpCodes()
+    private static IReadOnlyList<AccountCode> GetLiveTrayOtpCodes(long nowMs)
     {
         try
         {
-            return Services.GetRequiredService<QuickOtpCodeProvider>().GetCodes(MaxTrayOtpItems);
+            var client = Services.GetRequiredService<IOtpClientService>();
+            if (!client.IsUnlocked)
+                return Array.Empty<AccountCode>();
+
+            return client.CodesAt(nowMs)
+                .OrderByDescending(item => item.account.isFavorite)
+                .ThenBy(item => item.account.sortOrder)
+                .ThenBy(item => item.account.issuer ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(item => item.account.accountName, StringComparer.OrdinalIgnoreCase)
+                .Take(MaxTrayOtpItems)
+                .ToList();
         }
         catch
         {
-            return Array.Empty<QuickOtpCode>();
+            return Array.Empty<AccountCode>();
         }
     }
 
-    private static string GetTrayOtpMenuText(QuickOtpCode code)
+    private static string GetTrayOtpMenuText(AccountCode accountCode, long nowMs)
     {
-        string name = string.IsNullOrWhiteSpace(code.Issuer)
-            ? code.AccountName
-            : string.IsNullOrWhiteSpace(code.AccountName)
-                ? code.Issuer
-                : $"{code.Issuer} ({code.AccountName})";
+        var account = accountCode.account;
+        string name = string.IsNullOrWhiteSpace(account.issuer)
+            ? account.accountName
+            : string.IsNullOrWhiteSpace(account.accountName)
+                ? account.issuer!
+                : $"{account.issuer} ({account.accountName})";
 
-        return $"{name}    {code.FormattedCode}";
+        if (name.Length > TrayContextMenuNameMaxLength)
+            name = name[..(TrayContextMenuNameMaxLength - 1)] + "…";
+
+        string formattedCode = QuickOtpCodeProvider.FormatCode(accountCode.code.code);
+        string validity = account.otpType == OtpType.Hotp
+            ? "HOTP"
+            : $"{Math.Max(0, (accountCode.code.validUntil - nowMs) / 1000)}s";
+
+        // Win32 menu text after a tab is rendered as a right-aligned accelerator column.
+        return $"{name}\t{formattedCode}  ·  {validity}";
     }
 
-    private static async Task CopyTrayOtpAsync(string code)
+    private static async Task CopyTrayOtpAsync(string accountId)
     {
-        if (string.IsNullOrWhiteSpace(code))
-            return;
+        try
+        {
+            var client = Services.GetRequiredService<IOtpClientService>();
+            if (!client.IsUnlocked)
+                return;
 
-        var settings = Services.GetRequiredService<ISettingsService>().Settings;
-        var clipboard = Services.GetRequiredService<IClipboardService>();
-        await clipboard.CopyAsync(code, settings.ClipboardClearSeconds);
+            // Generate again at selection time: even if the user holds the native menu
+            // open across a TOTP boundary, the copied value is always current.
+            var freshCode = client.Code(accountId);
+            if (string.IsNullOrWhiteSpace(freshCode.code))
+                return;
+
+            var settings = Services.GetRequiredService<ISettingsService>().Settings;
+            var clipboard = Services.GetRequiredService<IClipboardService>();
+            await clipboard.CopyAsync(freshCode.code, settings.ClipboardClearSeconds);
+        }
+        catch
+        {
+            // A tray action must never terminate the app if the vault is being locked.
+        }
     }
 
     private void OpenSettings()
     {
         ShowMainWindow();
-        // 설정 페이지로 이동
-        if (MainWindow is MainWindow mainWin)
-        {
-            mainWin.NavigateToSettings();
-        }
+        if (MainWindow is MainWindow mainWindow)
+            mainWindow.NavigateToSettings();
     }
 
     private void ShowTrayPopup()
     {
+        if (_trayPopupWindow != null)
+        {
+            _trayPopupWindow.Activate();
+            return;
+        }
+
         var popup = new TrayPopupWindow();
+        _trayPopupWindow = popup;
+        popup.PopupClosed += OnTrayPopupClosed;
         popup.Activate();
+    }
+
+    private void OnTrayPopupClosed(object? sender, EventArgs e)
+    {
+        if (sender is TrayPopupWindow popup)
+            popup.PopupClosed -= OnTrayPopupClosed;
+
+        if (ReferenceEquals(_trayPopupWindow, sender))
+            _trayPopupWindow = null;
     }
 
     private void ShowMainWindow()
@@ -826,6 +976,11 @@ public partial class App : Application
 
     public new void Exit()
     {
+        _autoSyncTimer?.Stop();
+        _autoSyncTimer = null;
+        _trayPopupWindow?.Close();
+        _trayPopupWindow = null;
+        _trayContextMenu = null;
         _trayIcon?.Dispose();
         MainWindow?.Close();
         Environment.Exit(0);

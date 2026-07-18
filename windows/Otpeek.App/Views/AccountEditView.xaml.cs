@@ -17,13 +17,23 @@ public sealed partial class AccountEditView : UserControl
 
     public AccountEditView()
     {
-        this.InitializeComponent();
+        try
+        {
+            this.InitializeComponent();
+        }
+        catch (Exception ex)
+        {
+            App.LogStartup("Account editor XAML initialization failed", ex);
+            throw;
+        }
+
         ViewModel = App.Services.GetRequiredService<AccountEditViewModel>();
 
         // ViewModel 이벤트 연결
         ViewModel.Saved += OnSaved;
         ViewModel.Cancelled += OnCancelled;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        TypeComboBox.SelectionChanged += OnTypeSelectionChanged;
 
         // 바인딩 설정
         SetupBindings();
@@ -95,15 +105,25 @@ public sealed partial class AccountEditView : UserControl
         // ComboBox 선택
         TypeComboBox.SelectedIndex = (int)ViewModel.SelectedType;
         AlgorithmComboBox.SelectedIndex = (int)ViewModel.SelectedAlgorithm;
-        DigitsComboBox.SelectedIndex = ViewModel.Digits == 6 ? 0 : 1;
-        PeriodComboBox.SelectedIndex = ViewModel.Period switch
+        DigitsComboBox.SelectedIndex = ViewModel.Digits switch { 7 => 1, 8 => 2, _ => 0 };
+        PeriodNumberBox.Value = Math.Max(1, ViewModel.Period);
+        CounterNumberBox.Value = ViewModel.Counter;
+        FavoriteToggle.IsOn = ViewModel.IsFavorite;
+
+        FolderComboBox.ItemsSource = ViewModel.FolderOptions;
+        FolderComboBox.SelectedItem = ViewModel.FolderOptions.FirstOrDefault(
+            option => option.Id == ViewModel.SelectedFolderId) ?? ViewModel.FolderOptions.FirstOrDefault();
+
+        foreach (var item in ColorComboBox.Items.OfType<ComboBoxItem>())
         {
-            15 => 0,
-            30 => 1,
-            60 => 2,
-            _ => 1
-        };
-        NotesTextBox.Text = ViewModel.Notes ?? string.Empty;
+            if (string.Equals(item.Tag?.ToString(), ViewModel.SelectedColor, StringComparison.OrdinalIgnoreCase))
+            {
+                ColorComboBox.SelectedItem = item;
+                break;
+            }
+        }
+        if (ColorComboBox.SelectedIndex < 0) ColorComboBox.SelectedIndex = 0;
+        UpdateTypeFields();
     }
 
     private void OnCloseClick(object sender, RoutedEventArgs e)
@@ -121,15 +141,18 @@ public sealed partial class AccountEditView : UserControl
         // ComboBox 값 업데이트
         ViewModel.SelectedType = TypeComboBox.SelectedIndex == 0 ? OtpType.Totp : OtpType.Hotp;
         ViewModel.SelectedAlgorithm = (HashAlgorithm)AlgorithmComboBox.SelectedIndex;
-        ViewModel.Digits = DigitsComboBox.SelectedIndex == 0 ? 6 : 8;
-        ViewModel.Period = PeriodComboBox.SelectedIndex switch
-        {
-            0 => 15,
-            1 => 30,
-            2 => 60,
-            _ => 30
-        };
-        ViewModel.Notes = string.IsNullOrWhiteSpace(NotesTextBox.Text) ? null : NotesTextBox.Text;
+        ViewModel.Digits = DigitsComboBox.SelectedIndex switch { 1 => 7, 2 => 8, _ => 6 };
+        double periodValue = PeriodNumberBox.Value;
+        ViewModel.Period = double.IsNaN(periodValue) || double.IsInfinity(periodValue)
+            ? 30
+            : (int)Math.Max(1, periodValue);
+        double counterValue = CounterNumberBox.Value;
+        ViewModel.Counter = double.IsNaN(counterValue) || double.IsInfinity(counterValue)
+            ? 0
+            : (ulong)Math.Max(0, counterValue);
+        ViewModel.IsFavorite = FavoriteToggle.IsOn;
+        ViewModel.SelectedFolderId = (FolderComboBox.SelectedItem as FolderOption)?.Id;
+        ViewModel.SelectedColor = (ColorComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "#0078D4";
 
         await ViewModel.SaveCommand.ExecuteAsync(null);
     }
@@ -138,6 +161,18 @@ public sealed partial class AccountEditView : UserControl
     {
         ViewModel.GenerateRandomKeyCommand.Execute(null);
         SecretKeyTextBox.Text = ViewModel.SecretKey;
+    }
+
+    private void OnTypeSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        UpdateTypeFields();
+    }
+
+    private void UpdateTypeFields()
+    {
+        bool isHotp = TypeComboBox.SelectedIndex == 1;
+        PeriodNumberBox.Visibility = isHotp ? Visibility.Collapsed : Visibility.Visible;
+        CounterNumberBox.Visibility = isHotp ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void OnSaved(object? sender, OtpAccount account)

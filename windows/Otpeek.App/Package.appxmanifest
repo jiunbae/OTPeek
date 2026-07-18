@@ -12,7 +12,7 @@
   <Identity
     Name="Otpeek"
     Publisher="CN=Otpeek"
-    Version="1.0.1.0" />
+    Version="2.0.1.0" />
 
   <mp:PhoneIdentity PhoneProductId="12345678-1234-1234-1234-123456789012" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
@@ -39,12 +39,16 @@
 
       <uap:VisualElements
         DisplayName="OTPeek"
-        Description="Secure two-factor authentication for Windows"
+        Description="Secure one-time password authenticator for Windows"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Logo\Square150x150Logo.png"
         Square44x44Logo="Assets\Logo\Square44x44Logo.png">
-        <uap:DefaultTile Wide310x150Logo="Assets\Logo\Wide310x150Logo.png" />
-        <uap:SplashScreen Image="Assets\Logo\SplashScreen.png" />
+        <uap:DefaultTile
+          ShortName="OTPeek"
+          Wide310x150Logo="Assets\Logo\Wide310x150Logo.png" />
+        <uap:SplashScreen
+          Image="Assets\Logo\SplashScreen.png"
+          BackgroundColor="#151519" />
       </uap:VisualElements>
 
       <Extensions>
@@ -59,21 +63,21 @@
         <!-- Protocol Handler (otpauth://) — industry-standard Key URI scheme -->
         <uap:Extension Category="windows.protocol">
           <uap:Protocol Name="otpauth">
-            <uap:DisplayName>OTP Auth Protocol</uap:DisplayName>
+            <uap:DisplayName>OTPeek OTP Auth Link</uap:DisplayName>
           </uap:Protocol>
         </uap:Extension>
 
         <!-- App deep-link scheme (otpeek://add?uri=... / otpeek://totp/...) -->
         <uap:Extension Category="windows.protocol">
           <uap:Protocol Name="otpeek">
-            <uap:DisplayName>OTPeek Deep Link</uap:DisplayName>
+            <uap:DisplayName>OTPeek Link</uap:DisplayName>
           </uap:Protocol>
         </uap:Extension>
 
         <!-- File Type Association (.otpvault backup/restore) -->
         <uap:Extension Category="windows.fileTypeAssociation">
           <uap:FileTypeAssociation Name="otpvault">
-            <uap:DisplayName>OTP Vault Backup</uap:DisplayName>
+            <uap:DisplayName>OTPeek Encrypted Vault</uap:DisplayName>
             <uap:Logo>Assets\Logo\Square44x44Logo.png</uap:Logo>
             <uap:SupportedFileTypes>
               <uap:FileType>.otpvault</uap:FileType>
@@ -85,7 +89,7 @@
         <com:Extension Category="windows.comServer">
           <com:ComServer>
             <com:ExeServer Executable="Otpeek.Widget.exe" Arguments="-RegisterProcessAsComServer" DisplayName="OTPeek Widget Provider">
-              <com:Class Id="8A2C4E6F-1B3D-5A7C-9E0F-2D4B6C8A0E1F" DisplayName="OtpWidgetProvider" />
+              <com:Class Id="8A2C4E6F-1B3D-5A7C-9E0F-2D4B6C8A0E1F" DisplayName="OTPeek Widget Provider" />
             </com:ExeServer>
           </com:ComServer>
         </com:Extension>
@@ -93,13 +97,13 @@
         <!-- Widget Provider Registration -->
         <uap3:Extension Category="windows.appExtension">
           <uap3:AppExtension Name="com.microsoft.windows.widgets"
-                             DisplayName="OTPeek Widget"
+                             DisplayName="OTPeek"
                              Id="OtpWidget"
                              PublicFolder="Public">
             <uap3:Properties>
               <WidgetProvider>
                 <ProviderIcons>
-                  <Icon Path="Assets\Logo\Square44x44Logo.png" />
+                  <Icon Path="Assets\Logo\StoreLogo.png" />
                 </ProviderIcons>
                 <Activation>
                   <CreateInstance ClassId="8A2C4E6F-1B3D-5A7C-9E0F-2D4B6C8A0E1F" />
@@ -107,7 +111,7 @@
                 <Definitions>
                   <Definition Id="OtpWidget"
                               DisplayName="OTP Code"
-                              Description="Display your OTP codes in a widget"
+                              Description="Show an OTP code. Copy it or move between accounts."
                               AllowMultiple="true">
                     <Capabilities>
                       <Capability>
@@ -122,11 +126,33 @@
                     </Capabilities>
                     <ThemeResources>
                       <Icons>
-                        <Icon Path="Assets\Logo\Square44x44Logo.png" />
+                        <Icon Path="Assets\Logo\StoreLogo.png" />
                       </Icons>
                       <Screenshots>
-                        <Screenshot Path="Assets\Widget\WidgetScreenshot.png" DisplayAltText="OTPeek Widget Screenshot"/>
+                        <Screenshot
+                          Path="Assets\Widget\WidgetScreenshot.png"
+                          DisplayAltText="OTPeek one-time password code widget preview" />
                       </Screenshots>
+                      <DarkMode>
+                        <Icons>
+                          <Icon Path="Assets\Logo\StoreLogo.png" />
+                        </Icons>
+                        <Screenshots>
+                          <Screenshot
+                            Path="Assets\Widget\WidgetScreenshotDark.png"
+                            DisplayAltText="OTPeek one-time password code widget in dark mode" />
+                        </Screenshots>
+                      </DarkMode>
+                      <LightMode>
+                        <Icons>
+                          <Icon Path="Assets\Logo\StoreLogo.png" />
+                        </Icons>
+                        <Screenshots>
+                          <Screenshot
+                            Path="Assets\Widget\WidgetScreenshotLight.png"
+                            DisplayAltText="OTPeek one-time password code widget in light mode" />
+                        </Screenshots>
+                      </LightMode>
                     </ThemeResources>
                   </Definition>
                 </Definitions>

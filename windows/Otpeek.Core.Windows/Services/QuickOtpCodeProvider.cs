@@ -46,9 +46,14 @@ public sealed class QuickOtpCodeProvider
 
     public IReadOnlyList<QuickOtpCode> GetCodes(int maxCount = 10)
     {
-        var codes = LoadVaultCodes();
-        if (codes.Count == 0)
-            codes = LoadLegacyCodes();
+        // The presence of the v2 vault is the migration boundary. An empty vault is a
+        // valid state (for example, after the user deleted every account), and a vault
+        // that cannot currently be opened must fail closed. Falling back merely because
+        // no codes were returned could resurrect secrets from *.migrated legacy files.
+        string vaultPath = Path.Combine(_dataDirectory, VaultFileName);
+        var codes = File.Exists(vaultPath)
+            ? LoadVaultCodes()
+            : LoadLegacyCodes();
 
         return codes
             .OrderByDescending(c => c.IsFavorite)

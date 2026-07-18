@@ -3,184 +3,250 @@
     x:Class="Otpeek.App.Views.AccountListPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Otpeek.App.Views"
-    xmlns:vm="using:Otpeek.App.ViewModels">
+    xmlns:vm="using:Otpeek.App.ViewModels"
+    Background="Transparent">
 
-    <Grid Padding="24">
+    <Grid Padding="24,20,24,24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <Grid Grid.Row="0" Margin="0,0,0,16">
+        <!-- Compact command/search strip, matching the macOS list hierarchy. -->
+        <Grid Grid.Row="0" Margin="0,0,0,18">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <TextBlock Text="Accounts"
-                       Style="{StaticResource TitleTextBlockStyle}" />
+            <AutoSuggestBox x:Name="SearchBox"
+                            Style="{StaticResource OtpeekSearchBoxStyle}"
+                            MaxWidth="560"
+                            HorizontalAlignment="Stretch"
+                            PlaceholderText="Search accounts"
+                            QueryIcon="Find"
+                            AutomationProperties.Name="Search accounts" />
 
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                <Button x:Name="ScanQrButton" ToolTipService.ToolTip="Scan QR Code">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon Glyph="&#xE8B0;" FontSize="16" />
-                        <TextBlock Text="Scan QR" />
-                    </StackPanel>
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        Spacing="8"
+                        Margin="12,0,0,0">
+                <Button x:Name="ScanQrButton"
+                        Style="{StaticResource OtpeekIconButtonStyle}"
+                        ToolTipService.ToolTip="Import a QR code image"
+                        AutomationProperties.Name="Import QR image">
+                    <FontIcon Glyph="&#xED14;" FontSize="16" />
                 </Button>
 
-                <Button x:Name="AddButton" Style="{StaticResource AccentButtonStyle}">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon Glyph="&#xE710;" FontSize="16" />
+                <Button x:Name="AddButton"
+                        Style="{StaticResource AccentButtonStyle}"
+                        CornerRadius="10"
+                        AutomationProperties.Name="Add account">
+                    <StackPanel Orientation="Horizontal" Spacing="7">
+                        <FontIcon Glyph="&#xE710;" FontSize="14" />
                         <TextBlock Text="Add Account" />
                     </StackPanel>
                 </Button>
             </StackPanel>
         </Grid>
 
-        <!-- Search -->
-        <AutoSuggestBox x:Name="SearchBox"
-                        Grid.Row="1"
-                        Margin="0,0,0,16"
-                        PlaceholderText="Search accounts"
-                        QueryIcon="Find" />
-
-        <!-- Empty State -->
-        <StackPanel x:Name="EmptyState"
-                    Grid.Row="2"
-                    Visibility="Collapsed"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Spacing="16">
-            <FontIcon Glyph="&#xE8D7;" FontSize="64" Opacity="0.5" />
-            <TextBlock Text="No accounts yet"
-                       Style="{StaticResource SubtitleTextBlockStyle}"
-                       Opacity="0.7" />
-            <TextBlock Text="Add your first account by scanning a QR code or entering manually"
-                       TextWrapping="Wrap"
-                       TextAlignment="Center"
-                       MaxWidth="300"
-                       Opacity="0.5" />
-            <Button Content="Add Account"
-                    Style="{StaticResource AccentButtonStyle}"
-                    Margin="0,16,0,0"
-                    Click="OnAddButtonClick" />
+        <!-- A small section label replaces the former oversized page heading. -->
+        <StackPanel Grid.Row="1"
+                    Orientation="Horizontal"
+                    Spacing="7"
+                    Margin="4,0,0,8">
+            <FontIcon Glyph="&#xE8FD;"
+                      FontSize="12"
+                      Foreground="{ThemeResource OtpeekSecondaryTextBrush}" />
+            <TextBlock x:Name="PageTitle"
+                       Text="All Accounts"
+                       Style="{StaticResource SectionHeaderStyle}"
+                       Margin="0" />
         </StackPanel>
 
-        <!-- Account List -->
-        <ListView x:Name="AccountListView"
-                  Grid.Row="2"
-                  SelectionMode="None"
-                  ItemsSource="{x:Bind ViewModel.Accounts, Mode=OneWay}">
-            <ListView.ItemTemplate>
-                <DataTemplate x:DataType="vm:AccountItemViewModel">
-                    <Border Style="{StaticResource AccountCardStyle}"
-                            Margin="0,0,0,8">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Icon: 서비스 로고(파비콘)가 있으면 흰 배경 타일, 없으면 색상 이니셜 -->
-                            <Grid Grid.Column="0"
-                                  Width="44" Height="44"
-                                  Margin="0,0,16,0">
-                                <!-- 이니셜 폴백 -->
-                                <Border CornerRadius="12"
-                                        Background="{StaticResource PrimaryBrush}"
-                                        Visibility="{x:Bind InitialVisibility, Mode=OneWay}">
-                                    <TextBlock Text="{x:Bind Initial}"
-                                               FontSize="18"
-                                               FontWeight="SemiBold"
-                                               Foreground="White"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center" />
-                                </Border>
-                                <!-- 파비콘: 깨끗한 흰 타일 위에 로고(투명 로고 대비) -->
-                                <Border CornerRadius="12"
-                                        Background="White"
-                                        Padding="5"
-                                        Visibility="{x:Bind IconVisibility, Mode=OneWay}">
-                                    <Image Source="{x:Bind IconSource, Mode=OneWay}"
-                                           Stretch="Uniform" />
-                                </Border>
-                            </Grid>
-
-                            <!-- Account Info -->
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{x:Bind Issuer}"
-                                           Style="{StaticResource IssuerTextStyle}" />
-                                <TextBlock Text="{x:Bind AccountName}"
-                                           Style="{StaticResource AccountNameTextStyle}" />
-                            </StackPanel>
-
-                            <!-- OTP Code (Click to copy) -->
-                            <Button Grid.Column="2"
-                                    Command="{x:Bind CopyCodeCommand}"
-                                    ToolTipService.ToolTip="Click to copy"
-                                    VerticalAlignment="Center"
-                                    Margin="16,0"
-                                    Padding="12,8"
-                                    CornerRadius="8"
-                                    Background="{x:Bind IsCopied, Mode=OneWay, Converter={StaticResource CopiedBackgroundConverter}}">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
-                                        <Setter Property="BorderThickness" Value="0" />
-                                    </Style>
-                                </Button.Style>
-                                <StackPanel>
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <TextBlock Text="{x:Bind FormattedCode, Mode=OneWay}"
-                                                   Style="{StaticResource OtpCodeTextStyle}" />
-                                        <FontIcon Glyph="&#xE8FB;"
-                                                  FontSize="20"
-                                                  Foreground="Green"
-                                                  Visibility="{x:Bind IsCopied, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
-                                    </StackPanel>
-                                    <ProgressBar Value="{x:Bind Progress, Mode=OneWay}"
-                                                 Maximum="1"
-                                                 Height="4"
-                                                 Margin="0,4,0,0" />
-                                </StackPanel>
-                            </Button>
-
-                            <!-- Actions -->
-                            <StackPanel Grid.Column="3"
-                                        Orientation="Horizontal"
-                                        Spacing="4">
-                                <Button ToolTipService.ToolTip="More options">
-                                    <FontIcon Glyph="&#xE712;" FontSize="16" />
-                                    <Button.Flyout>
-                                        <MenuFlyout>
-                                            <MenuFlyoutItem Text="Edit" Icon="Edit"
-                                                            Command="{x:Bind EditCommand}" />
-                                            <MenuFlyoutItem Text="Favorite" Icon="Favorite"
-                                                            Command="{x:Bind ToggleFavoriteCommand}" />
-                                            <MenuFlyoutSeparator />
-                                            <MenuFlyoutItem Text="Delete" Icon="Delete"
-                                                            Command="{x:Bind DeleteCommand}" />
-                                        </MenuFlyout>
-                                    </Button.Flyout>
-                                </Button>
-                            </StackPanel>
-                        </Grid>
+        <!-- The list is one layered surface; individual accounts remain dense rows. -->
+        <Border Grid.Row="2"
+                Background="{ThemeResource OtpeekSurfaceSecondaryBrush}"
+                BorderBrush="{ThemeResource OtpeekStrokeBrush}"
+                BorderThickness="1"
+                CornerRadius="14"
+                Padding="8">
+            <Grid>
+                <StackPanel x:Name="EmptyState"
+                            Visibility="Collapsed"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="12">
+                    <Border Width="72"
+                            Height="72"
+                            CornerRadius="22"
+                            Background="{ThemeResource OtpeekAccentSoftBrush}">
+                        <FontIcon Glyph="&#xE72E;"
+                                  FontSize="34"
+                                  Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center" />
                     </Border>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+                    <TextBlock Text="{x:Bind ViewModel.EmptyTitle, Mode=OneWay}"
+                               Style="{StaticResource SubtitleTextBlockStyle}"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="{x:Bind ViewModel.EmptyMessage, Mode=OneWay}"
+                               Style="{StaticResource OtpeekPageSubtitleStyle}"
+                               TextAlignment="Center"
+                               MaxWidth="360" />
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="8"
+                                HorizontalAlignment="Center"
+                                Margin="0,8,0,0">
+                        <Button Content="Import QR Image"
+                                Click="OnScanQrButtonClick" />
+                        <Button Content="Add Account"
+                                Style="{StaticResource AccentButtonStyle}"
+                                Click="OnAddButtonClick" />
+                    </StackPanel>
+                </StackPanel>
 
-        <!-- Loading -->
-        <ProgressRing x:Name="LoadingRing"
-                      Grid.Row="2"
-                      IsActive="False"
-                      Width="48"
-                      Height="48"
-                      HorizontalAlignment="Center"
-                      VerticalAlignment="Center" />
+                <ListView x:Name="AccountListView"
+                          Background="Transparent"
+                          BorderThickness="0"
+                          SelectionMode="None"
+                          ItemContainerStyle="{StaticResource OtpeekListViewItemStyle}"
+                          ItemsSource="{x:Bind ViewModel.Accounts, Mode=OneWay}">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:AccountItemViewModel">
+                            <Border Style="{StaticResource AccountCardStyle}">
+                                <Grid MinHeight="48">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Grid Grid.Column="0"
+                                          Width="42"
+                                          Height="42"
+                                          Margin="0,0,12,0">
+                                        <Border CornerRadius="11"
+                                                Background="{x:Bind InitialBrush, Mode=OneWay}"
+                                                Visibility="{x:Bind InitialVisibility, Mode=OneWay}">
+                                            <TextBlock Text="{x:Bind Initial}"
+                                                       FontSize="15"
+                                                       FontWeight="Bold"
+                                                       Foreground="White"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center" />
+                                        </Border>
+                                        <Border CornerRadius="11"
+                                                Background="White"
+                                                Padding="5"
+                                                Visibility="{x:Bind IconVisibility, Mode=OneWay}">
+                                            <Image Source="{x:Bind IconSource, Mode=OneWay}"
+                                                   Stretch="Uniform" />
+                                        </Border>
+                                    </Grid>
+
+                                    <StackPanel Grid.Column="1"
+                                                MinWidth="84"
+                                                VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <TextBlock Text="{x:Bind Issuer}"
+                                                       Style="{StaticResource IssuerTextStyle}" />
+                                            <FontIcon Glyph="&#xE735;"
+                                                      FontSize="10"
+                                                      Foreground="{StaticResource FavoriteBrush}"
+                                                      Visibility="{x:Bind IsFavorite, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                        </StackPanel>
+                                        <TextBlock Text="{x:Bind AccountName}"
+                                                   Style="{StaticResource AccountNameTextStyle}" />
+                                    </StackPanel>
+
+                                    <Button Grid.Column="2"
+                                            Command="{x:Bind CopyCodeCommand}"
+                                            Style="{StaticResource OtpeekCodeButtonStyle}"
+                                            ToolTipService.ToolTip="{x:Bind CopyToolTip}"
+                                            AutomationProperties.Name="Copy one-time code"
+                                            VerticalAlignment="Center"
+                                            Margin="12,0,4,0"
+                                            Background="{x:Bind IsCopied, Mode=OneWay, Converter={StaticResource CopiedBackgroundConverter}}">
+                                        <StackPanel Orientation="Horizontal" Spacing="9">
+                                            <Grid Width="28"
+                                                  Height="28"
+                                                  Visibility="{x:Bind TotpVisibility}">
+                                                <ProgressRing Value="{x:Bind Progress, Mode=OneWay}"
+                                                              Maximum="1"
+                                                              Width="28"
+                                                              Height="28"
+                                                              IsActive="True"
+                                                              IsIndeterminate="False"
+                                                              Foreground="{x:Bind CodeBrush, Mode=OneWay}" />
+                                                <TextBlock Text="{x:Bind RemainingSeconds, Mode=OneWay}"
+                                                           FontSize="9"
+                                                           Foreground="{ThemeResource OtpeekSecondaryTextBrush}"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center" />
+                                            </Grid>
+                                            <TextBlock Text="{x:Bind FormattedCode, Mode=OneWay}"
+                                                       Style="{StaticResource OtpCodeTextStyle}"
+                                                       Foreground="{x:Bind CodeBrush, Mode=OneWay}"
+                                                       VerticalAlignment="Center" />
+                                            <FontIcon Glyph="&#xE8FB;"
+                                                      FontSize="16"
+                                                      Foreground="{StaticResource SuccessBrush}"
+                                                      Visibility="{x:Bind IsCopied, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                        </StackPanel>
+                                    </Button>
+
+                                    <Button Grid.Column="3"
+                                            Style="{StaticResource OtpeekIconButtonStyle}"
+                                            ToolTipService.ToolTip="More options"
+                                            AutomationProperties.Name="Account options">
+                                        <FontIcon Glyph="&#xE712;" FontSize="15" />
+                                        <Button.Flyout>
+                                            <MenuFlyout>
+                                                <MenuFlyoutItem Text="Edit"
+                                                                Icon="Edit"
+                                                                Command="{x:Bind EditCommand}" />
+                                                <MenuFlyoutItem Text="{x:Bind FavoriteActionText}"
+                                                                Command="{x:Bind ToggleFavoriteCommand}">
+                                                    <MenuFlyoutItem.Icon>
+                                                        <FontIcon Glyph="{x:Bind FavoriteGlyph}" />
+                                                    </MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutItem Text="Move to Folder…"
+                                                                Command="{x:Bind EditCommand}">
+                                                    <MenuFlyoutItem.Icon>
+                                                        <FontIcon Glyph="&#xE8DE;" />
+                                                    </MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutItem Text="Generate Next HOTP"
+                                                                Visibility="{x:Bind HotpVisibility}"
+                                                                Command="{x:Bind GenerateNextCodeCommand}">
+                                                    <MenuFlyoutItem.Icon>
+                                                        <FontIcon Glyph="&#xE72C;" />
+                                                    </MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutSeparator />
+                                                <MenuFlyoutItem Text="Delete"
+                                                                Icon="Delete"
+                                                                Command="{x:Bind DeleteCommand}" />
+                                            </MenuFlyout>
+                                        </Button.Flyout>
+                                    </Button>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
+                <ProgressRing x:Name="LoadingRing"
+                              IsActive="False"
+                              Width="42"
+                              Height="42"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+            </Grid>
+        </Border>
     </Grid>
 </Page>

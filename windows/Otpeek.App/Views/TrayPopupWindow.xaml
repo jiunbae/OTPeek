@@ -3,35 +3,78 @@
     x:Class="Otpeek.App.Views.TrayPopupWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Otpeek.App.Views"
     xmlns:vm="using:Otpeek.App.ViewModels"
     Title="OTPeek">
 
     <Grid Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}"
-          CornerRadius="8"
-          Padding="8">
+          CornerRadius="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Compact command bar: the popup remains useful when there are no accounts. -->
+        <Grid Grid.Row="0" Padding="14,10,8,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel VerticalAlignment="Center" Spacing="1">
+                <TextBlock Text="OTPeek"
+                           FontSize="15"
+                           FontWeight="SemiBold" />
+                <TextBlock Text="Favorites first · click an account to copy"
+                           FontSize="10"
+                           Opacity="0.58" />
+            </StackPanel>
+
+            <Button x:Name="RefreshButton"
+                    Grid.Column="1"
+                    ToolTipService.ToolTip="Refresh accounts"
+                    Background="Transparent"
+                    Padding="8">
+                <FontIcon Glyph="&#xE72C;" FontSize="14" />
+            </Button>
+            <Button x:Name="SettingsButton"
+                    Grid.Column="2"
+                    ToolTipService.ToolTip="Settings"
+                    Background="Transparent"
+                    Padding="8">
+                <FontIcon Glyph="&#xE713;" FontSize="14" />
+            </Button>
+            <Button x:Name="OpenAppButton"
+                    Grid.Column="3"
+                    ToolTipService.ToolTip="Open OTPeek"
+                    Background="Transparent"
+                    Padding="8">
+                <FontIcon Glyph="&#xE8A7;" FontSize="14" />
+            </Button>
+        </Grid>
 
         <!-- Account List -->
         <ListView x:Name="AccountListView"
+                  Grid.Row="1"
+                  Margin="6,0"
                   SelectionMode="None"
                   IsItemClickEnabled="True"
                   ItemClick="OnAccountItemClick">
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="vm:AccountItemViewModel">
                     <Grid Padding="8,10"
-                          Background="Transparent"
-                          PointerEntered="OnItemPointerEntered"
-                          PointerExited="OnItemPointerExited">
+                          Background="Transparent">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <!-- Icon: 파비콘(흰 타일) 또는 색상 이니셜 -->
-                        <Grid Grid.Column="0" Width="32" Height="32" Margin="0,0,10,0">
+                        <Grid Grid.Column="0" Width="34" Height="34" Margin="0,0,10,0">
                             <Border CornerRadius="9"
-                                    Background="{StaticResource PrimaryBrush}"
+                                    Background="{x:Bind InitialBrush, Mode=OneWay}"
                                     Visibility="{x:Bind InitialVisibility, Mode=OneWay}">
                                 <TextBlock Text="{x:Bind Initial}"
                                            FontSize="12"
@@ -48,24 +91,37 @@
                             </Border>
                         </Grid>
 
-                        <!-- Info -->
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,8,0">
                             <TextBlock Text="{x:Bind Issuer}"
                                        FontWeight="SemiBold"
-                                       FontSize="12" />
+                                       FontSize="12"
+                                       TextTrimming="CharacterEllipsis" />
                             <TextBlock Text="{x:Bind AccountName}"
                                        FontSize="10"
-                                       Opacity="0.6" />
+                                       Opacity="0.6"
+                                       TextTrimming="CharacterEllipsis" />
                         </StackPanel>
 
-                        <!-- Code -->
                         <StackPanel Grid.Column="2"
                                     VerticalAlignment="Center"
                                     HorizontalAlignment="Right">
-                            <TextBlock Text="{x:Bind FormattedCode, Mode=OneWay}"
-                                       FontFamily="Consolas"
-                                       FontSize="18"
-                                       FontWeight="SemiBold" />
+                            <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Right"
+                                        Spacing="7">
+                                <TextBlock Text="{x:Bind FormattedCode, Mode=OneWay}"
+                                           FontFamily="Consolas"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Foreground="{x:Bind CodeBrush, Mode=OneWay}" />
+                                <TextBlock Text="{x:Bind RemainingText, Mode=OneWay}"
+                                           MinWidth="24"
+                                           FontSize="10"
+                                           Opacity="0.58"
+                                           VerticalAlignment="Center"
+                                           TextAlignment="Right" />
+                            </StackPanel>
                             <ProgressBar Value="{x:Bind Progress, Mode=OneWay}"
                                          Maximum="1"
                                          Height="2"
@@ -76,16 +132,40 @@
             </ListView.ItemTemplate>
         </ListView>
 
-        <!-- Empty State -->
         <StackPanel x:Name="EmptyState"
+                    Grid.Row="1"
                     Visibility="Collapsed"
                     HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
+                    VerticalAlignment="Center"
+                    Spacing="6">
             <FontIcon Glyph="&#xE8D7;" FontSize="28" Opacity="0.3" />
             <TextBlock Text="No accounts"
-                       Margin="0,6,0,0"
+                       HorizontalAlignment="Center"
                        FontSize="12"
+                       Opacity="0.65" />
+            <TextBlock Text="Open OTPeek to add an account"
+                       FontSize="10"
                        Opacity="0.5" />
         </StackPanel>
+
+        <!-- Persistent footer prevents copy feedback from changing the popup height. -->
+        <Grid Grid.Row="2" Height="32" Padding="14,5">
+            <TextBlock x:Name="CopyHintText"
+                       Text="Codes refresh live · click an account to copy"
+                       FontSize="10"
+                       Opacity="0.45"
+                       VerticalAlignment="Center" />
+            <StackPanel x:Name="CopyFeedbackPanel"
+                        Orientation="Horizontal"
+                        Spacing="6"
+                        Visibility="Collapsed"
+                        VerticalAlignment="Center">
+                <FontIcon Glyph="&#xE73E;" FontSize="12" Foreground="{ThemeResource SystemAccentColor}" />
+                <TextBlock x:Name="CopyFeedbackText"
+                           FontSize="11"
+                           FontWeight="SemiBold"
+                           TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>

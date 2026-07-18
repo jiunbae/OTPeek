@@ -3,153 +3,292 @@
     x:Class="Otpeek.App.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Otpeek.App.Views">
+    Background="Transparent">
 
-    <ScrollViewer Padding="24" VerticalScrollBarVisibility="Auto">
-        <StackPanel MaxWidth="800" Spacing="4" Padding="0,0,0,48">
+    <ScrollViewer Padding="32,24,32,48" VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="760"
+                    HorizontalAlignment="Stretch"
+                    Spacing="0">
             <TextBlock Text="Settings"
-                       Style="{StaticResource TitleTextBlockStyle}"
-                       Margin="0,0,0,24" />
+                       Style="{StaticResource OtpeekPageTitleStyle}" />
+            <TextBlock Text="Personalize OTPeek and control how your encrypted vault behaves on Windows."
+                       Style="{StaticResource OtpeekPageSubtitleStyle}"
+                       Margin="0,4,0,4" />
 
-            <!-- General -->
-            <TextBlock Text="General"
-                       Style="{StaticResource SectionHeaderStyle}" />
-
-            <Border Style="{StaticResource AccountCardStyle}">
-                <StackPanel Spacing="16">
-                    <ToggleSwitch x:Name="StartWithWindowsToggle"
-                                  Header="Start with Windows"
-                                  OffContent="Off"
-                                  OnContent="On" />
-
-                    <ToggleSwitch x:Name="StartMinimizedToggle"
-                                  Header="Start minimized"
-                                  OffContent="Off"
-                                  OnContent="On" />
-
-                    <ToggleSwitch x:Name="MinimizeToTrayToggle"
-                                  Header="Minimize to system tray"
-                                  OffContent="Off"
-                                  OnContent="On" />
+            <TextBlock Text="GENERAL" Style="{StaticResource SectionHeaderStyle}" />
+            <Border Style="{StaticResource OtpeekSettingsCardStyle}">
+                <StackPanel Spacing="12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource OtpeekIconTileStyle}">
+                            <FontIcon Glyph="&#xE7E8;" FontSize="16"
+                                      Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+                            <TextBlock Text="Start with Windows" Style="{StaticResource OtpeekCardTitleStyle}" />
+                            <TextBlock Text="Open OTPeek after you sign in" Style="{StaticResource OtpeekDetailTextStyle}" />
+                        </StackPanel>
+                        <ToggleSwitch x:Name="StartWithWindowsToggle" Grid.Column="2"
+                                      Header="" OffContent="" OnContent=""
+                                      AutomationProperties.Name="Start with Windows" />
+                    </Grid>
+                    <Rectangle Height="1" Fill="{ThemeResource OtpeekDividerBrush}" Margin="48,0,0,0" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource OtpeekIconTileStyle}">
+                            <FontIcon Glyph="&#xE921;" FontSize="16"
+                                      Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+                            <TextBlock Text="Start minimized" Style="{StaticResource OtpeekCardTitleStyle}" />
+                            <TextBlock Text="Keep the vault available without opening a window" Style="{StaticResource OtpeekDetailTextStyle}" />
+                        </StackPanel>
+                        <ToggleSwitch x:Name="StartMinimizedToggle" Grid.Column="2"
+                                      Header="" OffContent="" OnContent=""
+                                      AutomationProperties.Name="Start minimized" />
+                    </Grid>
+                    <Rectangle Height="1" Fill="{ThemeResource OtpeekDividerBrush}" Margin="48,0,0,0" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource OtpeekIconTileStyle}">
+                            <FontIcon Glyph="&#xE7E2;" FontSize="16"
+                                      Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+                            <TextBlock Text="Minimize to system tray" Style="{StaticResource OtpeekCardTitleStyle}" />
+                            <TextBlock Text="Closing the window keeps quick codes available" Style="{StaticResource OtpeekDetailTextStyle}" />
+                        </StackPanel>
+                        <ToggleSwitch x:Name="MinimizeToTrayToggle" Grid.Column="2"
+                                      Header="" OffContent="" OnContent=""
+                                      AutomationProperties.Name="Minimize to system tray" />
+                    </Grid>
                 </StackPanel>
             </Border>
 
-            <!-- Clipboard -->
-            <TextBlock Text="Clipboard"
-                       Style="{StaticResource SectionHeaderStyle}" />
-
-            <Border Style="{StaticResource AccountCardStyle}">
-                <StackPanel Spacing="16">
-                    <ComboBox x:Name="ClipboardClearCombo"
-                              Header="Clear clipboard after"
-                              HorizontalAlignment="Stretch">
-                        <ComboBoxItem Content="Never" Tag="0" />
-                        <ComboBoxItem Content="15 seconds" Tag="15" />
-                        <ComboBoxItem Content="30 seconds" Tag="30" />
-                        <ComboBoxItem Content="1 minute" Tag="60" />
-                        <ComboBoxItem Content="2 minutes" Tag="120" />
-                    </ComboBox>
+            <TextBlock Text="CLIPBOARD" Style="{StaticResource SectionHeaderStyle}" />
+            <Border Style="{StaticResource OtpeekSettingsCardStyle}">
+                <StackPanel Spacing="12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource OtpeekIconTileStyle}">
+                            <FontIcon Glyph="&#xE8C8;" FontSize="16"
+                                      Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+                            <TextBlock Text="Copy code on click" Style="{StaticResource OtpeekCardTitleStyle}" />
+                            <TextBlock Text="Copy the current code when its row is selected" Style="{StaticResource OtpeekDetailTextStyle}" />
+                        </StackPanel>
+                        <ToggleSwitch x:Name="CopyCodeOnClickToggle" Grid.Column="2"
+                                      Header="" OffContent="" OnContent=""
+                                      AutomationProperties.Name="Copy code on click" />
+                    </Grid>
+                    <Rectangle Height="1" Fill="{ThemeResource OtpeekDividerBrush}" Margin="48,0,0,0" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource OtpeekIconTileStyle}">
+                            <FontIcon Glyph="&#xE823;" FontSize="16"
+                                      Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+                            <TextBlock Text="Clear clipboard" Style="{StaticResource OtpeekCardTitleStyle}" />
+                            <TextBlock Text="Remove copied codes automatically" Style="{StaticResource OtpeekDetailTextStyle}" />
+                        </StackPanel>
+                        <ComboBox x:Name="ClipboardClearCombo" Grid.Column="2" Width="154"
+                                  AutomationProperties.Name="Clear clipboard after">
+                            <ComboBoxItem Content="Never" Tag="0" />
+                            <ComboBoxItem Content="15 seconds" Tag="15" />
+                            <ComboBoxItem Content="30 seconds" Tag="30" />
+                            <ComboBoxItem Content="1 minute" Tag="60" />
+                            <ComboBoxItem Content="2 minutes" Tag="120" />
+                        </ComboBox>
+                    </Grid>
                 </StackPanel>
             </Border>
 
-            <!-- Appearance -->
-            <TextBlock Text="Appearance"
-                       Style="{StaticResource SectionHeaderStyle}" />
-
-            <Border Style="{StaticResource AccountCardStyle}">
-                <StackPanel Spacing="16">
-                    <ComboBox x:Name="ThemeCombo"
-                              Header="Theme"
-                              HorizontalAlignment="Stretch">
-                        <ComboBoxItem Content="System default" Tag="System" />
-                        <ComboBoxItem Content="Light" Tag="Light" />
-                        <ComboBoxItem Content="Dark" Tag="Dark" />
-                    </ComboBox>
-
-                    <ToggleSwitch x:Name="EnableWidgetToggle"
-                                  Header="Enable Windows 11 Widget"
-                                  OffContent="Off"
-                                  OnContent="On" />
-
-                    <ToggleSwitch x:Name="ShowFaviconsToggle"
-                                  Header="Show website icons"
-                                  OffContent="Off"
-                                  OnContent="On" />
+            <TextBlock Text="APPEARANCE" Style="{StaticResource SectionHeaderStyle}" />
+            <Border Style="{StaticResource OtpeekSettingsCardStyle}">
+                <StackPanel Spacing="12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource OtpeekIconTileStyle}">
+                            <FontIcon Glyph="&#xE793;" FontSize="16"
+                                      Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+                            <TextBlock Text="Theme" Style="{StaticResource OtpeekCardTitleStyle}" />
+                            <TextBlock Text="Follow Windows or choose a fixed appearance" Style="{StaticResource OtpeekDetailTextStyle}" />
+                        </StackPanel>
+                        <ComboBox x:Name="ThemeCombo" Grid.Column="2" Width="154"
+                                  AutomationProperties.Name="Theme">
+                            <ComboBoxItem Content="System default" Tag="System" />
+                            <ComboBoxItem Content="Light" Tag="Light" />
+                            <ComboBoxItem Content="Dark" Tag="Dark" />
+                        </ComboBox>
+                    </Grid>
+                    <Rectangle Height="1" Fill="{ThemeResource OtpeekDividerBrush}" Margin="48,0,0,0" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource OtpeekIconTileStyle}">
+                            <FontIcon Glyph="&#xE91B;" FontSize="16"
+                                      Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+                            <TextBlock Text="Website icons" Style="{StaticResource OtpeekCardTitleStyle}" />
+                            <TextBlock Text="Show a service icon when one is available" Style="{StaticResource OtpeekDetailTextStyle}" />
+                        </StackPanel>
+                        <ToggleSwitch x:Name="ShowFaviconsToggle" Grid.Column="2"
+                                      Header="" OffContent="" OnContent=""
+                                      AutomationProperties.Name="Show website icons" />
+                    </Grid>
                 </StackPanel>
             </Border>
 
-            <!-- Security -->
-            <TextBlock Text="Security"
-                       Style="{StaticResource SectionHeaderStyle}" />
+            <TextBlock Text="WEBDAV SYNC" Style="{StaticResource SectionHeaderStyle}" />
+            <Border Style="{StaticResource OtpeekSettingsCardStyle}">
+                <StackPanel Spacing="14">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource OtpeekIconTileStyle}">
+                            <FontIcon Glyph="&#xE753;" FontSize="16"
+                                      Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+                            <TextBlock Text="WebDAV sync" Style="{StaticResource OtpeekCardTitleStyle}" />
+                            <TextBlock Text="Sync the encrypted vault through your own server" Style="{StaticResource OtpeekDetailTextStyle}" />
+                        </StackPanel>
+                        <ToggleSwitch x:Name="WebDavEnabledToggle" Grid.Column="2"
+                                      Header="" OffContent="" OnContent=""
+                                      AutomationProperties.Name="Enable WebDAV sync" />
+                    </Grid>
 
-            <Border Style="{StaticResource AccountCardStyle}">
-                <StackPanel Spacing="16">
-                    <ToggleSwitch x:Name="RequireAuthToggle"
-                                  Header="Require Windows Hello on startup"
-                                  OffContent="Off"
-                                  OnContent="On" />
-                </StackPanel>
-            </Border>
+                    <Border Style="{StaticResource OtpeekFormSectionStyle}">
+                        <StackPanel Spacing="12">
+                            <TextBox x:Name="WebDavUrlTextBox"
+                                     Style="{StaticResource OtpeekFieldStyle}"
+                                     Header="Server URL (collection)"
+                                     PlaceholderText="https://dav.example.com/otp/" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="WebDavUserTextBox"
+                                         Style="{StaticResource OtpeekFieldStyle}"
+                                         Header="Username" />
+                                <PasswordBox x:Name="WebDavPasswordBox"
+                                             Grid.Column="1" Margin="10,0,0,0"
+                                             Header="Password" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ToggleSwitch x:Name="WebDavAutoSyncToggle"
+                                              Header="Sync automatically"
+                                              OffContent="Off" OnContent="On" />
+                                <ComboBox x:Name="WebDavSyncIntervalCombo"
+                                          Grid.Column="1" Width="154"
+                                          Header="Interval">
+                                    <ComboBoxItem Content="5 minutes" Tag="5" />
+                                    <ComboBoxItem Content="15 minutes" Tag="15" />
+                                    <ComboBoxItem Content="30 minutes" Tag="30" />
+                                    <ComboBoxItem Content="1 hour" Tag="60" />
+                                </ComboBox>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
 
-            <!-- WebDAV Sync -->
-            <TextBlock Text="WebDAV Sync"
-                       Style="{StaticResource SectionHeaderStyle}" />
-
-            <Border Style="{StaticResource AccountCardStyle}">
-                <StackPanel Spacing="16">
-                    <ToggleSwitch x:Name="WebDavEnabledToggle"
-                                  Header="Enable WebDAV sync"
-                                  OffContent="Off"
-                                  OnContent="On" />
-
-                    <TextBox x:Name="WebDavUrlTextBox"
-                             Header="Server URL (collection)"
-                             PlaceholderText="https://dav.example.com/otp/"
-                             HorizontalAlignment="Stretch" />
-
-                    <TextBox x:Name="WebDavUserTextBox"
-                             Header="Username"
-                             HorizontalAlignment="Stretch" />
-
-                    <PasswordBox x:Name="WebDavPasswordBox"
-                                 Header="Password"
-                                 HorizontalAlignment="Stretch" />
-
-                    <StackPanel Orientation="Horizontal" Spacing="12">
-                        <Button x:Name="SaveWebDavButton"
-                                Content="Save" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button x:Name="SaveWebDavButton" Content="Save" />
                         <Button x:Name="SyncNowButton"
-                                Content="Sync now" />
+                                Content="Sync Now"
+                                Style="{StaticResource AccentButtonStyle}" />
                     </StackPanel>
-
-                    <TextBlock x:Name="SyncStatusText"
-                               Opacity="0.7"
-                               TextWrapping="Wrap" />
+                    <TextBlock x:Name="SyncStatusText" Style="{StaticResource OtpeekDetailTextStyle}" />
                 </StackPanel>
             </Border>
 
-            <!-- About -->
-            <TextBlock Text="About"
-                       Style="{StaticResource SectionHeaderStyle}" />
+            <TextBlock Text="ABOUT" Style="{StaticResource SectionHeaderStyle}" />
+            <Border Style="{StaticResource OtpeekSettingsCardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="48" Height="48" CornerRadius="14"
+                            Background="{ThemeResource OtpeekAccentSoftBrush}">
+                        <FontIcon Glyph="&#xE72E;" FontSize="22"
+                                  Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="14,0" VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Text="OTPeek" FontSize="16" FontWeight="SemiBold" />
+                        <TextBlock x:Name="VersionText" Style="{StaticResource OtpeekDetailTextStyle}" />
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock x:Name="AccountCountText" Style="{StaticResource OtpeekDetailTextStyle}" />
+                            <TextBlock x:Name="FolderCountText" Style="{StaticResource OtpeekDetailTextStyle}" />
+                        </StackPanel>
+                    </StackPanel>
+                    <HyperlinkButton Grid.Column="2"
+                                     Content="GitHub"
+                                     NavigateUri="https://github.com/jiunbae/OTPeek"
+                                     VerticalAlignment="Center" />
+                </Grid>
+            </Border>
 
-            <Border Style="{StaticResource AccountCardStyle}">
-                <StackPanel Spacing="8">
-                    <TextBlock Text="OTPeek"
-                               FontWeight="SemiBold" />
-                    <TextBlock Text="Version 1.0.0"
-                               Opacity="0.7" />
-                    <HyperlinkButton Content="View on GitHub"
-                                     NavigateUri="https://github.com" />
+            <Button x:Name="ResetButton"
+                    Margin="0,18,0,0"
+                    Padding="16,12"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Foreground="{StaticResource ErrorBrush}">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <FontIcon Glyph="&#xE777;" FontSize="15" />
+                    <TextBlock Text="Reset all settings" />
                 </StackPanel>
-            </Border>
-
-            <!-- Reset -->
-            <Border Style="{StaticResource AccountCardStyle}"
-                    Margin="0,16,0,0">
-                <Button x:Name="ResetButton"
-                        Content="Reset all settings"
-                        HorizontalAlignment="Stretch" />
-            </Border>
+            </Button>
         </StackPanel>
     </ScrollViewer>
 </Page>

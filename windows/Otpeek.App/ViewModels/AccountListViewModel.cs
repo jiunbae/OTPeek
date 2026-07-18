@@ -11,7 +11,7 @@ namespace Otpeek.App.ViewModels;
 /// <summary>
 /// 계정 목록 ViewModel
 /// </summary>
-public partial class AccountListViewModel : BaseViewModel
+public partial class AccountListViewModel : BaseViewModel, IDisposable
 {
     private readonly IOtpClientService _client;
     private readonly IClipboardService _clipboardService;
@@ -19,6 +19,7 @@ public partial class AccountListViewModel : BaseViewModel
     private readonly IFaviconService _faviconService;
     private readonly DispatcherQueue _dispatcherQueue;
     private System.Threading.CancellationTokenSource? _searchDebounceCts;
+    private bool _disposed;
 
     public ObservableCollection<AccountItemViewModel> Accounts { get; } = new();
 
@@ -31,6 +32,15 @@ public partial class AccountListViewModel : BaseViewModel
     [ObservableProperty]
     private bool _isEmpty = true;
 
+    [ObservableProperty]
+    private string _pageTitle = "All Accounts";
+
+    [ObservableProperty]
+    private string _emptyTitle = "No accounts yet";
+
+    [ObservableProperty]
+    private string _emptyMessage = "Scan a QR code or add an account manually to get started.";
+
     /// <summary>필터: 특정 폴더 ID (코어 UUID 문자열)</summary>
     public string? FilterFolderId { get; set; }
 
@@ -41,6 +51,7 @@ public partial class AccountListViewModel : BaseViewModel
     public bool ShowUncategorizedOnly { get; set; }
 
     public event EventHandler<OtpAccount>? EditRequested;
+    public event EventHandler<OtpAccount>? DeleteRequested;
     public event EventHandler? AddRequested;
 
     public AccountListViewModel(
@@ -61,6 +72,7 @@ public partial class AccountListViewModel : BaseViewModel
 
     private void OnVaultChanged(object? sender, EventArgs e)
     {
+        if (_disposed) return;
         _dispatcherQueue.TryEnqueue(() => _ = LoadAccountsAsync());
     }
 
@@ -77,6 +89,7 @@ public partial class AccountListViewModel : BaseViewModel
             {
                 vm.CopyRequested -= OnCopyRequested;
                 vm.EditRequested -= OnItemEditRequested;
+                vm.DeleteRequested -= OnItemDeleteRequested;
                 vm.Dispose();
             }
             Accounts.Clear();
@@ -84,10 +97,13 @@ public partial class AccountListViewModel : BaseViewModel
             if (!_client.IsUnlocked)
             {
                 IsEmpty = true;
+                EmptyTitle = "Vault is locked";
+                EmptyMessage = "Unlock OTPeek to view your accounts.";
                 return Task.CompletedTask;
             }
 
-            IEnumerable<OtpAccount> accounts = _client.ListAccounts();
+            var allAccounts = _client.ListAccounts();
+            IEnumerable<OtpAccount> accounts = allAccounts;
 
             if (ShowFavoritesOnly)
                 accounts = accounts.Where(a => a.isFavorite);
@@ -107,13 +123,36 @@ public partial class AccountListViewModel : BaseViewModel
 
             foreach (var account in accounts)
             {
-                var vm = new AccountItemViewModel(account, _client, _faviconService);
+                var vm = new AccountItemViewModel(
+                    account,
+                    _client,
+                    _faviconService,
+                    allowClickToCopy: _settingsService.Settings.AutoCopyToClipboard);
                 vm.CopyRequested += OnCopyRequested;
                 vm.EditRequested += OnItemEditRequested;
+                vm.DeleteRequested += OnItemDeleteRequested;
                 Accounts.Add(vm);
             }
 
             IsEmpty = Accounts.Count == 0;
+            if (IsEmpty)
+            {
+                if (allAccounts.Count == 0)
+                {
+                    EmptyTitle = "No accounts yet";
+                    EmptyMessage = "Scan a QR code or add an account manually to get started.";
+                }
+                else if (!string.IsNullOrWhiteSpace(SearchQuery))
+                {
+                    EmptyTitle = "No matching accounts";
+                    EmptyMessage = "Try a different issuer or account name.";
+                }
+                else
+                {
+                    EmptyTitle = "No accounts here";
+                    EmptyMessage = "Move an account into this folder or add a new one.";
+                }
+            }
             return Task.CompletedTask;
         });
     }
@@ -142,6 +181,12 @@ public partial class AccountListViewModel : BaseViewModel
             // VaultChanged 이벤트가 목록을 새로고침합니다.
             return Task.CompletedTask;
         });
+    }
+
+    private void OnItemDeleteRequested(object? sender, EventArgs e)
+    {
+        if (sender is AccountItemViewModel vm)
+            DeleteRequested?.Invoke(this, vm.Account);
     }
 
     [RelayCommand]
@@ -177,7 +222,7 @@ public partial class AccountListViewModel : BaseViewModel
         await _clipboardService.CopyAsync(code, settings.ClipboardClearSeconds);
     }
 
-    // 아이템의 편집 요청을 목록 이벤트로 승격(MainViewModel 이 편집 화면을 연다).
+    // 아이템의 편집 요청을 목록 페이지로 승격해 메인 창 편집 패널을 연다.
     private void OnItemEditRequested(object? sender, EventArgs e)
     {
         if (sender is AccountItemViewModel vm)
@@ -186,12 +231,21 @@ public partial class AccountListViewModel : BaseViewModel
 
     public void Cleanup()
     {
+        if (_disposed) return;
+        _disposed = true;
+        _searchDebounceCts?.Cancel();
+        _searchDebounceCts?.Dispose();
+        _client.VaultChanged -= OnVaultChanged;
+
         foreach (var vm in Accounts)
         {
             vm.CopyRequested -= OnCopyRequested;
             vm.EditRequested -= OnItemEditRequested;
+            vm.DeleteRequested -= OnItemDeleteRequested;
             vm.Dispose();
         }
         Accounts.Clear();
     }
+
+    public void Dispose() => Cleanup();
 }

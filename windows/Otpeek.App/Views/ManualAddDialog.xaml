@@ -21,18 +21,50 @@
         <StackPanel Spacing="12">
             <!-- Service Name (Issuer) -->
             <TextBox x:Name="IssuerTextBox"
-                     Header="Service Name *"
+                     Header="Service Name"
                      PlaceholderText="e.g., Google, GitHub, Microsoft" />
 
             <!-- Account Name -->
             <TextBox x:Name="AccountNameTextBox"
-                     Header="Account Name"
+                     Header="Account Name *"
                      PlaceholderText="e.g., user@example.com" />
 
             <!-- Secret Key -->
             <TextBox x:Name="SecretKeyTextBox"
                      Header="Secret Key (Base32) *"
                      PlaceholderText="e.g., JBSWY3DPEHPK3PXP" />
+
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <ComboBox x:Name="FolderCombo"
+                          Grid.Column="0"
+                          Header="Folder"
+                          HorizontalAlignment="Stretch" />
+
+                <ComboBox x:Name="ColorCombo"
+                          Grid.Column="1"
+                          Header="Color"
+                          HorizontalAlignment="Stretch"
+                          SelectedIndex="0">
+                    <ComboBoxItem Content="Blue" Tag="#0078D4" />
+                    <ComboBoxItem Content="Green" Tag="#34A853" />
+                    <ComboBoxItem Content="Orange" Tag="#F7630C" />
+                    <ComboBoxItem Content="Red" Tag="#E74856" />
+                    <ComboBoxItem Content="Purple" Tag="#8764B8" />
+                    <ComboBoxItem Content="Pink" Tag="#E3008C" />
+                    <ComboBoxItem Content="Teal" Tag="#00B7C3" />
+                    <ComboBoxItem Content="Brown" Tag="#8E562E" />
+                </ComboBox>
+            </Grid>
+
+            <ToggleSwitch x:Name="FavoriteToggle"
+                          Header="Add to Favorites"
+                          OffContent="No"
+                          OnContent="Yes" />
 
             <!-- Type and Algorithm Row -->
             <Grid>
@@ -80,6 +112,7 @@
                           Margin="0,0,6,0"
                           SelectedIndex="0">
                     <ComboBoxItem Content="6 digits" Tag="6" />
+                    <ComboBoxItem Content="7 digits" Tag="7" />
                     <ComboBoxItem Content="8 digits" Tag="8" />
                 </ComboBox>
 
@@ -94,6 +127,21 @@
                            Maximum="120"
                            SpinButtonPlacementMode="Compact" />
             </Grid>
+
+            <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                    CornerRadius="8"
+                    Padding="16">
+                <StackPanel HorizontalAlignment="Center" Spacing="4">
+                    <TextBlock x:Name="PreviewCodeText"
+                               Text="------"
+                               Style="{StaticResource OtpCodeTextStyle}" />
+                    <TextBlock x:Name="PreviewCaptionText"
+                               Text="Live preview"
+                               HorizontalAlignment="Center"
+                               FontSize="11"
+                               Opacity="0.65" />
+                </StackPanel>
+            </Border>
         </StackPanel>
     </StackPanel>
 </ContentDialog>

@@ -7,110 +7,116 @@ namespace Otpeek.Widget;
 /// <summary>
 /// Widget Provider COM 서버 엔트리포인트
 /// </summary>
-public class Program
+public static class Program
 {
-    private static readonly string LogPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "Otpeek", "widget.log");
+    internal const string ProviderClassId = "8A2C4E6F-1B3D-5A7C-9E0F-2D4B6C8A0E1F";
+    private static readonly ManualResetEventSlim ShutdownEvent = new(false);
 
-    private static void Log(string message)
+    [MTAThread]
+    public static int Main(string[] args)
+    {
+        WidgetDiagnostics.Log("Server", $"Started; argumentCount={args.Length}");
+
+        if (args.Any(arg => string.Equals(arg, "--diagnostics", StringComparison.OrdinalIgnoreCase)))
+            return RunDiagnostics();
+
+        if (!args.Any(arg => string.Equals(
+                arg,
+                "-RegisterProcessAsComServer",
+                StringComparison.OrdinalIgnoreCase)))
+        {
+            WidgetDiagnostics.Log("Server", "No COM activation argument; exiting");
+            return 0;
+        }
+
+        uint cookie = 0;
+        try
+        {
+            ComWrappersSupport.InitializeComWrappers();
+            var factoryGuid = Guid.Parse(ProviderClassId);
+            var factory = new WidgetProviderFactory<WidgetProvider>();
+            int hr = CoRegisterClassObject(
+                factoryGuid,
+                factory,
+                CLSCTX_LOCAL_SERVER,
+                REGCLS_MULTIPLEUSE,
+                out cookie);
+            Marshal.ThrowExceptionForHR(hr);
+
+            WidgetDiagnostics.Log("Server", $"COM class registered; cookie={cookie}");
+
+            // This is an MTA local server. COM supplies its own RPC threads, so a Win32
+            // window message pump is neither required nor desirable here. We stay alive
+            // until the host deletes the final widget instance.
+            ShutdownEvent.Wait();
+            WidgetDiagnostics.Log("Server", "Shutdown requested after final widget deletion");
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            WidgetDiagnostics.LogException("Server", "COM server startup", ex);
+            return ex.HResult != 0 ? ex.HResult : 1;
+        }
+        finally
+        {
+            if (cookie != 0)
+            {
+                int revokeResult = CoRevokeClassObject(cookie);
+                WidgetDiagnostics.Log("Server", $"COM class revoked; result=0x{revokeResult:X8}");
+            }
+        }
+    }
+
+    internal static void RequestShutdown() => ShutdownEvent.Set();
+
+    private static int RunDiagnostics()
     {
         try
         {
-            var dir = Path.GetDirectoryName(LogPath);
-            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
-            File.AppendAllText(LogPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}\n");
-        }
-        catch { }
-    }
-
-    [STAThread]
-    public static void Main(string[] args)
-    {
-        Log($"Widget started with args: {string.Join(", ", args)}");
-
-        // COM 서버 초기화
-        if (args.Length > 0 && args.Contains("-RegisterProcessAsComServer"))
-        {
-            try
+            WidgetProvider.ValidateDeployment();
+            var dataProvider = new OtpWidgetDataProvider();
+            dataProvider.ValidateStorageAccess();
+            using var data = System.Text.Json.JsonDocument.Parse(dataProvider.GetWidgetData());
+            if (!data.RootElement.TryGetProperty("entries", out var entries) ||
+                entries.ValueKind != System.Text.Json.JsonValueKind.Array ||
+                entries.GetArrayLength() > OtpWidgetDataProvider.MaxVisibleAccounts)
             {
-                Log("Initializing COM wrappers...");
-                // Widget Provider 등록
-                ComWrappersSupport.InitializeComWrappers();
-                Log("COM wrappers initialized");
-
-                var factoryGuid = Guid.Parse("8A2C4E6F-1B3D-5A7C-9E0F-2D4B6C8A0E1F");
-
-                uint cookie = 0;
-                try
-                {
-                    Log("Creating WidgetProviderFactory...");
-                    // Widget Provider Factory 등록
-                    var factory = new WidgetProviderFactory<WidgetProvider>();
-                    Log("Registering COM class object...");
-                    var hr = CoRegisterClassObject(
-                        ref factoryGuid,
-                        factory,
-                        CLSCTX_LOCAL_SERVER,
-                        REGCLS_MULTIPLEUSE | REGCLS_SUSPENDED,
-                        out cookie);
-
-                    if (hr != 0)
-                    {
-                        Log($"CoRegisterClassObject failed with HRESULT: 0x{hr:X8}");
-                        Marshal.ThrowExceptionForHR(hr);
-                    }
-                    Log($"COM class object registered, cookie: {cookie}");
-
-                    // 모든 클래스 오브젝트 활성화
-                    Log("Resuming class objects...");
-                    hr = CoResumeClassObjects();
-                    if (hr != 0)
-                    {
-                        Log($"CoResumeClassObjects failed with HRESULT: 0x{hr:X8}");
-                        Marshal.ThrowExceptionForHR(hr);
-                    }
-                    Log("COM server ready, entering message loop...");
-
-                    // 메시지 루프 실행
-                    var msg = new MSG();
-                    while (GetMessage(ref msg, IntPtr.Zero, 0, 0) != 0)
-                    {
-                        TranslateMessage(ref msg);
-                        DispatchMessage(ref msg);
-                    }
-                    Log("Message loop exited");
-                }
-                finally
-                {
-                    if (cookie != 0)
-                    {
-                        CoRevokeClassObject(cookie);
-                        Log("COM class object revoked");
-                    }
-                }
+                throw new InvalidDataException("The widget data must contain at most eight visible entries.");
             }
-            catch (Exception ex)
+
+            int iconEntryCount = 0;
+            foreach (var entry in entries.EnumerateArray())
             {
-                Log($"FATAL ERROR: {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
-                throw;
+                if (!entry.TryGetProperty("icon", out _) ||
+                    !entry.TryGetProperty("hasIcon", out var hasIcon) ||
+                    !entry.TryGetProperty("showInMedium", out _))
+                {
+                    throw new InvalidDataException("Every visible entry must contain its icon and layout state.");
+                }
+
+                if (hasIcon.ValueKind == System.Text.Json.JsonValueKind.True)
+                    iconEntryCount++;
             }
+            WidgetDiagnostics.Log(
+                "Diagnostics",
+                $"Template, data JSON, native vault reader, and DPAPI probe passed; " +
+                $"visibleEntryCount={entries.GetArrayLength()}, iconEntryCount={iconEntryCount}");
+            return 0;
         }
-        else
+        catch (Exception ex)
         {
-            Log("No COM server argument, exiting");
+            WidgetDiagnostics.LogException("Diagnostics", "Self-test", ex);
+            return 1;
         }
     }
 
     private const uint CLSCTX_LOCAL_SERVER = 0x4;
     private const uint REGCLS_MULTIPLEUSE = 1;
-    private const uint REGCLS_SUSPENDED = 4;
 
     [DllImport("ole32.dll")]
     private static extern int CoRegisterClassObject(
-        ref Guid rclsid,
-        [MarshalAs(UnmanagedType.Interface)] object pUnk,
+        [MarshalAs(UnmanagedType.LPStruct)] Guid rclsid,
+        [MarshalAs(UnmanagedType.IUnknown)] object pUnk,
         uint dwClsContext,
         uint flags,
         out uint lpdwRegister);
@@ -118,73 +124,40 @@ public class Program
     [DllImport("ole32.dll")]
     private static extern int CoRevokeClassObject(uint dwRegister);
 
-    [DllImport("ole32.dll")]
-    private static extern int CoResumeClassObjects();
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct MSG
-    {
-        public IntPtr hwnd;
-        public uint message;
-        public IntPtr wParam;
-        public IntPtr lParam;
-        public uint time;
-        public POINT pt;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct POINT
-    {
-        public int x;
-        public int y;
-    }
-
-    [DllImport("user32.dll")]
-    private static extern int GetMessage(ref MSG lpMsg, IntPtr hWnd, uint wMsgFilterMin, uint wMsgFilterMax);
-
-    [DllImport("user32.dll")]
-    private static extern bool TranslateMessage(ref MSG lpMsg);
-
-    [DllImport("user32.dll")]
-    private static extern IntPtr DispatchMessage(ref MSG lpMsg);
 }
 
 /// <summary>
 /// Widget Provider Factory
 /// </summary>
-internal class WidgetProviderFactory<T> : IClassFactory where T : IWidgetProvider, new()
+[ComVisible(true)]
+internal sealed class WidgetProviderFactory<T> : IClassFactory where T : IWidgetProvider, new()
 {
-    private static void Log(string message)
-    {
-        try
-        {
-            var logPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Otpeek", "widget.log");
-            File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [Factory] {message}\n");
-        }
-        catch { }
-    }
-
     public int CreateInstance(IntPtr pUnkOuter, ref Guid riid, out IntPtr ppvObject)
     {
-        Log($"CreateInstance called. riid={riid}");
+        WidgetDiagnostics.Log("Factory", $"CreateInstance; riid={riid}");
         ppvObject = IntPtr.Zero;
 
         if (pUnkOuter != IntPtr.Zero)
-        {
-            Marshal.ThrowExceptionForHR(CLASS_E_NOAGGREGATION);
-        }
+            return CLASS_E_NOAGGREGATION;
 
-        if (riid == typeof(IWidgetProvider).GUID || riid == IUnknownGuid)
+        if (riid != typeof(T).GUID && riid != typeof(IWidgetProvider).GUID && riid != IUnknownGuid)
+            return E_NOINTERFACE;
+
+        try
         {
             var provider = new T();
-            ppvObject = Marshal.GetIUnknownForObject(provider);
+            // IWidgetProvider is a WinRT interface. Marshal.GetIUnknownForObject creates
+            // a classic COM callable wrapper that the Widget Host cannot inspect. CsWinRT's
+            // MarshalInspectable produces the required IInspectable/IWidgetProvider CCW.
+            ppvObject = MarshalInspectable<IWidgetProvider>.FromManaged(provider);
             return 0;
         }
-
-        Marshal.ThrowExceptionForHR(E_NOINTERFACE);
-        return E_NOINTERFACE;
+        catch (Exception ex)
+        {
+            WidgetDiagnostics.LogException("Factory", "Provider activation", ex);
+            ppvObject = IntPtr.Zero;
+            return Marshal.GetHRForException(ex);
+        }
     }
 
     public int LockServer(bool fLock)
@@ -197,7 +170,7 @@ internal class WidgetProviderFactory<T> : IClassFactory where T : IWidgetProvide
     private const int E_NOINTERFACE = unchecked((int)0x80004002);
 }
 
-[ComImport]
+[ComImport, ComVisible(false)]
 [Guid("00000001-0000-0000-C000-000000000046")]
 [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface IClassFactory

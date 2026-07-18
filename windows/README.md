@@ -46,6 +46,40 @@ The .NET build depends on the native library, so build in this order:
    # or open Otpeek.Windows.sln in Visual Studio 2022 (17.8+)
    ```
 
+## Run the unpackaged app
+
+The development build is unpackaged, so it does not create a Start-menu entry and cannot
+be found by searching for "OTPeek". Run it from a logged-in Windows desktop session:
+
+```powershell
+dotnet run --project windows\Otpeek.App\Otpeek.App.csproj -c Release -p:Platform=x64
+```
+
+Or launch the built executable directly:
+
+```text
+windows\Otpeek.App\bin\x64\Release\net8.0-windows10.0.22621.0\Otpeek.exe
+```
+
+If startup fails, the app records the WinUI exception in
+`%LOCALAPPDATA%\Otpeek\startup.log`.
+
+## Register the app and widget for development
+
+The Windows widget provider is a packaged COM extension. An unpackaged `dotnet run` or
+direct launch can test the app, but it cannot add OTPeek to the Windows widget picker.
+On Windows 11 with Developer Mode enabled, build and register the current x64 package with:
+
+```powershell
+./windows/scripts/package-msix.ps1 -Mode Dev -Platforms x64
+```
+
+This stops a running development instance, builds the app and widget, and registers the
+loose unsigned package for the current user. If AppX deployment reports `0x80070005` and
+names an old package below `C:\Program Files\WindowsApps\Deleted`, restart Windows so the
+orphaned package can be cleaned up, then run the command again. Do not reuse a certificate
+whose subject does not match the manifest publisher (`CN=Otpeek`).
+
 ## Regenerating the C# bindings
 
 `windows/Otpeek.Interop/Generated/otp.cs` is **committed** — it is platform-independent
@@ -66,6 +100,20 @@ Generation config (public access modifier, `Uniffi.Otpeek` namespace) lives in
 (synchronous `Send`, Basic auth, ETag / `If-Match` / `If-None-Match: *`). It stores a single
 file `otpeek-vault.otpvault` under the configured collection URL. Configure it in
 **Settings → WebDAV Sync**; the password is DPAPI-protected in `settings.dat`.
+
+## Windows parity status
+
+The WinUI shell now follows the same primary workflow as the Apple apps: account cards
+show issuer, account name, favorite state, color, live countdown and 6/7/8-digit codes;
+accounts can be added, edited, moved and deleted; folders can be created, edited and
+deleted from the sidebar; HOTP counters can be advanced explicitly. Settings expose
+clipboard behavior and scheduled WebDAV sync, while backup restore defaults to the safe
+merge mode and requires confirmation before replacing the vault. The tray and widget use
+the same encrypted v2 vault and refresh at TOTP boundaries.
+
+The unpackaged x64 app and platform-neutral settings tests run in Windows CI. MSIX/widget
+activation and Windows-runtime behavior still require the packaged development install and
+manual Windows checks described in `docs/TESTING.md`.
 
 ## Notes
 

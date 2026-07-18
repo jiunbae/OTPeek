@@ -1,140 +1,237 @@
 {
-    "type": "AdaptiveCard",
-    "version": "1.5",
-    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-    "body": [
+  "type": "AdaptiveCard",
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.6",
+  "body": [
+    {
+      "type": "Container",
+      "$when": "${!hasAccount}",
+      "verticalContentAlignment": "center",
+      "items": [
         {
-            "type": "Container",
-            "items": [
+          "type": "TextBlock",
+          "text": "OTPeek",
+          "size": "large",
+          "weight": "bolder",
+          "horizontalAlignment": "center"
+        },
+        {
+          "type": "TextBlock",
+          "text": "${accountName}",
+          "isSubtle": true,
+          "wrap": true,
+          "horizontalAlignment": "center",
+          "spacing": "small"
+        }
+      ]
+    },
+    {
+      "type": "Container",
+      "$when": "${$host.widgetSize == 'small'}",
+      "items": [
+        {
+          "type": "ColumnSet",
+          "$when": "${hasAccount}",
+          "columns": [
+            {
+              "type": "Column",
+              "width": "auto",
+              "verticalContentAlignment": "center",
+              "items": [
                 {
-                    "type": "ColumnSet",
-                    "columns": [
-                        {
-                            "type": "Column",
-                            "width": "auto",
-                            "items": [
-                                {
-                                    "type": "Image",
-                                    "$when": "${hasIcon}",
-                                    "url": "${icon}",
-                                    "width": "40px",
-                                    "height": "40px",
-                                    "altText": "${issuer}"
-                                },
-                                {
-                                    "type": "Container",
-                                    "$when": "${hasIcon == false}",
-                                    "style": "accent",
-                                    "items": [
-                                        {
-                                            "type": "TextBlock",
-                                            "text": "${initial}",
-                                            "size": "large",
-                                            "weight": "bolder",
-                                            "horizontalAlignment": "center",
-                                            "color": "light"
-                                        }
-                                    ],
-                                    "bleed": true,
-                                    "minHeight": "44px",
-                                    "verticalContentAlignment": "center"
-                                }
-                            ],
-                            "verticalContentAlignment": "center"
-                        },
-                        {
-                            "type": "Column",
-                            "width": "stretch",
-                            "items": [
-                                {
-                                    "type": "TextBlock",
-                                    "text": "${issuer}",
-                                    "weight": "bolder",
-                                    "size": "medium",
-                                    "wrap": true
-                                },
-                                {
-                                    "type": "TextBlock",
-                                    "text": "${accountName}",
-                                    "size": "small",
-                                    "isSubtle": true,
-                                    "wrap": true,
-                                    "maxLines": 1
-                                }
-                            ],
-                            "verticalContentAlignment": "center",
-                            "spacing": "medium"
-                        }
-                    ]
+                  "type": "Image",
+                  "$when": "${hasIcon}",
+                  "url": "${icon}",
+                  "width": "32px",
+                  "height": "32px",
+                  "altText": "${issuer}"
                 },
                 {
-                    "type": "Container",
-                    "items": [
-                        {
-                            "type": "TextBlock",
-                            "text": "${otpCode}",
-                            "size": "extraLarge",
-                            "weight": "bolder",
-                            "fontType": "monospace",
-                            "horizontalAlignment": "center"
-                        }
-                    ],
-                    "spacing": "medium"
-                },
-                {
-                    "type": "ColumnSet",
-                    "columns": [
-                        {
-                            "type": "Column",
-                            "width": "stretch",
-                            "items": [
-                                {
-                                    "type": "ProgressBar",
-                                    "value": "${timeProgress}"
-                                }
-                            ],
-                            "verticalContentAlignment": "center"
-                        },
-                        {
-                            "type": "Column",
-                            "width": "auto",
-                            "items": [
-                                {
-                                    "type": "TextBlock",
-                                    "text": "${remainingSeconds}s",
-                                    "size": "small",
-                                    "isSubtle": true
-                                }
-                            ],
-                            "verticalContentAlignment": "center",
-                            "spacing": "small"
-                        }
-                    ],
-                    "spacing": "small"
+                  "type": "Container",
+                  "$when": "${!hasIcon}",
+                  "style": "accent",
+                  "minHeight": "32px",
+                  "verticalContentAlignment": "center",
+                  "items": [
+                    {
+                      "type": "TextBlock",
+                      "text": "${initial}",
+                      "weight": "bolder",
+                      "horizontalAlignment": "center",
+                      "color": "light"
+                    }
+                  ]
                 }
-            ]
-        }
-    ],
-    "actions": [
+              ]
+            },
+            {
+              "type": "Column",
+              "width": "stretch",
+              "verticalContentAlignment": "center",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "text": "${countdownLabel}",
+                  "weight": "bolder",
+                  "color": "${countdownColor}",
+                  "horizontalAlignment": "right"
+                }
+              ]
+            }
+          ]
+        },
         {
+          "type": "TextBlock",
+          "$when": "${hasAccount}",
+          "text": "${issuer}",
+          "isSubtle": true,
+          "wrap": true,
+          "maxLines": 1,
+          "spacing": "small"
+        },
+        {
+          "type": "TextBlock",
+          "$when": "${hasAccount}",
+          "text": "${otpCode}",
+          "fontType": "monospace",
+          "size": "extraLarge",
+          "weight": "bolder",
+          "wrap": false,
+          "spacing": "small"
+        }
+      ]
+    },
+    {
+      "type": "Container",
+      "$when": "${hasAccount && $host.widgetSize != 'small'}",
+      "items": [
+        {
+          "type": "Container",
+          "$data": "${entries}",
+          "$when": "${$host.widgetSize == 'large' || showInMedium}",
+          "separator": true,
+          "spacing": "small",
+          "selectAction": {
             "type": "Action.Execute",
-            "title": "Copy",
             "verb": "copy",
-            "data": "${rawCode}",
-            "iconUrl": "https://cdn-icons-png.flaticon.com/512/1621/1621635.png"
-        },
-        {
-            "type": "Action.Execute",
-            "title": "Refresh",
-            "verb": "refresh",
-            "iconUrl": "https://cdn-icons-png.flaticon.com/512/61/61444.png"
+            "tooltip": "Copy ${issuer} code",
+            "data": {
+              "accountId": "${accountId}"
+            }
+          },
+          "items": [
+            {
+              "type": "ColumnSet",
+              "columns": [
+                {
+                  "type": "Column",
+                  "width": "32px",
+                  "verticalContentAlignment": "center",
+                  "items": [
+                    {
+                      "type": "Image",
+                      "$when": "${hasIcon}",
+                      "url": "${icon}",
+                      "width": "30px",
+                      "height": "30px",
+                      "altText": "${issuer}"
+                    },
+                    {
+                      "type": "Container",
+                      "$when": "${!hasIcon}",
+                      "style": "accent",
+                      "minHeight": "30px",
+                      "verticalContentAlignment": "center",
+                      "items": [
+                        {
+                          "type": "TextBlock",
+                          "text": "${initial}",
+                          "weight": "bolder",
+                          "horizontalAlignment": "center",
+                          "color": "light"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "Column",
+                  "width": "stretch",
+                  "verticalContentAlignment": "center",
+                  "spacing": "small",
+                  "items": [
+                    {
+                      "type": "TextBlock",
+                      "text": "${issuer}",
+                      "weight": "bolder",
+                      "wrap": true,
+                      "maxLines": 1
+                    },
+                    {
+                      "type": "TextBlock",
+                      "text": "${accountName}",
+                      "size": "small",
+                      "isSubtle": true,
+                      "wrap": true,
+                      "maxLines": 1,
+                      "spacing": "none"
+                    }
+                  ]
+                },
+                {
+                  "type": "Column",
+                  "width": "auto",
+                  "verticalContentAlignment": "center",
+                  "items": [
+                    {
+                      "type": "TextBlock",
+                      "text": "${otpCode}",
+                      "fontType": "monospace",
+                      "size": "large",
+                      "weight": "bolder",
+                      "horizontalAlignment": "right",
+                      "wrap": false
+                    },
+                    {
+                      "type": "TextBlock",
+                      "text": "${statusLabel}",
+                      "size": "small",
+                      "weight": "bolder",
+                      "color": "${statusColor}",
+                      "horizontalAlignment": "right",
+                      "spacing": "none"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         }
-    ],
-    "refresh": {
-        "action": {
-            "type": "Action.Execute",
-            "verb": "refresh"
-        },
-        "expires": "2099-12-31T23:59:59Z"
+      ]
     }
+  ],
+  "actions": [
+    {
+      "type": "Action.Execute",
+      "$when": "${hasAccount && $host.widgetSize == 'small'}",
+      "title": "${copyLabel}",
+      "style": "${copyStyle}",
+      "verb": "copy",
+      "data": {
+        "accountId": "${accountId}"
+      }
+    },
+    {
+      "type": "Action.Execute",
+      "$when": "${hasPrev && $host.widgetSize == 'small'}",
+      "title": "Previous",
+      "verb": "prev"
+    },
+    {
+      "type": "Action.Execute",
+      "$when": "${hasNext && $host.widgetSize == 'small'}",
+      "title": "Next",
+      "verb": "next"
+    }
+  ]
 }

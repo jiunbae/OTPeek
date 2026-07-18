@@ -91,6 +91,9 @@ jobs:
       - name: Build Otpeek.App (Release x64)
         run: dotnet build windows/Otpeek.App/Otpeek.App.csproj -c Release -p:Platform=x64 --no-restore
 
+      - name: Test Windows settings core
+        run: dotnet test tests/Otpeek.Core.Tests/Otpeek.Core.Tests.csproj -c Release --no-restore
+
       # NOTE: Otpeek.Widget is a CsWinRT component and needs the UAP platform SDK
       # (Platforms\UAP\...\Platform.xml), which isn't present on windows-latest, so
       # it can't be built standalone here. It compiles as part of the MSIX package

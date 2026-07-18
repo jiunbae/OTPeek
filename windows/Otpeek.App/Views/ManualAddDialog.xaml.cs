@@ -23,11 +23,16 @@ public sealed partial class ManualAddDialog : ContentDialog
         this.InitializeComponent();
 
         _client = App.Services.GetRequiredService<IOtpClientService>();
+        PopulateFolders();
 
         // Event handlers
         IssuerTextBox.TextChanged += OnTextChanged;
+        AccountNameTextBox.TextChanged += OnTextChanged;
         SecretKeyTextBox.TextChanged += OnTextChanged;
         OtpTypeCombo.SelectionChanged += OnOtpTypeChanged;
+        AlgorithmCombo.SelectionChanged += (_, _) => UpdatePreview();
+        DigitsCombo.SelectionChanged += (_, _) => UpdatePreview();
+        PeriodNumberBox.ValueChanged += (_, _) => UpdatePreview();
 
         this.PrimaryButtonClick += OnPrimaryButtonClick;
     }
@@ -39,9 +44,10 @@ public sealed partial class ManualAddDialog : ContentDialog
 
     private void ValidateForm()
     {
-        bool hasIssuer = !string.IsNullOrWhiteSpace(IssuerTextBox.Text);
-        bool hasSecret = !string.IsNullOrWhiteSpace(SecretKeyTextBox.Text);
-        IsPrimaryButtonEnabled = hasIssuer && hasSecret;
+        bool hasAccount = !string.IsNullOrWhiteSpace(AccountNameTextBox.Text);
+        string secret = NormalizeSecret(SecretKeyTextBox.Text);
+        IsPrimaryButtonEnabled = hasAccount && OtpeekMethods.ValidateSecret(secret);
+        UpdatePreview();
     }
 
     private void OnOtpTypeChanged(object sender, SelectionChangedEventArgs e)
@@ -53,13 +59,12 @@ public sealed partial class ManualAddDialog : ContentDialog
             PeriodNumberBox.Value = isTotp ? 30 : 0;
             PeriodNumberBox.Minimum = isTotp ? 10 : 0;
             PeriodNumberBox.Maximum = isTotp ? 120 : 999999;
+            UpdatePreview();
         }
     }
 
-    private async void OnPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+    private void OnPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
-        var deferral = args.GetDeferral();
-
         try
         {
             // Validate
@@ -71,10 +76,10 @@ public sealed partial class ManualAddDialog : ContentDialog
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(IssuerTextBox.Text))
+            if (string.IsNullOrWhiteSpace(AccountNameTextBox.Text))
             {
                 StatusInfoBar.Severity = InfoBarSeverity.Error;
-                StatusInfoBar.Message = "Service Name is required.";
+                StatusInfoBar.Message = "Account Name is required.";
                 args.Cancel = true;
                 return;
             }
@@ -107,15 +112,23 @@ public sealed partial class ManualAddDialog : ContentDialog
             }
 
             // Normalize Secret Key
-            string secretKey = SecretKeyTextBox.Text
-                .Replace(" ", "")
-                .Replace("-", "")
-                .ToUpperInvariant();
+            string secretKey = NormalizeSecret(SecretKeyTextBox.Text);
+
+            if (!OtpeekMethods.ValidateSecret(secretKey))
+            {
+                StatusInfoBar.Severity = InfoBarSeverity.Error;
+                StatusInfoBar.Message = "Secret Key must be valid Base32.";
+                args.Cancel = true;
+                return;
+            }
 
             string issuer = IssuerTextBox.Text.Trim();
-            string accountName = string.IsNullOrWhiteSpace(AccountNameTextBox.Text)
-                ? issuer
-                : AccountNameTextBox.Text.Trim();
+            string accountName = AccountNameTextBox.Text.Trim();
+            double numericValue = PeriodNumberBox.Value;
+            if (double.IsNaN(numericValue) || double.IsInfinity(numericValue))
+            {
+                numericValue = otpType == OtpType.Totp ? 30 : 0;
+            }
 
             var account = OtpAccountExtensions.NewAccount(
                 secret: secretKey,
@@ -124,8 +137,13 @@ public sealed partial class ManualAddDialog : ContentDialog
                 accountName: accountName,
                 algorithm: algorithm,
                 digits: digits,
-                period: otpType == OtpType.Totp ? (uint)PeriodNumberBox.Value : 30,
-                counter: otpType == OtpType.Hotp ? (ulong)PeriodNumberBox.Value : 0);
+                period: otpType == OtpType.Totp ? (uint)Math.Max(10, numericValue) : 30,
+                counter: otpType == OtpType.Hotp ? (ulong)Math.Max(0, numericValue) : 0,
+                folderId: (FolderCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString()) with
+            {
+                isFavorite = FavoriteToggle.IsOn,
+                color = (ColorCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "#0078D4"
+            };
 
             // Save (코어가 id/타임스탬프 할당)
             AddedAccount = _client.AddAccount(account);
@@ -139,9 +157,84 @@ public sealed partial class ManualAddDialog : ContentDialog
             StatusInfoBar.Message = $"Failed to add account: {ex.Message}";
             args.Cancel = true;
         }
-        finally
+    }
+
+    private void UpdatePreview()
+    {
+        if (PreviewCodeText == null) return;
+
+        string secret = NormalizeSecret(SecretKeyTextBox.Text);
+        if (!OtpeekMethods.ValidateSecret(secret))
         {
-            deferral.Complete();
+            PreviewCodeText.Text = "------";
+            PreviewCaptionText.Text = "Enter a valid secret to preview";
+            return;
         }
+
+        if (SelectedOtpType() == OtpType.Hotp)
+        {
+            PreviewCodeText.Text = "HOTP";
+            PreviewCaptionText.Text = "The counter code is generated after adding";
+            return;
+        }
+
+        try
+        {
+            double periodValue = PeriodNumberBox.Value;
+            if (double.IsNaN(periodValue) || double.IsInfinity(periodValue)) periodValue = 30;
+
+            string code = OtpeekMethods.GenerateTotpNow(
+                secret,
+                SelectedAlgorithm(),
+                SelectedDigits(),
+                (uint)Math.Max(10, periodValue),
+                DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+            PreviewCodeText.Text = code.Length switch
+            {
+                6 => $"{code[..3]} {code[3..]}",
+                7 => $"{code[..3]} {code[3..]}",
+                8 => $"{code[..4]} {code[4..]}",
+                _ => code
+            };
+            PreviewCaptionText.Text = "Live preview";
+        }
+        catch
+        {
+            PreviewCodeText.Text = "------";
+            PreviewCaptionText.Text = "The secret could not be previewed";
+        }
+    }
+
+    private OtpType SelectedOtpType()
+        => (OtpTypeCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() == "hotp"
+            ? OtpType.Hotp
+            : OtpType.Totp;
+
+    private HashAlgorithm SelectedAlgorithm()
+        => (AlgorithmCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() switch
+        {
+            "SHA256" => HashAlgorithm.Sha256,
+            "SHA512" => HashAlgorithm.Sha512,
+            _ => HashAlgorithm.Sha1
+        };
+
+    private uint SelectedDigits()
+        => uint.TryParse((DigitsCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString(), out uint digits)
+            ? digits
+            : 6;
+
+    private static string NormalizeSecret(string value)
+        => value.Replace(" ", string.Empty).Replace("-", string.Empty).ToUpperInvariant();
+
+    private void PopulateFolders()
+    {
+        FolderCombo.Items.Clear();
+        FolderCombo.Items.Add(new ComboBoxItem { Content = "Uncategorized", Tag = null });
+        if (_client.IsUnlocked)
+        {
+            foreach (var folder in _client.ListFolders())
+                FolderCombo.Items.Add(new ComboBoxItem { Content = folder.name, Tag = folder.id });
+        }
+        FolderCombo.SelectedIndex = 0;
     }
 }

@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Collections.ObjectModel;
 using Otpeek.Core.Windows;
 using Otpeek.Core.Windows.Services;
 using Uniffi.Otpeek;
@@ -39,11 +40,17 @@ public partial class AccountEditViewModel : BaseViewModel
     [ObservableProperty]
     private int _period = 30;
 
-    /// <summary>
-    /// 메모 (참고: v2 볼트 모델에는 메모 필드가 없어 저장되지 않습니다. UI 호환을 위해 유지)
-    /// </summary>
     [ObservableProperty]
-    private string? _notes;
+    private ulong _counter;
+
+    [ObservableProperty]
+    private bool _isFavorite;
+
+    [ObservableProperty]
+    private string? _selectedFolderId;
+
+    [ObservableProperty]
+    private string _selectedColor = "#0078D4";
 
     [ObservableProperty]
     private string? _validationError;
@@ -56,8 +63,9 @@ public partial class AccountEditViewModel : BaseViewModel
 
     public IReadOnlyList<OtpType> OtpTypes { get; } = Enum.GetValues<OtpType>();
     public IReadOnlyList<HashAlgorithm> Algorithms { get; } = Enum.GetValues<HashAlgorithm>();
-    public IReadOnlyList<int> DigitOptions { get; } = new[] { 6, 8 };
-    public IReadOnlyList<int> PeriodOptions { get; } = new[] { 15, 30, 60 };
+    public IReadOnlyList<int> DigitOptions { get; } = new[] { 6, 7, 8 };
+    public IReadOnlyList<int> PeriodOptions { get; } = new[] { 30, 60 };
+    public ObservableCollection<FolderOption> FolderOptions { get; } = new();
 
     public AccountEditViewModel(IOtpClientService client)
     {
@@ -76,7 +84,11 @@ public partial class AccountEditViewModel : BaseViewModel
         SelectedAlgorithm = HashAlgorithm.Sha1;
         Digits = 6;
         Period = 30;
-        Notes = null;
+        Counter = 0;
+        IsFavorite = false;
+        SelectedFolderId = null;
+        SelectedColor = "#0078D4";
+        LoadFolderOptions();
 
         Validate();
     }
@@ -93,7 +105,11 @@ public partial class AccountEditViewModel : BaseViewModel
         SelectedAlgorithm = account.algorithm;
         Digits = (int)account.digits;
         Period = (int)account.period;
-        Notes = null;
+        Counter = account.counter;
+        IsFavorite = account.isFavorite;
+        SelectedFolderId = account.folderId;
+        SelectedColor = string.IsNullOrWhiteSpace(account.color) ? "#0078D4" : account.color!;
+        LoadFolderOptions();
 
         Validate();
     }
@@ -124,6 +140,11 @@ public partial class AccountEditViewModel : BaseViewModel
         SelectedAlgorithm = account.algorithm;
         Digits = (int)account.digits;
         Period = (int)account.period;
+        Counter = account.counter;
+        IsFavorite = account.isFavorite;
+        SelectedFolderId = account.folderId;
+        SelectedColor = string.IsNullOrWhiteSpace(account.color) ? "#0078D4" : account.color!;
+        LoadFolderOptions();
 
         Validate();
         return true;
@@ -179,7 +200,11 @@ public partial class AccountEditViewModel : BaseViewModel
                     otpType = SelectedType,
                     algorithm = SelectedAlgorithm,
                     digits = (uint)Digits,
-                    period = (uint)Period
+                    period = (uint)Period,
+                    counter = Counter,
+                    folderId = SelectedFolderId,
+                    isFavorite = IsFavorite,
+                    color = SelectedColor
                 };
                 saved = _client.UpdateAccount(updated);
             }
@@ -192,7 +217,13 @@ public partial class AccountEditViewModel : BaseViewModel
                     accountName: AccountName,
                     algorithm: SelectedAlgorithm,
                     digits: (uint)Digits,
-                    period: (uint)Period);
+                    period: (uint)Period,
+                    counter: Counter,
+                    folderId: SelectedFolderId) with
+                {
+                    isFavorite = IsFavorite,
+                    color = SelectedColor
+                };
                 saved = _client.AddAccount(account);
             }
 
@@ -212,4 +243,16 @@ public partial class AccountEditViewModel : BaseViewModel
     {
         SecretKey = SecretGenerator.RandomBase32();
     }
+
+    private void LoadFolderOptions()
+    {
+        FolderOptions.Clear();
+        FolderOptions.Add(new FolderOption(null, "Uncategorized"));
+
+        if (!_client.IsUnlocked) return;
+        foreach (var folder in _client.ListFolders())
+            FolderOptions.Add(new FolderOption(folder.id, folder.name));
+    }
 }
+
+public sealed record FolderOption(string? Id, string Name);

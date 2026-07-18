@@ -14,7 +14,6 @@
     <Platforms>x86;x64;ARM64</Platforms>
     <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <EnableComHosting>true</EnableComHosting>
     <!-- Widget shares App's Windows App SDK runtime -->
     <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
     <WindowsPackageType>None</WindowsPackageType>
@@ -34,7 +33,7 @@
 
   <ItemGroup>
     <!-- Exclude build/analyzers to prevent auto-initializer code generation -->
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.250907003">
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260710003">
       <ExcludeAssets>build;analyzers</ExcludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4654" />

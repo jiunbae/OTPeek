@@ -95,9 +95,28 @@ Requires VS 2022 (.NET Desktop + Windows App SDK), .NET 8 SDK, Rust + MSVC targe
 ./windows/scripts/package-msix.ps1 -Mode Sideload -Platforms x64 `
     -CertPath .\otpeek.pfx -CertPassword (Read-Host -AsSecureString)
 ```
+To keep a non-exportable private key in the current-user certificate store, pass
+`-CertThumbprint <thumbprint>` instead of `-CertPath`.
+
 Install the resulting `.msix` with `Add-AppxPackage`. The `.otpvault` file
 association and the widget provider register only from an installed MSIX, not from
 an unpackaged `dotnet run`.
+
+GitHub sideload releases include the signed bundle, its public `.cer`, and
+`Install-OTPeek.ps1`. The installer verifies that the package signer matches that
+certificate before requesting UAC approval to trust it under
+`Cert:\LocalMachine\TrustedPeople`; the signing private key must never be included
+in release artifacts.
+
+For local widget and shell-integration testing without creating a signing certificate,
+enable Windows Developer Mode and register the loose package:
+
+```powershell
+./windows/scripts/package-msix.ps1 -Mode Dev -Platforms x64
+```
+
+This mode is for development only. Store and sideload releases still use the signing and
+identity flows above.
 
 ---
 

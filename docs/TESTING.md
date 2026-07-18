@@ -76,7 +76,7 @@ xcodebuild -project Otpeek.xcodeproj -scheme Otpeek-macOS build CODE_SIGNING_ALL
       if the widget shows an unlock error, reconcile the access-group string in
       both entitlements files with your Team ID)
 
-## 2. Windows  ⚠️ never compiled yet — expect to fix small compile errors
+## 2. Windows
 
 Prereqs: VS 2022 (.NET Desktop + Windows App SDK), .NET 8 SDK, Rust MSVC:
 
@@ -86,10 +86,63 @@ dotnet restore Otpeek.Windows.sln
 dotnet build windows/Otpeek.App/Otpeek.App.csproj -p:Platform=x64
 ```
 
-- [ ] Interop project's MSBuild target runs cargo and stages `otpeek_ffi.dll` into
+The unpackaged x64 app is also compiled on every pull request by the Windows CI job.
+MSIX packaging, Widget COM registration, and runtime behavior still require a Windows
+11 machine and the manual checks below.
+
+Before testing Start-menu identity, protocols, file associations, or the widget, register
+the development package (Developer Mode must be enabled):
+
+```powershell
+./windows/scripts/package-msix.ps1 -Mode Dev -Platforms x64
+Get-AppxPackage -Name Otpeek
+```
+
+Launching `Otpeek.exe` directly is not a substitute: the Widget Host discovers the COM
+provider only from the installed package manifest. If registration fails with `0x80070005`
+against an orphan below `WindowsApps\Deleted`, restart Windows and retry before changing
+the OTPeek manifest or certificate identity.
+
+Verified on a Windows 11 x64 workstation on 2026-07-18:
+
+- `dotnet build windows/Otpeek.App/Otpeek.App.csproj -c Release -p:Platform=x64`
+  completed with 0 errors and staged `otpeek_ffi.dll` beside the app.
+- `dotnet build windows/Otpeek.Widget/Otpeek.Widget.csproj -c Release -p:Platform=x64`
+  completed with 0 errors and staged the same native library beside the widget provider.
+- The final unsigned x64 MSIX bundle completed with 0 errors. Unpacking it confirmed the
+  app and widget executables, native Rust DLL, responsive widget template, COM/widget
+  manifest registration, and light/dark icon and preview assets.
+- `Otpeek.Widget.exe --diagnostics` exited 0, and cross-process COM activation returned
+  the WinRT provider while the server remained alive. The installed provider read the real
+  20-account vault and reported `visibleEntryCount=8, iconEntryCount=7`; the unsupported or
+  missing icon used the initial fallback.
+- All 6 `Otpeek.Core.Tests` tests and all 77 shared Rust workspace tests passed on Windows.
+- The Release app reached its main window and remained responsive in the logged-in desktop
+  session; the startup smoke test covered account-editor XAML construction, first-page
+  navigation, title-bar branding, initial empty/locked state, and the first-run password
+  dialog.
+- The orphaned legacy `OtpAuthenticator` directory was removed and the Dev package was
+  registered from `%LOCALAPPDATA%\Otpeek.DevPackage`. `Get-AppxPackage -Name Otpeek`
+  reports `Status=Ok`; the installed manifest contains the widget extension and matching
+  COM class, and the WidgetService process was restarted. Complete the visual Widget Board
+  checks below in the logged-in desktop session.
+- After replacing or re-registering the loose Dev package, restart both `Widgets.exe` and
+  `WidgetService.exe` before reopening the board. A host process that predates registration
+  can retain a stale app-extension catalog and hide OTPeek even though the package reports
+  `Status=Ok`.
+- The branded multi-resolution `app.ico` is used by the tray icon. Left-click opens the rich
+  WinUI surface with cached favicons and a one-second countdown. Right-click uses the native
+  Win32 menu for immediate response; it is rebuilt from the already-open vault on every open,
+  displays an ellipsized label plus right-aligned OTP and remaining time, and does not create a
+  Window or timer. Selecting an account forces one final fresh generation before copying.
+- Three non-fatal `MSB3277` reference warnings remain because
+  `ZXing.Net.Bindings.Windows.Compatibility 0.16.14` requires
+  `System.Drawing.Common 9.0.10` while the application targets .NET 8.
+
+- [x] Interop project's MSBuild target runs cargo and stages `otpeek_ffi.dll` into
       the App output dir (check `bin/x64/Debug/.../otpeek_ffi.dll` exists)
 - [ ] If bindings drift from otpeek-ffi: re-run `windows/scripts/generate-bindings.ps1`
-- [ ] App launches; `[DllImport("otpeek_ffi")]` resolves (no DllNotFoundException)
+- [x] App launches; `[DllImport("otpeek_ffi")]` resolves (no DllNotFoundException)
 - [ ] Fresh start: master-password creation dialog → empty list
 - [ ] Upgrade path: with a real v1 profile (`%LOCALAPPDATA%\Otpeek\accounts.dat`),
       migration prompt appears, accounts survive, legacy file renamed `.migrated`
@@ -105,7 +158,18 @@ dotnet build windows/Otpeek.App/Otpeek.App.csproj -p:Platform=x64
       on the server; second machine syncs the same accounts
 - [ ] Foreign-trait check: WebDAV sync with a WRONG password shows an auth error
       (exception marshalling through the FFI, not a crash)
-- [ ] Widget (Win11 widgets board) shows codes
+- [ ] Widget (Win11 widgets board) can be added after the Dev/MSIX package is registered
+- [ ] Widget small size shows one compact code with Copy/previous/next and no clipped progress
+      or Refresh footer; medium shows up to five and large shows up to eight live codes;
+      clicking any row copies that account's fresh code
+- [ ] Widget rows show cached issuer favicons when available and fall back to initials only
+      for missing or unsupported images; no instructional/count summary consumes row space
+- [ ] Tray uses the branded shield icon; left-click opens the rich live surface with favicon
+      fallbacks and a one-second countdown, while right-click immediately opens a native menu
+      with ellipsized labels and right-aligned OTP plus remaining time; reopening refreshes the
+      displayed values, and selecting a row after a TOTP boundary copies the fresh code
+- [ ] Widget empty/error states remain visible instead of terminating the provider; inspect
+      `%LOCALAPPDATA%\Otpeek\widget.log` for COM activation and refresh diagnostics
 - [ ] Known intentional drops: OneDrive/Google Drive sync, account Notes field,
       last-used ordering — confirm nothing else went missing
 

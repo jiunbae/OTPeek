@@ -2,14 +2,9 @@
 <UserControl
     x:Class="Otpeek.App.Views.AccountEditView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Otpeek.App.Views">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="1"
-            CornerRadius="8"
-            Padding="24">
+    <Border Style="{StaticResource OtpeekEditorSurfaceStyle}">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -17,120 +12,194 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Header -->
-            <Grid Grid.Row="0" Margin="0,0,0,24">
-                <TextBlock x:Name="TitleText"
-                           Text="Add Account"
-                           Style="{StaticResource SubtitleTextBlockStyle}" />
-                <Button HorizontalAlignment="Right"
-                        Background="Transparent"
+            <Grid Grid.Row="0" Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Spacing="3">
+                    <TextBlock x:Name="TitleText"
+                               Text="Add Account"
+                               FontSize="22"
+                               FontWeight="SemiBold" />
+                    <TextBlock Text="Your secret stays encrypted in the local vault."
+                               Style="{StaticResource OtpeekDetailTextStyle}" />
+                </StackPanel>
+
+                <Button Grid.Column="1"
+                        Style="{StaticResource OtpeekIconButtonStyle}"
+                        ToolTipService.ToolTip="Close"
+                        AutomationProperties.Name="Close account editor"
                         Click="OnCloseClick">
                     <FontIcon Glyph="&#xE711;" FontSize="12" />
                 </Button>
             </Grid>
 
-            <!-- Form -->
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                <StackPanel Spacing="16">
-                    <!-- Issuer -->
-                    <TextBox x:Name="IssuerTextBox"
-                             Header="Issuer (Service Name)"
-                             PlaceholderText="e.g., Google, GitHub, Microsoft" />
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="9" Padding="0,0,10,0">
+                    <TextBlock Text="ACCOUNT"
+                               Style="{StaticResource SectionHeaderStyle}"
+                               Margin="4,0,0,0" />
 
-                    <!-- Account Name -->
-                    <TextBox x:Name="AccountNameTextBox"
-                             Header="Account Name *"
-                             PlaceholderText="e.g., user@example.com" />
+                    <Border Style="{StaticResource OtpeekFormSectionStyle}">
+                        <StackPanel Spacing="13">
+                            <TextBox x:Name="IssuerTextBox"
+                                     Style="{StaticResource OtpeekFieldStyle}"
+                                     Header="Issuer"
+                                     PlaceholderText="Google, GitHub, Microsoft…" />
 
-                    <!-- Secret Key -->
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+                            <TextBox x:Name="AccountNameTextBox"
+                                     Style="{StaticResource OtpeekFieldStyle}"
+                                     Header="Account name *"
+                                     PlaceholderText="user@example.com" />
 
-                        <TextBox x:Name="SecretKeyTextBox"
-                                 Grid.Column="0"
-                                 Header="Secret Key (Base32) *"
-                                 PlaceholderText="e.g., JBSWY3DPEHPK3PXP" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
 
-                        <Button Grid.Column="1"
-                                VerticalAlignment="Bottom"
-                                Margin="8,0,0,0"
-                                ToolTipService.ToolTip="Generate random key"
-                                Click="OnGenerateKeyClick">
-                            <FontIcon Glyph="&#xE8EE;" FontSize="16" />
-                        </Button>
-                    </Grid>
+                                <TextBox x:Name="SecretKeyTextBox"
+                                         Style="{StaticResource OtpeekFieldStyle}"
+                                         Header="Secret key (Base32) *"
+                                         PlaceholderText="JBSWY3DPEHPK3PXP" />
 
-                    <!-- Validation Error -->
-                    <InfoBar x:Name="ValidationErrorBar"
-                             IsOpen="False"
-                             Severity="Error"
-                             IsClosable="False" />
+                                <Button Grid.Column="1"
+                                        Style="{StaticResource OtpeekIconButtonStyle}"
+                                        VerticalAlignment="Bottom"
+                                        Margin="8,0,0,0"
+                                        ToolTipService.ToolTip="Generate a random secret key"
+                                        AutomationProperties.Name="Generate random secret key"
+                                        Click="OnGenerateKeyClick">
+                                    <FontIcon Glyph="&#xE8EE;" FontSize="15" />
+                                </Button>
+                            </Grid>
 
-                    <!-- Advanced Options -->
-                    <Expander Header="Advanced Options"
-                              HorizontalAlignment="Stretch"
-                              HorizontalContentAlignment="Stretch">
-                        <StackPanel Spacing="12" Padding="0,8,0,0">
-                            <!-- OTP Type -->
-                            <ComboBox x:Name="TypeComboBox"
-                                      Header="Type"
-                                      SelectedIndex="0"
-                                      HorizontalAlignment="Stretch">
-                                <ComboBoxItem Content="TOTP (Time-based)" Tag="Totp" />
-                                <ComboBoxItem Content="HOTP (Counter-based)" Tag="Hotp" />
-                            </ComboBox>
-
-                            <!-- Algorithm -->
-                            <ComboBox x:Name="AlgorithmComboBox"
-                                      Header="Algorithm"
-                                      SelectedIndex="0"
-                                      HorizontalAlignment="Stretch">
-                                <ComboBoxItem Content="SHA1" Tag="Sha1" />
-                                <ComboBoxItem Content="SHA256" Tag="Sha256" />
-                                <ComboBoxItem Content="SHA512" Tag="Sha512" />
-                            </ComboBox>
-
-                            <!-- Digits -->
-                            <ComboBox x:Name="DigitsComboBox"
-                                      Header="Digits"
-                                      SelectedIndex="0"
-                                      HorizontalAlignment="Stretch">
-                                <ComboBoxItem Content="6" Tag="6" />
-                                <ComboBoxItem Content="8" Tag="8" />
-                            </ComboBox>
-
-                            <!-- Period (TOTP only) -->
-                            <ComboBox x:Name="PeriodComboBox"
-                                      Header="Period (seconds)"
-                                      SelectedIndex="1"
-                                      HorizontalAlignment="Stretch">
-                                <ComboBoxItem Content="15" Tag="15" />
-                                <ComboBoxItem Content="30" Tag="30" />
-                                <ComboBoxItem Content="60" Tag="60" />
-                            </ComboBox>
-
-                            <!-- Notes -->
-                            <TextBox x:Name="NotesTextBox"
-                                     Header="Notes"
-                                     PlaceholderText="Optional notes..."
-                                     TextWrapping="Wrap"
-                                     AcceptsReturn="True"
-                                     MinHeight="80" />
+                            <InfoBar x:Name="ValidationErrorBar"
+                                     IsOpen="False"
+                                     Severity="Error"
+                                     IsClosable="False" />
                         </StackPanel>
-                    </Expander>
+                    </Border>
+
+                    <TextBlock Text="ORGANIZATION"
+                               Style="{StaticResource SectionHeaderStyle}"
+                               Margin="4,14,0,0" />
+
+                    <Border Style="{StaticResource OtpeekFormSectionStyle}">
+                        <StackPanel Spacing="13">
+                            <ToggleSwitch x:Name="FavoriteToggle"
+                                          Header="Favorite"
+                                          OffContent="Not favorite"
+                                          OnContent="Shown first" />
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <ComboBox x:Name="FolderComboBox"
+                                          Header="Folder"
+                                          HorizontalAlignment="Stretch"
+                                          DisplayMemberPath="Name" />
+
+                                <ComboBox x:Name="ColorComboBox"
+                                          Grid.Column="1"
+                                          Margin="10,0,0,0"
+                                          Header="Color"
+                                          HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="Blue" Tag="#0078D4" />
+                                    <ComboBoxItem Content="Green" Tag="#34A853" />
+                                    <ComboBoxItem Content="Orange" Tag="#F7630C" />
+                                    <ComboBoxItem Content="Red" Tag="#E74856" />
+                                    <ComboBoxItem Content="Purple" Tag="#8764B8" />
+                                    <ComboBoxItem Content="Pink" Tag="#E3008C" />
+                                    <ComboBoxItem Content="Teal" Tag="#00B7C3" />
+                                    <ComboBoxItem Content="Brown" Tag="#8E562E" />
+                                </ComboBox>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="OTP OPTIONS"
+                               Style="{StaticResource SectionHeaderStyle}"
+                               Margin="4,14,0,0" />
+
+                    <Border Style="{StaticResource OtpeekFormSectionStyle}">
+                        <!-- SelectionChanged is attached after InitializeComponent in code-behind. -->
+                        <Expander Header="Advanced options"
+                                  IsExpanded="False"
+                                  HorizontalAlignment="Stretch"
+                                  HorizontalContentAlignment="Stretch">
+                            <StackPanel Spacing="12" Padding="0,10,0,0">
+                                <ComboBox x:Name="TypeComboBox"
+                                          Header="Type"
+                                          SelectedIndex="0"
+                                          HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="TOTP (time-based)" Tag="Totp" />
+                                    <ComboBoxItem Content="HOTP (counter-based)" Tag="Hotp" />
+                                </ComboBox>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <ComboBox x:Name="AlgorithmComboBox"
+                                              Header="Algorithm"
+                                              SelectedIndex="0"
+                                              HorizontalAlignment="Stretch">
+                                        <ComboBoxItem Content="SHA1" Tag="Sha1" />
+                                        <ComboBoxItem Content="SHA256" Tag="Sha256" />
+                                        <ComboBoxItem Content="SHA512" Tag="Sha512" />
+                                    </ComboBox>
+
+                                    <ComboBox x:Name="DigitsComboBox"
+                                              Grid.Column="1"
+                                              Margin="10,0,0,0"
+                                              Header="Digits"
+                                              SelectedIndex="0"
+                                              HorizontalAlignment="Stretch">
+                                        <ComboBoxItem Content="6" Tag="6" />
+                                        <ComboBoxItem Content="7" Tag="7" />
+                                        <ComboBoxItem Content="8" Tag="8" />
+                                    </ComboBox>
+                                </Grid>
+
+                                <NumberBox x:Name="PeriodNumberBox"
+                                           Header="Period (seconds)"
+                                           Value="30"
+                                           Minimum="1"
+                                           Maximum="3600"
+                                           SpinButtonPlacementMode="Compact" />
+
+                                <NumberBox x:Name="CounterNumberBox"
+                                           Header="Counter"
+                                           Minimum="0"
+                                           Maximum="999999999"
+                                           SpinButtonPlacementMode="Compact"
+                                           Visibility="Collapsed" />
+                            </StackPanel>
+                        </Expander>
+                    </Border>
                 </StackPanel>
             </ScrollViewer>
 
-            <!-- Actions -->
-            <Grid Grid.Row="2" Margin="0,24,0,0">
+            <Grid Grid.Row="2" Margin="0,18,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
+
+                <TextBlock Text="Fields marked * are required"
+                           Style="{StaticResource OtpeekDetailTextStyle}"
+                           VerticalAlignment="Center" />
 
                 <Button Grid.Column="1"
                         Content="Cancel"
@@ -139,7 +208,7 @@
 
                 <Button x:Name="SaveButton"
                         Grid.Column="2"
-                        Content="Save"
+                        Content="Save Account"
                         Style="{StaticResource AccentButtonStyle}"
                         Click="OnSaveClick" />
             </Grid>

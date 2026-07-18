@@ -14,6 +14,7 @@ public partial class SettingsViewModel : BaseViewModel
     private readonly ISettingsService _settingsService;
     private readonly ISecureStorageService _secureStorage;
     private readonly IOtpClientService _client;
+    private bool _isLoadingSettings;
 
     [ObservableProperty]
     private bool _startWithWindows;
@@ -65,6 +66,14 @@ public partial class SettingsViewModel : BaseViewModel
     [ObservableProperty]
     private string? _syncStatus;
 
+    [ObservableProperty]
+    private int _accountCount;
+
+    [ObservableProperty]
+    private int _folderCount;
+
+    public string AppVersion { get; } = GetAppVersion();
+
     public IReadOnlyList<string> ThemeOptions { get; } = new[] { "System", "Light", "Dark" };
     public IReadOnlyList<int> ClipboardClearOptions { get; } = new[] { 0, 15, 30, 60, 120 };
     public IReadOnlyList<int> SyncIntervalOptions { get; } = new[] { 5, 15, 30, 60 };
@@ -82,25 +91,39 @@ public partial class SettingsViewModel : BaseViewModel
     [RelayCommand]
     public async Task LoadSettingsAsync()
     {
-        await _settingsService.LoadAsync();
-        var settings = _settingsService.Settings;
+        _isLoadingSettings = true;
+        try
+        {
+            await _settingsService.LoadAsync();
+            var settings = _settingsService.Settings;
 
-        StartWithWindows = settings.StartWithWindows;
-        StartMinimized = settings.StartMinimized;
-        MinimizeToTray = settings.MinimizeToTray;
-        AutoCopyToClipboard = settings.AutoCopyToClipboard;
-        ClipboardClearSeconds = settings.ClipboardClearSeconds;
-        EnableWidgetProvider = settings.EnableWidgetProvider;
-        SelectedTheme = settings.Theme;
-        RequireAuthentication = settings.RequireAuthentication;
-        ShowFavicons = settings.ShowFavicons;
+            StartWithWindows = settings.StartWithWindows;
+            StartMinimized = settings.StartMinimized;
+            MinimizeToTray = settings.MinimizeToTray;
+            AutoCopyToClipboard = settings.AutoCopyToClipboard;
+            ClipboardClearSeconds = settings.ClipboardClearSeconds;
+            EnableWidgetProvider = settings.EnableWidgetProvider;
+            SelectedTheme = settings.Theme;
+            RequireAuthentication = settings.RequireAuthentication;
+            ShowFavicons = settings.ShowFavicons;
 
-        WebDavEnabled = settings.WebDav.Enabled;
-        WebDavUrl = settings.WebDav.Url;
-        WebDavUsername = settings.WebDav.Username;
-        WebDavPassword = _secureStorage.UnprotectString(settings.WebDav.ProtectedPassword) ?? string.Empty;
-        WebDavAutoSync = settings.WebDav.AutoSync;
-        WebDavSyncIntervalMinutes = settings.WebDav.SyncIntervalMinutes;
+            WebDavEnabled = settings.WebDav.Enabled;
+            WebDavUrl = settings.WebDav.Url;
+            WebDavUsername = settings.WebDav.Username;
+            WebDavPassword = _secureStorage.UnprotectString(settings.WebDav.ProtectedPassword) ?? string.Empty;
+            WebDavAutoSync = settings.WebDav.AutoSync;
+            WebDavSyncIntervalMinutes = settings.WebDav.SyncIntervalMinutes;
+            SyncStatus = settings.WebDav.LastSyncTime is DateTime lastSync
+                ? $"Last synced {lastSync.ToLocalTime():g}"
+                : null;
+
+            AccountCount = _client.IsUnlocked ? _client.ListAccounts().Count : 0;
+            FolderCount = _client.IsUnlocked ? _client.ListFolders().Count : 0;
+        }
+        finally
+        {
+            _isLoadingSettings = false;
+        }
     }
 
     [RelayCommand]
@@ -133,6 +156,8 @@ public partial class SettingsViewModel : BaseViewModel
 
             ApplyWebDavToClient();
             await UpdateStartupAsync();
+            if (Microsoft.UI.Xaml.Application.Current is App app)
+                app.RefreshAutoSyncSchedule();
         });
     }
 
@@ -163,26 +188,26 @@ public partial class SettingsViewModel : BaseViewModel
     [RelayCommand]
     public async Task SyncNowAsync()
     {
-        await ExecuteAsync(() =>
+        await ExecuteAsync(async () =>
         {
             if (!_client.IsUnlocked)
             {
                 SyncStatus = "Vault is locked.";
-                return Task.CompletedTask;
+                return;
             }
 
             try
             {
                 ApplyWebDavToClient();
-                SyncOutcome outcome = _client.Sync();
+                SyncOutcome outcome = await Task.Run(_client.Sync);
                 _settingsService.Settings.WebDav.LastSyncTime = DateTime.UtcNow;
+                await _settingsService.SaveAsync();
                 SyncStatus = $"Synced. pushed={outcome.pushed}, pulled={outcome.pulled}, changes={outcome.mergedChanges}";
             }
             catch (OtpException ex)
             {
                 SyncStatus = $"Sync failed: {ex.Message}";
             }
-            return Task.CompletedTask;
         });
     }
 
@@ -194,6 +219,8 @@ public partial class SettingsViewModel : BaseViewModel
             _settingsService.Settings.WebDav.ProtectedPassword = string.Empty;
             await _settingsService.ResetAsync();
             await LoadSettingsAsync();
+            if (Microsoft.UI.Xaml.Application.Current is App app)
+                app.RefreshAutoSyncSchedule();
         });
     }
 
@@ -214,15 +241,36 @@ public partial class SettingsViewModel : BaseViewModel
         }
     }
 
-    partial void OnStartWithWindowsChanged(bool value) => _ = SaveSettingsAsync();
-    partial void OnStartMinimizedChanged(bool value) => _ = SaveSettingsAsync();
-    partial void OnMinimizeToTrayChanged(bool value) => _ = SaveSettingsAsync();
-    partial void OnAutoCopyToClipboardChanged(bool value) => _ = SaveSettingsAsync();
-    partial void OnClipboardClearSecondsChanged(int value) => _ = SaveSettingsAsync();
+    partial void OnStartWithWindowsChanged(bool value) => SaveAfterChange();
+    partial void OnStartMinimizedChanged(bool value) => SaveAfterChange();
+    partial void OnMinimizeToTrayChanged(bool value) => SaveAfterChange();
+    partial void OnAutoCopyToClipboardChanged(bool value) => SaveAfterChange();
+    partial void OnClipboardClearSecondsChanged(int value) => SaveAfterChange();
+    partial void OnShowFaviconsChanged(bool value) => SaveAfterChange();
     partial void OnSelectedThemeChanged(string value)
     {
         ApplyTheme(value);
-        _ = SaveSettingsAsync();
+        SaveAfterChange();
+    }
+
+    private void SaveAfterChange()
+    {
+        if (!_isLoadingSettings)
+            _ = SaveSettingsAsync();
+    }
+
+    private static string GetAppVersion()
+    {
+        try
+        {
+            var version = global::Windows.ApplicationModel.Package.Current.Id.Version;
+            return $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
+        }
+        catch
+        {
+            var version = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Version;
+            return version?.ToString(3) ?? "Unknown";
+        }
     }
 
     public static void ApplyTheme(string theme)

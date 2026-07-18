@@ -21,6 +21,8 @@ public partial class AccountItemViewModel : ObservableObject, IDisposable
     private readonly IFaviconService? _favicon;
     private readonly DispatcherQueueTimer _timer;
     private readonly DispatcherQueue _dispatcherQueue;
+    private readonly bool _allowClickToCopy;
+    private long _lastTotpTimeStep = -1;
     private bool _disposed;
 
     public OtpAccount Account { get; private set; }
@@ -45,20 +47,44 @@ public partial class AccountItemViewModel : ObservableObject, IDisposable
     private string _currentCode = "------";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CodeBrush))]
+    [NotifyPropertyChangedFor(nameof(RemainingText))]
     private int _remainingSeconds;
 
     [ObservableProperty]
     private double _progress = 1.0;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CodeBrush))]
     private bool _isCopied;
 
     public string Issuer => string.IsNullOrEmpty(Account.issuer) ? string.Empty : Account.issuer!;
     public string AccountName => Account.accountName;
     public string Initial => Account.Initial();
     public bool IsFavorite => Account.isFavorite;
+    public string FavoriteActionText => Account.isFavorite ? "Remove from Favorites" : "Add to Favorites";
+    public string FavoriteGlyph => Account.isFavorite ? "\uE735" : "\uE734";
+    public string CopyToolTip => _allowClickToCopy
+        ? "Click to copy"
+        : "Click-to-copy is disabled in Settings";
+    public string RemainingText => Account.otpType == OtpType.Totp
+        ? $"{Math.Max(0, RemainingSeconds)}s"
+        : "HOTP";
     public string? Color => Account.color;
     public string Id => Account.id;
+    public Visibility HotpVisibility => Account.otpType == OtpType.Hotp
+        ? Visibility.Visible
+        : Visibility.Collapsed;
+    public Visibility TotpVisibility => Account.otpType == OtpType.Totp
+        ? Visibility.Visible
+        : Visibility.Collapsed;
+    public Brush InitialBrush => new SolidColorBrush(ParseColor(Account.color));
+    public Brush CodeBrush => new SolidColorBrush(
+        IsCopied
+            ? Microsoft.UI.Colors.ForestGreen
+            : RemainingSeconds is > 0 and < 10
+                ? Microsoft.UI.Colors.OrangeRed
+                : Microsoft.UI.Colors.Gray);
 
     /// <summary>
     /// 복사 요청 이벤트
@@ -68,11 +94,19 @@ public partial class AccountItemViewModel : ObservableObject, IDisposable
     /// <summary>편집 요청 이벤트(목록이 편집 화면을 연다).</summary>
     public event EventHandler? EditRequested;
 
-    public AccountItemViewModel(OtpAccount account, IOtpClientService client, IFaviconService? favicon = null)
+    /// <summary>삭제 확인 UI를 목록 페이지에 요청합니다.</summary>
+    public event EventHandler? DeleteRequested;
+
+    public AccountItemViewModel(
+        OtpAccount account,
+        IOtpClientService client,
+        IFaviconService? favicon = null,
+        bool allowClickToCopy = true)
     {
         Account = account;
         _client = client;
         _favicon = favicon;
+        _allowClickToCopy = allowClickToCopy;
 
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
@@ -80,7 +114,7 @@ public partial class AccountItemViewModel : ObservableObject, IDisposable
         _timer.Interval = TimeSpan.FromSeconds(1);
         _timer.Tick += OnTimerTick;
 
-        UpdateCode();
+        UpdateCode(forceCodeGeneration: true);
 
         // TOTP인 경우 타이머 시작
         if (account.otpType == OtpType.Totp)
@@ -139,19 +173,27 @@ public partial class AccountItemViewModel : ObservableObject, IDisposable
         UpdateCode();
     }
 
-    private void UpdateCode()
+    private void UpdateCode(bool forceCodeGeneration = false)
     {
         try
         {
             if (Account.otpType == OtpType.Totp)
             {
                 long nowSecs = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                CurrentCode = OtpeekMethods.GenerateTotpNow(
-                    Account.secret, Account.algorithm, Account.digits, Account.period, nowSecs);
-
                 int period = (int)Account.period;
+                if (period <= 0)
+                    throw new InvalidOperationException("TOTP period must be greater than zero.");
+
+                long timeStep = nowSecs / period;
+                if (forceCodeGeneration || timeStep != _lastTotpTimeStep)
+                {
+                    CurrentCode = OtpeekMethods.GenerateTotpNow(
+                        Account.secret, Account.algorithm, Account.digits, Account.period, nowSecs);
+                    _lastTotpTimeStep = timeStep;
+                }
+
                 RemainingSeconds = period - (int)(nowSecs % period);
-                Progress = period > 0 ? (double)RemainingSeconds / period : 0;
+                Progress = (double)RemainingSeconds / period;
             }
             else
             {
@@ -169,11 +211,22 @@ public partial class AccountItemViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
+    /// Regenerates the selected value immediately before copying so a click on a TOTP
+    /// boundary cannot use the previous timer tick.
+    /// </summary>
+    public string GetFreshCode()
+    {
+        UpdateCode(forceCodeGeneration: true);
+        return CurrentCode;
+    }
+
+    /// <summary>
     /// 코드 복사
     /// </summary>
     [RelayCommand]
     private void CopyCode()
     {
+        if (!_allowClickToCopy) return;
         CopyRequested?.Invoke(this, CurrentCode);
         ShowCopiedIndicator();
     }
@@ -194,8 +247,7 @@ public partial class AccountItemViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void Delete()
     {
-        try { _client.DeleteAccount(Account.id); }
-        catch { /* 삭제 실패는 무시 */ }
+        DeleteRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -242,6 +294,8 @@ public partial class AccountItemViewModel : ObservableObject, IDisposable
         {
             if (CurrentCode.Length == 6)
                 return $"{CurrentCode[..3]} {CurrentCode[3..]}";
+            if (CurrentCode.Length == 7)
+                return $"{CurrentCode[..3]} {CurrentCode[3..]}";
             if (CurrentCode.Length == 8)
                 return $"{CurrentCode[..4]} {CurrentCode[4..]}";
             return CurrentCode;
@@ -255,5 +309,20 @@ public partial class AccountItemViewModel : ObservableObject, IDisposable
 
         _timer.Stop();
         _timer.Tick -= OnTimerTick;
+    }
+
+    private static Windows.UI.Color ParseColor(string? hex)
+    {
+        const string fallback = "#0078D4";
+        hex = string.IsNullOrWhiteSpace(hex) ? fallback : hex.Trim();
+        if (hex.StartsWith('#')) hex = hex[1..];
+
+        if (hex.Length == 6 && uint.TryParse(hex, System.Globalization.NumberStyles.HexNumber,
+                System.Globalization.CultureInfo.InvariantCulture, out uint rgb))
+        {
+            return Windows.UI.Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
+        }
+
+        return Windows.UI.Color.FromArgb(255, 0, 120, 212);
     }
 }

@@ -32,6 +32,7 @@ TestResults/
 # Misc
 nul
 *.log
+.context/
 
 # Rust core
 core/target/
