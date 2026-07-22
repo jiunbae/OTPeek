@@ -45,13 +45,15 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>25</string>
+	<string>26</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>SKIncludeConsumableInAppPurchaseHistory</key>
+	<true/>
 	<key>UTExportedTypeDeclarations</key>
 	<array>
 		<dict>

@@ -49,6 +49,12 @@ struct SettingsView: View {
         let isError: Bool
     }
 
+    private var appVersion: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
+        return "\(version) (\(build))"
+    }
+
     var body: some View {
         content
             .task { await checkICloudAvailability() }
@@ -145,33 +151,39 @@ struct SettingsView: View {
         #endif
     }
 
-    // MARK: - Support (tips / remove ads / links)
+    // MARK: - Support (one-time support / links)
 
     @ViewBuilder
     private var supportSection: some View {
         Section {
-            // 팁(순수 후원). 아무 기능도 잠그지 않는다.
-            if store.showTipThanks {
-                Label("Thank you for the tip! ☕️", systemImage: "heart.fill")
+            if store.hasSupported {
+                Label("Thank you for supporting OTPeek! ☕️", systemImage: "heart.fill")
                     .foregroundColor(.pink)
-            }
-            ForEach(store.tipProducts, id: \.id) { product in
-                Button {
-                    Task { await store.purchase(product) }
-                } label: {
-                    HStack {
-                        settingLabel(tipTitle(for: product.id), tipIcon(for: product.id))
-                        Spacer()
-                        Text(product.displayPrice).foregroundColor(.secondary)
-                    }
+            } else if !store.isSupportStatusLoaded {
+                HStack {
+                    ProgressView()
+                    Text("Checking support status…")
+                        .foregroundColor(.secondary)
                 }
-                .buttonStyle(.plain)
-                .disabled(store.isPurchasing)
+            } else {
+                ForEach(store.tipProducts, id: \.id) { product in
+                    Button {
+                        Task { await store.purchase(product) }
+                    } label: {
+                        HStack {
+                            settingLabel(tipTitle(for: product.id), tipIcon(for: product.id))
+                            Spacer()
+                            Text(product.displayPrice).foregroundColor(.secondary)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(store.isPurchasing)
+                }
             }
         } header: {
             Text("Support OTPeek")
         } footer: {
-            Text("OTPeek is free and open source. Tips fund development; they don't unlock features.")
+            Text("OTPeek is free and open source. Support is optional, one-time, and never unlocks features.")
         }
 
         Section {
@@ -430,7 +442,7 @@ struct SettingsView: View {
     @ViewBuilder
     private var aboutSection: some View {
         Section {
-            LabeledContent("Version", value: "1.0.0")
+            LabeledContent("Version", value: appVersion)
             LabeledContent("Accounts", value: "\(appState.accounts.count)")
             LabeledContent("Folders", value: "\(appState.folders.count)")
         } header: {

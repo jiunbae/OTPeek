@@ -111,9 +111,10 @@ targets:
       properties:
         CFBundleDisplayName: OTPeek
         CFBundleShortVersionString: "1.1"
-        CFBundleVersion: "21"
+        CFBundleVersion: "26"
         LSApplicationCategoryType: public.app-category.utilities
         ITSAppUsesNonExemptEncryption: false
+        SKIncludeConsumableInAppPurchaseHistory: true
         NSCameraUsageDescription: Camera access is needed to scan QR codes for adding accounts.
         NSFaceIDUsageDescription: Face ID unlocks your one-time codes.
         UILaunchScreen: {}
@@ -137,7 +138,7 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         PRODUCT_NAME: OTPeek
         MARKETING_VERSION: "1.1"
-        CURRENT_PROJECT_VERSION: "21"
+        CURRENT_PROJECT_VERSION: "26"
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Apple Distribution"
         PROVISIONING_PROFILE_SPECIFIER: "OTPeek iOS AppStore 2026-07"
@@ -174,10 +175,11 @@ targets:
       properties:
         CFBundleDisplayName: OTPeek
         CFBundleShortVersionString: "1.1"
-        CFBundleVersion: "25"
+        CFBundleVersion: "26"
         LSApplicationCategoryType: public.app-category.utilities
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
         ITSAppUsesNonExemptEncryption: false
+        SKIncludeConsumableInAppPurchaseHistory: true
         UTExportedTypeDeclarations: *otpvaultExportedTypes
         CFBundleDocumentTypes: *otpvaultDocumentTypes
         CFBundleURLTypes: *deepLinkUrlTypes
@@ -188,7 +190,7 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         PRODUCT_NAME: OTPeek
         MARKETING_VERSION: "1.1"
-        CURRENT_PROJECT_VERSION: "25"
+        CURRENT_PROJECT_VERSION: "26"
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Apple Distribution"
         PROVISIONING_PROFILE_SPECIFIER: "OTPeek macOS AppStore 1784287691"
@@ -217,7 +219,7 @@ targets:
         CODE_SIGN_ENTITLEMENTS: OtpWidgetExtension/OtpWidgetExtension.entitlements
         PRODUCT_NAME: OtpWidget
         MARKETING_VERSION: "1.1"
-        CURRENT_PROJECT_VERSION: "21"
+        CURRENT_PROJECT_VERSION: "26"
         SKIP_INSTALL: YES
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Apple Distribution"
@@ -246,7 +248,7 @@ targets:
         CODE_SIGN_ENTITLEMENTS: OtpWidgetExtension/OtpWidgetExtension.entitlements
         PRODUCT_NAME: OtpWidget
         MARKETING_VERSION: "1.1"
-        CURRENT_PROJECT_VERSION: "25"
+        CURRENT_PROJECT_VERSION: "26"
         SKIP_INSTALL: YES
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Apple Distribution"
