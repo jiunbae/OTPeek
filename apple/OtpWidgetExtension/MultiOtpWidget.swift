@@ -15,7 +15,13 @@ import AppKit
 /// 방금 복사한 행을 App Group 저장소에 기록한다. 인텐트 실행 후 타임라인이 리로드되면
 /// 프로바이더가 이 값을 읽어 해당 행에 잠깐(약 2초) 체크마크를 보여준다.
 enum CopyFeedback {
-    static let feedbackWindow: TimeInterval = 2.0
+    /// 체크마크 표시 시간. 타임라인이 만들어진 시각부터 잰다. 시스템은 위젯 크기별 타임라인을
+    /// 차례로 만든 뒤 한꺼번에 반영하므로(시뮬레이터에서 약 2초) 그만큼을 더 둔다.
+    static let feedbackWindow: TimeInterval = 4.0
+    /// 탭 후 이 시간 안에 만들어진 타임라인이면 "복사 직후" 리로드로 본다.
+    static let pendingWindow: TimeInterval = 15
+    /// 복사 직후 리로드는 빨리 끝나도록 엔트리를 이만큼만 만든다(다 쓰면 평소 리로드로 돌아간다).
+    static let quickEntryCount = 8
     private static let idKey = "widget.lastCopiedId"
     private static let atKey = "widget.lastCopiedAt"
     private static var defaults: UserDefaults? { UserDefaults(suiteName: VaultAccess.appGroupId) }
@@ -25,11 +31,26 @@ enum CopyFeedback {
         defaults?.set(date.timeIntervalSince1970, forKey: atKey)
     }
 
-    /// 피드백 창(feedbackWindow) 안이라면 방금 복사한 계정 id, 아니면 nil.
+    /// 마지막으로 복사한 계정 id 와 시각.
     static func recent() -> (id: String, at: Date)? {
         guard let d = defaults, let id = d.string(forKey: idKey) else { return nil }
         let at = Date(timeIntervalSince1970: d.double(forKey: atKey))
         return (id, at)
+    }
+
+    /// 체크마크가 사라지는 시각(위젯 크기별). 복사 후 그 크기의 첫 타임라인이 만들어질 때 정해지고,
+    /// 같은 복사로 다시 만들어지는 타임라인(연달아 오는 리로드, 앱을 연 직후 리로드)은 그 시각을
+    /// 그대로 쓴다. 그래서 체크마크가 다시 뜨거나 늘어나지 않고, 중간에 끊기지도 않는다.
+    static func feedbackEnd(for family: String, copiedAt: Date, now: Date) -> Date {
+        let copiedKey = "widget.copiedFor.\(family)", endKey = "widget.copiedUntil.\(family)"
+        guard let d = defaults else { return now.addingTimeInterval(feedbackWindow) }
+        if d.double(forKey: copiedKey) == copiedAt.timeIntervalSince1970 {
+            return Date(timeIntervalSince1970: d.double(forKey: endKey))
+        }
+        let end = now.addingTimeInterval(feedbackWindow)
+        d.set(copiedAt.timeIntervalSince1970, forKey: copiedKey)
+        d.set(end.timeIntervalSince1970, forKey: endKey)
+        return end
     }
 }
 
@@ -81,8 +102,10 @@ struct OtpRowItem: Identifiable {
     let issuer: String
     let accountName: String
     let code: String
-    let remaining: Int
-    let progress: Double
+    /// 현재 코드 구간(카운트다운용). 행마다 주기가 다를 수 있다.
+    let window: ClosedRange<Date>
+    /// 남은 시간이 경고 기준 미만인지(빨간색).
+    let isWarning: Bool
     /// 공유 캐시에서 읽은 파비콘/로고(있으면). 없으면 이니셜 원을 그린다.
     var iconData: Data? = nil
 }
@@ -90,54 +113,65 @@ struct OtpRowItem: Identifiable {
 // MARK: - Provider
 
 struct MultiOtpTimelineProvider: TimelineProvider {
-    /// 위젯에 담을 최대 계정 수(가장 큰 패밀리 기준). 뷰가 패밀리별로 잘라서 표시한다.
-    private let maxAccounts = 6
+    /// 패밀리별로 보이는 행 수. 엔트리에는 보이는 계정만 담는다(안 보이는 행까지 담으면 엔트리가
+    /// 커져 아카이브 한도에 빨리 닿는다).
+    static func rowCount(for family: WidgetFamily) -> Int { family == .systemLarge ? 6 : 3 }
 
     func placeholder(in context: Context) -> MultiOtpEntry {
         MultiOtpEntry(date: Date(), items: MultiOtpTimelineProvider.sampleItems)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (MultiOtpEntry) -> Void) {
-        completion(makeEntry(for: Date(), accounts: loadAccounts()))
+        completion(makeEntry(for: Date(), accounts: loadAccounts(limit: Self.rowCount(for: context.family))))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<MultiOtpEntry>) -> Void) {
         Task {
-            let accounts = loadAccounts()
+            let accounts = loadAccounts(limit: Self.rowCount(for: context.family))
             guard !accounts.isEmpty else {
                 let entry = MultiOtpEntry(date: Date(), items: [])
-                completion(Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(300))))
+                completion(Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(OtpTimeline.retryInterval))))
                 return
             }
+            // 방금 행을 눌러 복사했다면 체크마크가 늦지 않게 이번 리로드를 가볍게 한다:
+            // 파비콘은 캐시만 쓰고 엔트리도 몇 개만 만든다.
+            let now = Date()
+            let copied = CopyFeedback.recent().flatMap { c -> (id: String, until: Date)? in
+                guard c.at <= now, now.timeIntervalSince(c.at) < CopyFeedback.pendingWindow else { return nil }
+                let end = CopyFeedback.feedbackEnd(for: "\(context.family)", copiedAt: c.at, now: now)
+                return end > now ? (c.id, end) : nil
+            }
+
             // 아직 캐시에 없는 파비콘을 받아 공유 캐시에 채운다(설정이 켜져 있을 때만).
-            await prefetchFavicons(for: accounts)
+            if copied == nil { await prefetchFavicons(for: accounts) }
             let icons = faviconMap(for: accounts)
 
-            var entries: [MultiOtpEntry] = []
-            let now = Date()
-            let copied = CopyFeedback.recent()
-            for offset in 0..<60 {
-                let date = now.addingTimeInterval(Double(offset))
-                // 방금 복사한 행이면 피드백 창 동안만 체크마크를 표시한다.
-                var copiedId: String? = nil
-                if let c = copied {
-                    let dt = date.timeIntervalSince(c.at)
-                    if dt >= 0 && dt < CopyFeedback.feedbackWindow { copiedId = c.id }
-                }
-                entries.append(makeEntry(for: date, accounts: accounts, icons: icons, copiedId: copiedId))
+            // 모든 행의 코드 교체 순간에만 엔트리를 두고, 피드백 창이 끝나는 순간에도 하나 더 둬
+            // 체크마크를 걷어낸다. 행이 많아 엔트리 하나가 크므로(행당 약 17KB) 아카이브 한도 안에
+            // 들도록 경고색 엔트리는 생략하고 개수를 제한한다(30초 계정 기준 medium 40분, large 30분).
+            let dates = OtpTimeline.entryDates(
+                from: Date(),
+                periods: accounts.map(\.period),
+                warnings: false,
+                maxCount: copied != nil ? CopyFeedback.quickEntryCount : (context.family == .systemLarge ? 60 : 80),
+                extra: copied.map { [$0.until] } ?? []
+            )
+            let entries = dates.map { date -> MultiOtpEntry in
+                let copiedId = copied.flatMap { date < $0.until ? $0.id : nil }
+                return makeEntry(for: date, accounts: accounts, icons: icons, copiedId: copiedId)
             }
-            completion(Timeline(entries: entries, policy: .after(now.addingTimeInterval(60))))
+            completion(Timeline(entries: entries, policy: .after(OtpTimeline.reloadDate(after: dates, periods: accounts.map(\.period)))))
         }
     }
 
     // MARK: - Private
 
-    /// 즐겨찾기 우선, 그다음 정렬 순서. 최대 maxAccounts 개.
-    private func loadAccounts() -> [OtpAccount] {
+    /// 즐겨찾기 우선, 그다음 정렬 순서. 최대 limit 개.
+    private func loadAccounts(limit: Int) -> [OtpAccount] {
         let all = WidgetVault.openClient()?.listAccounts() ?? []
         let favorites = all.filter { $0.isFavorite }
         let others = all.filter { !$0.isFavorite }
-        return Array((favorites + others).prefix(maxAccounts))
+        return Array((favorites + others).prefix(limit))
     }
 
     /// 계정 id → 캐시된 파비콘 데이터. 설정이 꺼져 있으면 빈 맵.
@@ -146,21 +180,17 @@ struct MultiOtpTimelineProvider: TimelineProvider {
         var map: [String: Data] = [:]
         for a in accounts {
             if let dom = FaviconProvider.domain(for: a), let data = FaviconProvider.cachedData(for: dom) {
-                map[a.id] = data
+                map[a.id] = OtpTimeline.thumbnail(data)
             }
         }
         return map
     }
 
-    /// 캐시에 없는 파비콘만 동시 다운로드(위젯이 스스로 채운다).
+    /// 캐시에 없는 파비콘만 동시 다운로드(위젯이 스스로 채운다). 단일 위젯과 같은 판정을 써서
+    /// 추측 도메인은 받지 않는다(엉뚱한 아이콘이 캐시돼 앱에도 보이는 것을 막는다).
     private func prefetchFavicons(for accounts: [OtpAccount]) async {
-        guard FaviconProvider.faviconsEnabled else { return }
         await withTaskGroup(of: Void.self) { group in
-            for a in accounts {
-                guard let dom = FaviconProvider.domain(for: a),
-                      FaviconProvider.cachedData(for: dom) == nil else { continue }
-                group.addTask { _ = await FaviconStore.shared.iconData(for: dom) }
-            }
+            for a in accounts { group.addTask { await FaviconStore.shared.prefetch(a) } }
         }
     }
 
@@ -173,8 +203,8 @@ struct MultiOtpTimelineProvider: TimelineProvider {
                 issuer: account.issuerText.isEmpty ? account.accountName : account.issuerText,
                 accountName: account.accountName,
                 code: account.generateCode(at: date) ?? "------",
-                remaining: OtpGenerator.getRemainingSeconds(period: account.period, date: date),
-                progress: OtpGenerator.getProgress(period: account.period, date: date),
+                window: OtpTimeline.window(period: account.period, at: date),
+                isWarning: OtpTimeline.isWarning(period: account.period, at: date),
                 iconData: icons[account.id]
             )
         }
@@ -182,10 +212,11 @@ struct MultiOtpTimelineProvider: TimelineProvider {
     }
 
     static var sampleItems: [OtpRowItem] {
-        [
-            OtpRowItem(id: "1", initial: "G", color: "#4285F4", issuer: "Google", accountName: "me@gmail.com", code: "123456", remaining: 21, progress: 0.7),
-            OtpRowItem(id: "2", initial: "A", color: "#FF9500", issuer: "Amazon", accountName: "me@me.com", code: "482915", remaining: 21, progress: 0.7),
-            OtpRowItem(id: "3", initial: "G", color: "#24292E", issuer: "GitHub", accountName: "octocat", code: "705513", remaining: 21, progress: 0.7),
+        let sampleWindow = OtpTimeline.window(period: 30, at: Date())
+        return [
+            OtpRowItem(id: "1", initial: "G", color: "#4285F4", issuer: "Google", accountName: "me@gmail.com", code: "123456", window: sampleWindow, isWarning: false),
+            OtpRowItem(id: "2", initial: "A", color: "#FF9500", issuer: "Amazon", accountName: "me@me.com", code: "482915", window: sampleWindow, isWarning: false),
+            OtpRowItem(id: "3", initial: "G", color: "#24292E", issuer: "GitHub", accountName: "octocat", code: "705513", window: sampleWindow, isWarning: false),
         ]
     }
 }
@@ -203,6 +234,7 @@ struct MultiOtpWidget: Widget {
         .configurationDisplayName("OTP List")
         .description("Show several accounts. Tap a code to copy it.")
         .supportedFamilies([.systemMedium, .systemLarge])
+        .excludingIPhoneWidgetsOnMac([.systemMedium, .systemLarge])
     }
 }
 
@@ -212,13 +244,8 @@ struct MultiOtpWidgetEntryView: View {
     var entry: MultiOtpEntry
     @Environment(\.widgetFamily) var family
 
-    /// 패밀리별 표시 행 수.
-    private var rowCount: Int {
-        switch family {
-        case .systemLarge: return 6
-        default: return 3   // systemMedium
-        }
-    }
+    /// 패밀리별 표시 행 수(타임라인이 담는 계정 수와 같다).
+    private var rowCount: Int { MultiOtpTimelineProvider.rowCount(for: family) }
 
     var body: some View {
         if entry.items.isEmpty {
@@ -315,15 +342,15 @@ struct OtpWidgetRow: View {
                 } else {
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(formatOtpCode(item.code))
+                            .privacySensitive()
                             .font(.system(.callout, design: .monospaced))
                             .fontWeight(.bold)
                             .monospacedDigit()
                             .lineLimit(1)
-                            .foregroundColor(item.remaining < 10 ? .red : .primary)
-                        Text("\(item.remaining)s")
+                            .foregroundColor(item.isWarning ? .red : .primary)
+                        CountdownText(window: item.window, width: 40)
                             .font(.system(size: 9))
-                            .monospacedDigit()
-                            .foregroundColor(item.remaining < 10 ? .red : .secondary)
+                            .foregroundColor(item.isWarning ? .red : .secondary)
                     }
                 }
             }

@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 #if os(macOS)
 import AppKit
 #endif
@@ -556,7 +557,10 @@ struct RootView: View {
         .animation(.easeInOut(duration: 0.2), value: appLock.isLocked)
         .onChange(of: scenePhase) { _, phase in
             switch phase {
-            case .active:                     appLock.didBecomeActive()
+            case .active:
+                appLock.didBecomeActive()
+                // 앱이 앞에 있을 때의 리로드는 위젯 예산을 쓰지 않는다. 혹시 멈춰 있던 위젯을 되살린다.
+                WidgetCenter.shared.reloadAllTimelines()
             case .inactive, .background:      appLock.didResignActive()
             @unknown default:                 break
             }

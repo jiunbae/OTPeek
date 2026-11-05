@@ -52,6 +52,7 @@
 		6C37342F194A6062220D157B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CC83E2AA4F9F250CBEE0514A /* Assets.xcassets */; };
 		6F28D4AC03D7311A3C33C250 /* FaviconProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7241B5227ED2EB431B42A95D /* FaviconProvider.swift */; };
 		70180A982F076DD652207470 /* AccountListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E416CF793686FC417359347 /* AccountListView.swift */; };
+		74C9BCBC8A8A83FC3D453AED /* OtpTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CCEF8F37926340D9012BCA9 /* OtpTimeline.swift */; };
 		7D754C30FE32B948FFDFD0A5 /* OtpGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 065664E27D1DDB3265845FF9 /* OtpGenerator.swift */; };
 		7F25D55F16C71B3F337AB95C /* AppLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 853A371AB8C03A5298A8BB92 /* AppLock.swift */; };
 		80616D3718D67CAD8EBD6202 /* OtpModelBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6607ED4CCF1CA8C75A052E22 /* OtpModelBridge.swift */; };
@@ -74,6 +75,7 @@
 		ACF2FCB79CDDB309D9F16714 /* OtpModelBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6607ED4CCF1CA8C75A052E22 /* OtpModelBridge.swift */; };
 		AEA6AC769EF9A040770E6CA4 /* OtpeekApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E36583E2F1FE33791D4DD250 /* OtpeekApp.swift */; };
 		AF870A2BAAE05C6009AE331F /* LockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3BD28163A9AB2F1B075332 /* LockView.swift */; };
+		B1E25B54F3CC670325638700 /* OtpTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CCEF8F37926340D9012BCA9 /* OtpTimeline.swift */; };
 		B481D1BEE4B4963A61286EC7 /* StoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0434FDB92ABA36F8F357074 /* StoreManager.swift */; };
 		B52D49B9C328EECE226F1B62 /* SharedViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B9E2B53D62837C0D688E506 /* SharedViews.swift */; };
 		B887B223CEF32E1973CF428C /* WidgetSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBD05CF608489D2A47C38939 /* WidgetSettingsView.swift */; };
@@ -147,6 +149,7 @@
 
 /* Begin PBXFileReference section */
 		065664E27D1DDB3265845FF9 /* OtpGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtpGenerator.swift; sourceTree = "<group>"; };
+		1CCEF8F37926340D9012BCA9 /* OtpTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtpTimeline.swift; sourceTree = "<group>"; };
 		20D38C65B0403945BD877732 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		22DE66DC596C2E4DE3C4F5F5 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		28757F94227AC0414CCB6A05 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -246,6 +249,7 @@
 				E5019611EB35C6B4B35D7066 /* Info.plist */,
 				66BBACC7795CB0843396FF97 /* MultiOtpWidget.swift */,
 				E9CDC678383A01B5A4B75E45 /* OtpEntry.swift */,
+				1CCEF8F37926340D9012BCA9 /* OtpTimeline.swift */,
 				BAF0EEF1B739B5AE7D093E2F /* OtpTimelineProvider.swift */,
 				FF2DDB7DE7AC8C946FAE1375 /* OtpWidget.swift */,
 				997918DC98088E032336E738 /* OtpWidgetEntryView.swift */,
@@ -464,10 +468,10 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A09B0C27BE3819D741576A6E /* OtpWidgetExtension-iOS */,
-				CFF5C4D710DBBD67FD2116C4 /* OtpWidgetExtension-macOS */,
 				A996C7D3B9DC3E03C6CFAF8D /* Otpeek-iOS */,
 				0A0A269B363FBEDD48284A57 /* Otpeek-macOS */,
+				A09B0C27BE3819D741576A6E /* OtpWidgetExtension-iOS */,
+				CFF5C4D710DBBD67FD2116C4 /* OtpWidgetExtension-macOS */,
 			);
 		};
 /* End PBXProject section */
@@ -586,6 +590,7 @@
 				7D754C30FE32B948FFDFD0A5 /* OtpGenerator.swift in Sources */,
 				80616D3718D67CAD8EBD6202 /* OtpModelBridge.swift in Sources */,
 				3B7918F035FE35831A92D9FF /* OtpStore.swift in Sources */,
+				74C9BCBC8A8A83FC3D453AED /* OtpTimeline.swift in Sources */,
 				50A8D6AFE69095020972E30E /* OtpTimelineProvider.swift in Sources */,
 				89EBE0728D37904AB1085D36 /* OtpWidget.swift in Sources */,
 				3B5A085CC0F45ABAB3DCEF10 /* OtpWidgetEntryView.swift in Sources */,
@@ -642,6 +647,7 @@
 				3491A484ECC881F981D92B20 /* OtpGenerator.swift in Sources */,
 				CCA0071AE8B3A5BC072186A8 /* OtpModelBridge.swift in Sources */,
 				20A3192B57A68B7D8991C31D /* OtpStore.swift in Sources */,
+				B1E25B54F3CC670325638700 /* OtpTimeline.swift in Sources */,
 				3743A296DDB5FB101E4959D2 /* OtpTimelineProvider.swift in Sources */,
 				C1947C163AA7BCF9EA3C1FA8 /* OtpWidget.swift in Sources */,
 				95A3C93B3AE8A48977A34620 /* OtpWidgetEntryView.swift in Sources */,
@@ -707,7 +713,7 @@
 				CODE_SIGN_ENTITLEMENTS = OtpWidgetExtension/OtpWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 27;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
@@ -736,7 +742,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 27;
 				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -762,7 +768,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 27;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
@@ -790,7 +796,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 27;
 				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -816,7 +822,7 @@
 				CODE_SIGN_ENTITLEMENTS = Otpeek/Otpeek.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 27;
 				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -902,7 +908,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 27;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
@@ -928,7 +934,7 @@
 				CODE_SIGN_ENTITLEMENTS = OtpWidgetExtension/OtpWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 27;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
@@ -1022,7 +1028,7 @@
 				CODE_SIGN_ENTITLEMENTS = Otpeek/Otpeek.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 27;
 				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",

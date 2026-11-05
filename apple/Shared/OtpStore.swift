@@ -141,6 +141,8 @@ public final class OtpStore: ObservableObject {
         self.vaultExists = true
         restoreSyncPreference()
         refresh()
+        // 생성/잠금해제/복원 직후 위젯이 "No accounts" 에 머물지 않도록 바로 새로고침.
+        VaultAccess.notifyChange()
     }
 
     /// 새 볼트 생성 (기존 데이터 없음).
@@ -256,6 +258,8 @@ public final class OtpStore: ObservableObject {
         vaultExists = false
         lastError = nil
         lastSyncStatus = "Never synced"
+        // 지워진 볼트의 코드를 위젯이 계속 보여주지 않도록.
+        VaultAccess.notifyChange()
     }
 
     // MARK: - 새로고침
@@ -443,6 +447,8 @@ public final class OtpStore: ObservableObject {
                 self?.lastSyncStatus = result
                 if wrongKey { self?.lastError = result }
                 self?.reloadFromDisk()
+                // 다른 기기에서 받아 온 변경을 위젯에도 반영.
+                VaultAccess.notifyChange()
             }
         }
     }

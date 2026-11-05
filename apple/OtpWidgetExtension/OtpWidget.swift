@@ -26,6 +26,7 @@ struct OtpWidget: Widget {
         .configurationDisplayName("OTP Quick")
         .description("Display your favorite account's OTP code")
         .supportedFamilies(supportedFamilies)
+        .excludingIPhoneWidgetsOnMac(supportedFamilies)
     }
 
     private var supportedFamilies: [WidgetFamily] {
