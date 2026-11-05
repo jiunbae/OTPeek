@@ -270,6 +270,7 @@ struct ConfigurableSmallWidgetView: View {
                 .lineLimit(1)
 
             Text(entry.displayCode)
+                .privacySensitive()
                 .font(.system(.title2, design: .monospaced))
                 .fontWeight(.bold)
                 .foregroundColor(.primary)
@@ -312,6 +313,7 @@ struct ConfigurableMediumWidgetView: View {
                 }
 
                 Text(entry.displayCode)
+                    .privacySensitive()
                     .font(.system(.largeTitle, design: .monospaced))
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
@@ -340,9 +342,12 @@ struct ConfigurableCircularAccessoryView: View {
                     .font(.caption)
                     .fontWeight(.bold)
 
-                Text(entry.code.prefix(3))
-                    .font(.system(.caption, design: .monospaced))
-                    .fontWeight(.bold)
+                // 원형은 공간이 좁지만 앞 3자리만으로는 코드를 쓸 수 없으므로 6자리를 줄여서라도 다 보인다.
+                Text(entry.code)
+                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
+                    .privacySensitive()
             }
         }
     }
@@ -369,6 +374,7 @@ struct ConfigurableRectangularAccessoryView: View {
             }
 
             Text(entry.displayCode)
+                .privacySensitive()
                 .font(.system(.body, design: .monospaced))
                 .fontWeight(.bold)
 

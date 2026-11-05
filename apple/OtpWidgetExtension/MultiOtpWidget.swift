@@ -15,7 +15,13 @@ import AppKit
 /// 방금 복사한 행을 App Group 저장소에 기록한다. 인텐트 실행 후 타임라인이 리로드되면
 /// 프로바이더가 이 값을 읽어 해당 행에 잠깐(약 2초) 체크마크를 보여준다.
 enum CopyFeedback {
-    static let feedbackWindow: TimeInterval = 2.0
+    /// 체크마크 표시 시간. 타임라인이 만들어진 시각부터 잰다. 시스템은 위젯 크기별 타임라인을
+    /// 차례로 만든 뒤 한꺼번에 반영하므로(시뮬레이터에서 약 2초) 그만큼을 더 둔다.
+    static let feedbackWindow: TimeInterval = 4.0
+    /// 탭 후 이 시간 안에 만들어진 타임라인이면 "복사 직후" 리로드로 본다.
+    static let pendingWindow: TimeInterval = 15
+    /// 복사 직후 리로드는 빨리 끝나도록 엔트리를 이만큼만 만든다(다 쓰면 평소 리로드로 돌아간다).
+    static let quickEntryCount = 8
     private static let idKey = "widget.lastCopiedId"
     private static let atKey = "widget.lastCopiedAt"
     private static var defaults: UserDefaults? { UserDefaults(suiteName: VaultAccess.appGroupId) }
@@ -111,24 +117,26 @@ struct MultiOtpTimelineProvider: TimelineProvider {
                 completion(Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(OtpTimeline.retryInterval))))
                 return
             }
-            // 아직 캐시에 없는 파비콘을 받아 공유 캐시에 채운다(설정이 켜져 있을 때만).
-            await prefetchFavicons(for: accounts)
-            let icons = faviconMap(for: accounts)
-
-            // 모든 행의 코드 교체 순간에만 엔트리를 둔다. 방금 복사했다면
-            // 피드백 창이 끝나는 순간에도 엔트리를 하나 더 둬 체크마크를 걷어낸다.
+            // 방금 행을 눌러 복사했다면 체크마크가 늦지 않게 이번 리로드를 가볍게 한다:
+            // 파비콘은 캐시만 쓰고 엔트리도 몇 개만 만든다.
             let now = Date()
             let copied = CopyFeedback.recent().flatMap { c -> (id: String, until: Date)? in
-                let until = c.at.addingTimeInterval(CopyFeedback.feedbackWindow)
-                return c.at <= now && now < until ? (c.id, until) : nil
+                c.at <= now && now.timeIntervalSince(c.at) < CopyFeedback.pendingWindow
+                    ? (c.id, now.addingTimeInterval(CopyFeedback.feedbackWindow)) : nil
             }
-            // 행이 많아 엔트리 하나가 크다(행당 약 17KB). 아카이브 한도 안에 들도록 경고색 엔트리는
-            // 생략하고 개수를 제한한다(30초 계정 기준 medium 40분, large 30분).
+
+            // 아직 캐시에 없는 파비콘을 받아 공유 캐시에 채운다(설정이 켜져 있을 때만).
+            if copied == nil { await prefetchFavicons(for: accounts) }
+            let icons = faviconMap(for: accounts)
+
+            // 모든 행의 코드 교체 순간에만 엔트리를 두고, 피드백 창이 끝나는 순간에도 하나 더 둬
+            // 체크마크를 걷어낸다. 행이 많아 엔트리 하나가 크므로(행당 약 17KB) 아카이브 한도 안에
+            // 들도록 경고색 엔트리는 생략하고 개수를 제한한다(30초 계정 기준 medium 40분, large 30분).
             let dates = OtpTimeline.entryDates(
-                from: now,
+                from: Date(),
                 periods: accounts.map(\.period),
                 warnings: false,
-                maxCount: context.family == .systemLarge ? 60 : 80,
+                maxCount: copied != nil ? CopyFeedback.quickEntryCount : (context.family == .systemLarge ? 60 : 80),
                 extra: copied.map { [$0.until] } ?? []
             )
             let entries = dates.map { date -> MultiOtpEntry in
@@ -326,6 +334,7 @@ struct OtpWidgetRow: View {
                 } else {
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(formatOtpCode(item.code))
+                            .privacySensitive()
                             .font(.system(.callout, design: .monospaced))
                             .fontWeight(.bold)
                             .monospacedDigit()

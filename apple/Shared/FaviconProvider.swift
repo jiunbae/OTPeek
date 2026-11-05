@@ -1,5 +1,6 @@
 import Foundation
 import ImageIO
+import UniformTypeIdentifiers
 
 /// 앱과 위젯이 공유하는 App Group UserDefaults(파비콘 on/off 등).
 public extension UserDefaults {
@@ -33,9 +34,50 @@ public enum FaviconProvider {
     }
 
     /// 디스크에 이미 캐시된 이미지(동기). 위젯 타임라인에서 사용.
+    /// 예전 빌드가 원본(최대 1024px)으로 저장한 파일은 읽을 때 한 번 줄여서 다시 저장한다.
     public static func cachedData(for domain: String) -> Data? {
-        guard let data = try? Data(contentsOf: fileURL(for: domain)), !data.isEmpty else { return nil }
-        return data
+        let url = fileURL(for: domain)
+        guard let data = try? Data(contentsOf: url), !data.isEmpty else { return nil }
+        guard pixelDimension(data) > storedMaxPixel, let small = downscaled(data, maxPixel: storedMaxPixel) else { return data }
+        try? small.write(to: url, options: .atomic)
+        return small
+    }
+
+    // MARK: - 크기 제한
+
+    /// 디스크에 저장하는 아이콘의 최대 변(px). 아이콘은 최대 44pt(@3x 132px)로만 그려지므로
+    /// 원본(1024px 로고 등)을 그대로 두면 앱은 매번 큰 이미지를 디코딩하고, 위젯은 이미지 면적
+    /// 한도(imageTooLarge)에 걸려 타임라인 저장이 통째로 실패한다.
+    static let storedMaxPixel = 256
+
+    /// 긴 변이 maxPixel 이하가 되도록 줄인 PNG. 읽을 수 없는 데이터면 nil.
+    public static func downscaled(_ data: Data?, maxPixel: Int) -> Data? {
+        guard let data, let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixel
+        ]
+        guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
+        let out = NSMutableData()
+        guard let dest = CGImageDestinationCreateWithData(out, UTType.png.identifier as CFString, 1, nil) else { return nil }
+        CGImageDestinationAddImage(dest, image, nil)
+        return CGImageDestinationFinalize(dest) ? out as Data : nil
+    }
+
+    /// 인코딩된 이미지의 최대 픽셀 변(멀티 해상도 .ico 포함)을 ImageIO 로 확인한다.
+    /// 전체 디코드 없이 헤더만 읽으므로 가볍다.
+    static func pixelDimension(_ data: Data) -> Int {
+        guard let src = CGImageSourceCreateWithData(data as CFData, nil) else { return 0 }
+        var maxDim = 0
+        for i in 0..<max(CGImageSourceGetCount(src), 1) {
+            guard let props = CGImageSourceCopyPropertiesAtIndex(src, i, nil) as? [CFString: Any]
+            else { continue }
+            let w = (props[kCGImagePropertyPixelWidth] as? Int) ?? 0
+            let h = (props[kCGImagePropertyPixelHeight] as? Int) ?? 0
+            maxDim = max(maxDim, w, h)
+        }
+        return maxDim
     }
 
     /// 파비콘 표시 on/off. 앱·위젯이 공유하도록 App Group 저장소에 둔다(미설정 시 기본 on).
@@ -169,9 +211,11 @@ public actor FaviconStore {
         inFlight[domain] = task
         let data = await task.value
         inFlight[domain] = nil
-        if let data {
-            memory[domain] = data
-            try? data.write(to: FaviconProvider.fileURL(for: domain), options: .atomic)
+        if let original = data {
+            let stored = FaviconProvider.downscaled(original, maxPixel: FaviconProvider.storedMaxPixel) ?? original
+            memory[domain] = stored
+            try? stored.write(to: FaviconProvider.fileURL(for: domain), options: .atomic)
+            return stored
         } else if !Task.isCancelled {
             FaviconProvider.recordMiss(domain)
         }
@@ -205,29 +249,13 @@ public actor FaviconStore {
             guard let (data, response) = try? await URLSession.shared.data(for: request),
                   let http = response as? HTTPURLResponse, http.statusCode == 200,
                   data.count > 200, isRasterImage(data) else { continue }
-            let dim = pixelDimension(data)
+            let dim = FaviconProvider.pixelDimension(data)
             if dim >= 128 { return data }            // 이미 선명 → 채택
             if dim > bestDim { best = data; bestDim = dim }  // 더 큰 후보 기억
         }
         return best
     }
 
-    /// 인코딩된 이미지의 최대 픽셀 변(멀티 해상도 .ico 포함)을 ImageIO 로 확인한다.
-    /// 전체 디코드 없이 헤더만 읽으므로 가볍다.
-    private static func pixelDimension(_ data: Data) -> Int {
-        guard let src = CGImageSourceCreateWithData(data as CFData, nil) else { return 0 }
-        var maxDim = 0
-        for i in 0..<max(CGImageSourceGetCount(src), 1) {
-            guard let props = CGImageSourceCopyPropertiesAtIndex(src, i, nil) as? [CFString: Any]
-            else { continue }
-            let w = (props[kCGImagePropertyPixelWidth] as? Int) ?? 0
-            let h = (props[kCGImagePropertyPixelHeight] as? Int) ?? 0
-            maxDim = max(maxDim, w, h)
-        }
-        return maxDim
-    }
-
-    /// OS 가 디코딩할 수 있는 래스터 이미지인지 매직 바이트로 확인(SVG/HTML 배제).
     private static func isRasterImage(_ data: Data) -> Bool {
         guard data.count >= 12 else { return false }
         let b = [UInt8](data.prefix(12))

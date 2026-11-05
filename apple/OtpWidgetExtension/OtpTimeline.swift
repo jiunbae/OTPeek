@@ -1,7 +1,5 @@
 import SwiftUI
 import WidgetKit
-import ImageIO
-import UniformTypeIdentifiers
 
 /// 위젯 타임라인 계산 헬퍼 (모든 OTP 위젯 공용).
 ///
@@ -74,20 +72,10 @@ extension WidgetConfiguration {
 // MARK: - Icon thumbnail
 
 extension OtpTimeline {
-    /// 위젯 아이콘용 썸네일(최대 maxPixel px PNG). 엔트리마다 아이콘이 아카이브되므로
-    /// 원본 파비콘(최대 512px)을 그대로 넣으면 타임라인이 시스템 한도를 넘어 리로드가 거부된다.
+    /// 위젯 아이콘용 썸네일(최대 maxPixel px PNG). 엔트리마다 아이콘이 아카이브되므로 큰 이미지는
+    /// 이미지 면적 한도(imageTooLarge)에 걸려 타임라인 저장이 통째로 실패한다(iPhone 에서 확인).
     static func thumbnail(_ data: Data?, maxPixel: Int = 96) -> Data? {
-        guard let data, let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
-        let options: [CFString: Any] = [
-            kCGImageSourceCreateThumbnailFromImageAlways: true,
-            kCGImageSourceCreateThumbnailWithTransform: true,
-            kCGImageSourceThumbnailMaxPixelSize: maxPixel
-        ]
-        guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
-        let out = NSMutableData()
-        guard let dest = CGImageDestinationCreateWithData(out, UTType.png.identifier as CFString, 1, nil) else { return nil }
-        CGImageDestinationAddImage(dest, image, nil)
-        return CGImageDestinationFinalize(dest) ? out as Data : nil
+        FaviconProvider.downscaled(data, maxPixel: maxPixel)
     }
 }
 
