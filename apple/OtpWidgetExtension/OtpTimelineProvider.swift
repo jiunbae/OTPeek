@@ -29,9 +29,9 @@ struct OtpTimelineProvider: TimelineProvider {
             let iconData = OtpTimeline.thumbnail(FaviconProvider.cachedData(for: account))
 
             // 코드가 바뀌는 순간/경고 진입 순간에만 엔트리를 두고, 다 쓰면 다시 받는다.
-            let dates = OtpTimeline.entryDates(from: Date(), periods: [account.period])
+            let dates = OtpTimeline.entryDates(from: Date(), periods: [account.period], maxCount: OtpTimeline.singleMaxEntries)
             let entries = dates.map { makeEntry(for: $0, account: account, iconData: iconData) }
-            completion(Timeline(entries: entries, policy: .atEnd))
+            completion(Timeline(entries: entries, policy: .after(OtpTimeline.reloadDate(after: dates, periods: [account.period]))))
         }
     }
 

@@ -179,10 +179,11 @@ struct ConfigurableOtpTimelineProvider: AppIntentTimelineProvider {
         let iconData = OtpTimeline.thumbnail(FaviconProvider.cachedData(for: account))
 
         // 코드가 바뀌는 순간/경고 진입 순간에만 엔트리를 두고, 다 쓰면 다시 받는다.
-        let entries = OtpTimeline.entryDates(from: Date(), periods: [account.period]).map {
+        let dates = OtpTimeline.entryDates(from: Date(), periods: [account.period], maxCount: OtpTimeline.singleMaxEntries)
+        let entries = dates.map {
             createEntry(for: $0, account: account, configuration: configuration, iconData: iconData)
         }
-        return Timeline(entries: entries, policy: .atEnd)
+        return Timeline(entries: entries, policy: .after(OtpTimeline.reloadDate(after: dates, periods: [account.period])))
     }
 
     private func getAccount(for configuration: SelectAccountIntent) -> OtpAccount? {

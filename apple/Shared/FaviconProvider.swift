@@ -87,20 +87,26 @@ public enum FaviconProvider {
 
     // MARK: - 실패 캐시
 
-    /// 로고를 끝내 못 받은 도메인은 이 기간 동안 다시 받지 않는다. 기록이 없으면 위젯이 갱신될
+    /// 로고가 없다고 확인된 도메인(모든 소스가 응답했지만 쓸 이미지가 없음)은 이 기간 동안 다시 받지 않는다. 기록이 없으면 위젯이 갱신될
     /// 때마다(30~60분) 같은 소스들에 다시 요청해 네트워크를 깨우고 타임라인 완성을 늦춘다.
     static let missRetryInterval: TimeInterval = 3 * 24 * 60 * 60
     private static let missesKey = "faviconMisses"
 
-    static func recentlyMissed(_ domain: String, now: Date = Date()) -> Bool {
-        guard let at = (UserDefaults.appGroup?.dictionary(forKey: missesKey) as? [String: Double])?[domain] else { return false }
+    /// Clearbit 만 시도한 실패(brandOnly)와 전체 소스를 시도한 실패는 따로 기록한다.
+    private static func missKey(_ domain: String, brandOnly: Bool) -> String {
+        brandOnly ? "brand:" + domain : domain
+    }
+
+    static func recentlyMissed(_ domain: String, brandOnly: Bool, now: Date = Date()) -> Bool {
+        let misses = UserDefaults.appGroup?.dictionary(forKey: missesKey) as? [String: Double]
+        guard let at = misses?[missKey(domain, brandOnly: brandOnly)] else { return false }
         return now.timeIntervalSince1970 - at < missRetryInterval
     }
 
-    static func recordMiss(_ domain: String, now: Date = Date()) {
+    static func recordMiss(_ domain: String, brandOnly: Bool, now: Date = Date()) {
         guard let defaults = UserDefaults.appGroup else { return }
         var misses = defaults.dictionary(forKey: missesKey) as? [String: Double] ?? [:]
-        misses[domain] = now.timeIntervalSince1970
+        misses[missKey(domain, brandOnly: brandOnly)] = now.timeIntervalSince1970
         defaults.set(misses, forKey: missesKey)
     }
 
@@ -205,9 +211,13 @@ public actor FaviconStore {
             return disk
         }
         if let task = inFlight[domain] { return await task.value }
-        if FaviconProvider.recentlyMissed(domain) { return nil }
+        if FaviconProvider.recentlyMissed(domain, brandOnly: brandOnly) { return nil }
 
-        let task = Task<Data?, Never> { await Self.download(domain: domain, brandOnly: brandOnly) }
+        let task = Task<Data?, Never> {
+            let result = await Self.download(domain: domain, brandOnly: brandOnly)
+            if result.definitiveMiss { FaviconProvider.recordMiss(domain, brandOnly: brandOnly) }
+            return result.data
+        }
         inFlight[domain] = task
         let data = await task.value
         inFlight[domain] = nil
@@ -216,8 +226,6 @@ public actor FaviconStore {
             memory[domain] = stored
             try? stored.write(to: FaviconProvider.fileURL(for: domain), options: .atomic)
             return stored
-        } else if !Task.isCancelled {
-            FaviconProvider.recordMiss(domain)
         }
         return data
     }
@@ -229,7 +237,9 @@ public actor FaviconStore {
     /// 받은 이미지가 이미 충분히 크면(≥128px) 즉시 사용하고, 모두 작을 때만
     /// 그중 가장 큰 것을 쓴다(16px 짜리 저화질 파비콘을 피한다).
     /// SVG/HTML 등 래스터가 아닌 응답(UIImage/NSImage 로 못 읽음)은 건너뛴다.
-    private static func download(domain: String, brandOnly: Bool = false) async -> Data? {
+    /// - Returns: 받은 이미지와, 실패라면 그것이 확실한 실패(모든 소스가 응답은 했지만 쓸 이미지가
+    ///   없음)인지 여부. 오프라인·타임아웃 같은 일시 실패는 definitiveMiss=false 라 다음에 다시 시도한다.
+    private static func download(domain: String, brandOnly: Bool = false) async -> (data: Data?, definitiveMiss: Bool) {
         // 추측 도메인(brandOnly)은 Clearbit 만: 없으면 404 → 아이콘 없이 이니셜(엉뚱한 로고 방지).
         // 확신 도메인은 전체 체인(icon.horse/Google 폴백 포함).
         let sources = brandOnly
@@ -242,18 +252,23 @@ public actor FaviconStore {
             ]
         var best: Data?
         var bestDim = 0
+        var transientFailure = false
         for urlString in sources {
             guard let url = URL(string: urlString) else { continue }
             var request = URLRequest(url: url)
             request.timeoutInterval = 8
             guard let (data, response) = try? await URLSession.shared.data(for: request),
-                  let http = response as? HTTPURLResponse, http.statusCode == 200,
-                  data.count > 200, isRasterImage(data) else { continue }
+                  let http = response as? HTTPURLResponse else {
+                transientFailure = true   // 네트워크 오류·타임아웃·취소
+                continue
+            }
+            if http.statusCode >= 500 || http.statusCode == 429 { transientFailure = true; continue }
+            guard http.statusCode == 200, data.count > 200, isRasterImage(data) else { continue }
             let dim = FaviconProvider.pixelDimension(data)
-            if dim >= 128 { return data }            // 이미 선명 → 채택
+            if dim >= 128 { return (data, false) }            // 이미 선명 → 채택
             if dim > bestDim { best = data; bestDim = dim }  // 더 큰 후보 기억
         }
-        return best
+        return (best, best == nil && !transientFailure)
     }
 
     private static func isRasterImage(_ data: Data) -> Bool {

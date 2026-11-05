@@ -31,11 +31,26 @@ enum CopyFeedback {
         defaults?.set(date.timeIntervalSince1970, forKey: atKey)
     }
 
-    /// 피드백 창(feedbackWindow) 안이라면 방금 복사한 계정 id, 아니면 nil.
+    /// 마지막으로 복사한 계정 id 와 시각.
     static func recent() -> (id: String, at: Date)? {
         guard let d = defaults, let id = d.string(forKey: idKey) else { return nil }
         let at = Date(timeIntervalSince1970: d.double(forKey: atKey))
         return (id, at)
+    }
+
+    /// 체크마크가 사라지는 시각(위젯 크기별). 복사 후 그 크기의 첫 타임라인이 만들어질 때 정해지고,
+    /// 같은 복사로 다시 만들어지는 타임라인(연달아 오는 리로드, 앱을 연 직후 리로드)은 그 시각을
+    /// 그대로 쓴다. 그래서 체크마크가 다시 뜨거나 늘어나지 않고, 중간에 끊기지도 않는다.
+    static func feedbackEnd(for family: String, copiedAt: Date, now: Date) -> Date {
+        let copiedKey = "widget.copiedFor.\(family)", endKey = "widget.copiedUntil.\(family)"
+        guard let d = defaults else { return now.addingTimeInterval(feedbackWindow) }
+        if d.double(forKey: copiedKey) == copiedAt.timeIntervalSince1970 {
+            return Date(timeIntervalSince1970: d.double(forKey: endKey))
+        }
+        let end = now.addingTimeInterval(feedbackWindow)
+        d.set(copiedAt.timeIntervalSince1970, forKey: copiedKey)
+        d.set(end.timeIntervalSince1970, forKey: endKey)
+        return end
     }
 }
 
@@ -98,20 +113,21 @@ struct OtpRowItem: Identifiable {
 // MARK: - Provider
 
 struct MultiOtpTimelineProvider: TimelineProvider {
-    /// 위젯에 담을 최대 계정 수(가장 큰 패밀리 기준). 뷰가 패밀리별로 잘라서 표시한다.
-    private let maxAccounts = 6
+    /// 패밀리별로 보이는 행 수. 엔트리에는 보이는 계정만 담는다(안 보이는 행까지 담으면 엔트리가
+    /// 커져 아카이브 한도에 빨리 닿는다).
+    static func rowCount(for family: WidgetFamily) -> Int { family == .systemLarge ? 6 : 3 }
 
     func placeholder(in context: Context) -> MultiOtpEntry {
         MultiOtpEntry(date: Date(), items: MultiOtpTimelineProvider.sampleItems)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (MultiOtpEntry) -> Void) {
-        completion(makeEntry(for: Date(), accounts: loadAccounts()))
+        completion(makeEntry(for: Date(), accounts: loadAccounts(limit: Self.rowCount(for: context.family))))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<MultiOtpEntry>) -> Void) {
         Task {
-            let accounts = loadAccounts()
+            let accounts = loadAccounts(limit: Self.rowCount(for: context.family))
             guard !accounts.isEmpty else {
                 let entry = MultiOtpEntry(date: Date(), items: [])
                 completion(Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(OtpTimeline.retryInterval))))
@@ -121,8 +137,9 @@ struct MultiOtpTimelineProvider: TimelineProvider {
             // 파비콘은 캐시만 쓰고 엔트리도 몇 개만 만든다.
             let now = Date()
             let copied = CopyFeedback.recent().flatMap { c -> (id: String, until: Date)? in
-                c.at <= now && now.timeIntervalSince(c.at) < CopyFeedback.pendingWindow
-                    ? (c.id, now.addingTimeInterval(CopyFeedback.feedbackWindow)) : nil
+                guard c.at <= now, now.timeIntervalSince(c.at) < CopyFeedback.pendingWindow else { return nil }
+                let end = CopyFeedback.feedbackEnd(for: "\(context.family)", copiedAt: c.at, now: now)
+                return end > now ? (c.id, end) : nil
             }
 
             // 아직 캐시에 없는 파비콘을 받아 공유 캐시에 채운다(설정이 켜져 있을 때만).
@@ -143,18 +160,18 @@ struct MultiOtpTimelineProvider: TimelineProvider {
                 let copiedId = copied.flatMap { date < $0.until ? $0.id : nil }
                 return makeEntry(for: date, accounts: accounts, icons: icons, copiedId: copiedId)
             }
-            completion(Timeline(entries: entries, policy: .atEnd))
+            completion(Timeline(entries: entries, policy: .after(OtpTimeline.reloadDate(after: dates, periods: accounts.map(\.period)))))
         }
     }
 
     // MARK: - Private
 
-    /// 즐겨찾기 우선, 그다음 정렬 순서. 최대 maxAccounts 개.
-    private func loadAccounts() -> [OtpAccount] {
+    /// 즐겨찾기 우선, 그다음 정렬 순서. 최대 limit 개.
+    private func loadAccounts(limit: Int) -> [OtpAccount] {
         let all = WidgetVault.openClient()?.listAccounts() ?? []
         let favorites = all.filter { $0.isFavorite }
         let others = all.filter { !$0.isFavorite }
-        return Array((favorites + others).prefix(maxAccounts))
+        return Array((favorites + others).prefix(limit))
     }
 
     /// 계정 id → 캐시된 파비콘 데이터. 설정이 꺼져 있으면 빈 맵.
@@ -231,13 +248,8 @@ struct MultiOtpWidgetEntryView: View {
     var entry: MultiOtpEntry
     @Environment(\.widgetFamily) var family
 
-    /// 패밀리별 표시 행 수.
-    private var rowCount: Int {
-        switch family {
-        case .systemLarge: return 6
-        default: return 3   // systemMedium
-        }
-    }
+    /// 패밀리별 표시 행 수(타임라인이 담는 계정 수와 같다).
+    private var rowCount: Int { MultiOtpTimelineProvider.rowCount(for: family) }
 
     var body: some View {
         if entry.items.isEmpty {

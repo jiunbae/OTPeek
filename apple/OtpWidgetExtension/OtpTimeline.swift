@@ -12,10 +12,13 @@ enum OtpTimeline {
     static let horizon: TimeInterval = 60 * 60
     /// 남은 시간이 이 값 미만이면 빨간색 경고.
     static let warningSeconds = 10
+    /// 단일 계정 위젯의 엔트리 상한. 30초 주기면 1시간치(241개)이고, 15초처럼 짧은 주기에서
+    /// 아카이브가 한없이 커지지 않게 막는다.
+    static let singleMaxEntries = 241
     /// 볼트를 열 수 없을 때(재부팅 후 첫 잠금 해제 전 등) 다시 시도할 간격.
     static let retryInterval: TimeInterval = 5 * 60
 
-    private static func normalized(_ period: UInt32) -> Int { Int(period == 0 ? 30 : period) }
+    fileprivate static func normalized(_ period: UInt32) -> Int { Int(period == 0 ? 30 : period) }
 
     /// date 가 속한 코드 구간(시작 ~ 다음 코드로 바뀌는 시각).
     static func window(period: UInt32, at date: Date) -> ClosedRange<Date> {
@@ -66,6 +69,20 @@ extension WidgetConfiguration {
         #else
         return self
         #endif
+    }
+}
+
+extension OtpTimeline {
+    /// 엔트리를 다 쓴 뒤 다시 불러올 시각. 보통은 마지막 엔트리 시각(.atEnd 와 같음)이지만,
+    /// 주기가 horizon 보다 길어 엔트리가 거의 없으면 다음 코드 경계까지 기다린다. 그러지 않으면
+    /// 마지막 엔트리가 곧 지금이라 곧바로 다시 불러오기를 반복한다.
+    static func reloadDate(after dates: [Date], periods: [UInt32]) -> Date {
+        let start = Int((dates.first ?? Date()).timeIntervalSince1970)
+        let nextBoundary = periods.map { p -> Int in
+            let p = normalized(p)
+            return start - start % p + p
+        }.min() ?? start + 30
+        return max(dates.last ?? Date(), Date(timeIntervalSince1970: TimeInterval(nextBoundary)))
     }
 }
 
