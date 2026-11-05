@@ -19,24 +19,19 @@ struct OtpTimelineProvider: TimelineProvider {
         Task {
             // 앱이 방금 저장한 변경을 반영하도록 읽기 전에 볼트를 연다(내부에서 reload).
             guard let account = loadFirstAccount() else {
-                let timeline = Timeline(entries: [OtpEntry.empty], policy: .after(Date().addingTimeInterval(300)))
+                let timeline = Timeline(entries: [OtpEntry.empty], policy: .after(Date().addingTimeInterval(OtpTimeline.retryInterval)))
                 completion(timeline)
                 return
             }
 
             // 파비콘이 캐시에 없으면 받아 둔다(설정 on 일 때).
             await FaviconStore.shared.prefetch(account)
-            let iconData = FaviconProvider.cachedData(for: account)
+            let iconData = OtpTimeline.thumbnail(FaviconProvider.cachedData(for: account))
 
-            var entries: [OtpEntry] = []
-            let currentDate = Date()
-            for secondOffset in stride(from: 0, to: 300, by: 1) {
-                let entryDate = Calendar.current.date(byAdding: .second, value: secondOffset, to: currentDate)!
-                entries.append(makeEntry(for: entryDate, account: account, iconData: iconData))
-            }
-
-            let refreshDate = Calendar.current.date(byAdding: .minute, value: 5, to: currentDate)!
-            completion(Timeline(entries: entries, policy: .after(refreshDate)))
+            // 코드가 바뀌는 순간/경고 진입 순간에만 엔트리를 두고, 다 쓰면 다시 받는다.
+            let dates = OtpTimeline.entryDates(from: Date(), periods: [account.period])
+            let entries = dates.map { makeEntry(for: $0, account: account, iconData: iconData) }
+            completion(Timeline(entries: entries, policy: .atEnd))
         }
     }
 
@@ -50,16 +45,12 @@ struct OtpTimelineProvider: TimelineProvider {
     private func makeEntry(for date: Date, account: OtpAccount?, iconData: Data? = nil) -> OtpEntry {
         guard let account = account else { return OtpEntry.empty }
 
-        let code = account.generateCode(at: date) ?? "------"
-        let progress = OtpGenerator.getProgress(period: account.period, date: date)
-        let remainingSeconds = OtpGenerator.getRemainingSeconds(period: account.period, date: date)
-
         return OtpEntry(
             date: date,
             account: account,
-            code: code,
-            progress: progress,
-            remainingSeconds: remainingSeconds,
+            code: account.generateCode(at: date) ?? "------",
+            window: OtpTimeline.window(period: account.period, at: date),
+            isWarning: OtpTimeline.isWarning(period: account.period, at: date),
             iconData: iconData
         )
     }

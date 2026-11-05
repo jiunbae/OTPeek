@@ -38,10 +38,12 @@ struct SmallWidgetView: View {
 
                 Spacer()
 
-                Text("\(entry.remainingSeconds)s")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(entry.remainingSeconds < 10 ? .red : .secondary)
+                if entry.account != nil {
+                    CountdownText(window: entry.window)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(entry.isWarning ? .red : .secondary)
+                }
             }
 
             Spacer()
@@ -59,8 +61,8 @@ struct SmallWidgetView: View {
                 .foregroundColor(.primary)
 
             // Progress
-            ProgressView(value: entry.progress)
-                .tint(entry.remainingSeconds < 10 ? .red : .blue)
+            CountdownBar(window: entry.window)
+                .tint(entry.isWarning ? .red : .blue)
         }
         .padding()
     }
@@ -91,18 +93,20 @@ struct MediumWidgetView: View {
 
             // Right: Code
             VStack(alignment: .trailing, spacing: 8) {
-                Text("\(entry.remainingSeconds)s")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(entry.remainingSeconds < 10 ? .red : .secondary)
+                if entry.account != nil {
+                    CountdownText(window: entry.window)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(entry.isWarning ? .red : .secondary)
+                }
 
                 Text(entry.displayCode)
                     .font(.system(.largeTitle, design: .monospaced))
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
 
-                ProgressView(value: entry.progress)
-                    .tint(entry.remainingSeconds < 10 ? .red : .blue)
+                CountdownBar(window: entry.window)
+                    .tint(entry.isWarning ? .red : .blue)
                     .frame(width: 100)
             }
         }
@@ -137,24 +141,27 @@ struct RectangularAccessoryView: View {
     let entry: OtpEntry
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
+        // Gauge 는 엔트리마다만 값이 바뀌므로, 실시간으로 줄어드는 타이머 막대를 쓴다.
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 4) {
                 Text(entry.displayIssuer)
                     .font(.caption)
                     .fontWeight(.medium)
+                    .lineLimit(1)
 
-                Text(entry.displayCode)
-                    .font(.system(.body, design: .monospaced))
-                    .fontWeight(.bold)
+                Spacer(minLength: 4)
+
+                if entry.account != nil {
+                    CountdownText(window: entry.window, width: 44)
+                        .font(.caption2)
+                }
             }
 
-            Spacer()
+            Text(entry.displayCode)
+                .font(.system(.body, design: .monospaced))
+                .fontWeight(.bold)
 
-            Gauge(value: entry.progress) {
-                Text("\(entry.remainingSeconds)")
-            }
-            .gaugeStyle(.accessoryCircularCapacity)
-            .tint(entry.remainingSeconds < 10 ? .red : .blue)
+            CountdownBar(window: entry.window)
         }
     }
 }

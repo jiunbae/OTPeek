@@ -43,6 +43,25 @@ public enum FaviconProvider {
         (UserDefaults.appGroup?.object(forKey: "showFavicons") as? Bool) ?? true
     }
 
+    // MARK: - 실패 캐시
+
+    /// 로고를 끝내 못 받은 도메인은 이 기간 동안 다시 받지 않는다. 기록이 없으면 위젯이 갱신될
+    /// 때마다(30~60분) 같은 소스들에 다시 요청해 네트워크를 깨우고 타임라인 완성을 늦춘다.
+    static let missRetryInterval: TimeInterval = 3 * 24 * 60 * 60
+    private static let missesKey = "faviconMisses"
+
+    static func recentlyMissed(_ domain: String, now: Date = Date()) -> Bool {
+        guard let at = (UserDefaults.appGroup?.dictionary(forKey: missesKey) as? [String: Double])?[domain] else { return false }
+        return now.timeIntervalSince1970 - at < missRetryInterval
+    }
+
+    static func recordMiss(_ domain: String, now: Date = Date()) {
+        guard let defaults = UserDefaults.appGroup else { return }
+        var misses = defaults.dictionary(forKey: missesKey) as? [String: Double] ?? [:]
+        misses[domain] = now.timeIntervalSince1970
+        defaults.set(misses, forKey: missesKey)
+    }
+
     /// 계정에 대해 캐시된 파비콘(설정 on + 도메인 해석 + 디스크 캐시가 있을 때).
     public static func cachedData(for account: OtpAccount) -> Data? {
         guard faviconsEnabled, let domain = domain(for: account) else { return nil }
@@ -144,6 +163,7 @@ public actor FaviconStore {
             return disk
         }
         if let task = inFlight[domain] { return await task.value }
+        if FaviconProvider.recentlyMissed(domain) { return nil }
 
         let task = Task<Data?, Never> { await Self.download(domain: domain, brandOnly: brandOnly) }
         inFlight[domain] = task
@@ -152,6 +172,8 @@ public actor FaviconStore {
         if let data {
             memory[domain] = data
             try? data.write(to: FaviconProvider.fileURL(for: domain), options: .atomic)
+        } else if !Task.isCancelled {
+            FaviconProvider.recordMiss(domain)
         }
         return data
     }

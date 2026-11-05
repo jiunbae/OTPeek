@@ -81,8 +81,10 @@ struct OtpRowItem: Identifiable {
     let issuer: String
     let accountName: String
     let code: String
-    let remaining: Int
-    let progress: Double
+    /// 현재 코드 구간(카운트다운용). 행마다 주기가 다를 수 있다.
+    let window: ClosedRange<Date>
+    /// 남은 시간이 경고 기준 미만인지(빨간색).
+    let isWarning: Bool
     /// 공유 캐시에서 읽은 파비콘/로고(있으면). 없으면 이니셜 원을 그린다.
     var iconData: Data? = nil
 }
@@ -106,27 +108,34 @@ struct MultiOtpTimelineProvider: TimelineProvider {
             let accounts = loadAccounts()
             guard !accounts.isEmpty else {
                 let entry = MultiOtpEntry(date: Date(), items: [])
-                completion(Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(300))))
+                completion(Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(OtpTimeline.retryInterval))))
                 return
             }
             // 아직 캐시에 없는 파비콘을 받아 공유 캐시에 채운다(설정이 켜져 있을 때만).
             await prefetchFavicons(for: accounts)
             let icons = faviconMap(for: accounts)
 
-            var entries: [MultiOtpEntry] = []
+            // 모든 행의 코드 교체 순간에만 엔트리를 둔다. 방금 복사했다면
+            // 피드백 창이 끝나는 순간에도 엔트리를 하나 더 둬 체크마크를 걷어낸다.
             let now = Date()
-            let copied = CopyFeedback.recent()
-            for offset in 0..<60 {
-                let date = now.addingTimeInterval(Double(offset))
-                // 방금 복사한 행이면 피드백 창 동안만 체크마크를 표시한다.
-                var copiedId: String? = nil
-                if let c = copied {
-                    let dt = date.timeIntervalSince(c.at)
-                    if dt >= 0 && dt < CopyFeedback.feedbackWindow { copiedId = c.id }
-                }
-                entries.append(makeEntry(for: date, accounts: accounts, icons: icons, copiedId: copiedId))
+            let copied = CopyFeedback.recent().flatMap { c -> (id: String, until: Date)? in
+                let until = c.at.addingTimeInterval(CopyFeedback.feedbackWindow)
+                return c.at <= now && now < until ? (c.id, until) : nil
             }
-            completion(Timeline(entries: entries, policy: .after(now.addingTimeInterval(60))))
+            // 행이 많아 엔트리 하나가 크다(행당 약 17KB). 아카이브 한도 안에 들도록 경고색 엔트리는
+            // 생략하고 개수를 제한한다(30초 계정 기준 medium 40분, large 30분).
+            let dates = OtpTimeline.entryDates(
+                from: now,
+                periods: accounts.map(\.period),
+                warnings: false,
+                maxCount: context.family == .systemLarge ? 60 : 80,
+                extra: copied.map { [$0.until] } ?? []
+            )
+            let entries = dates.map { date -> MultiOtpEntry in
+                let copiedId = copied.flatMap { date < $0.until ? $0.id : nil }
+                return makeEntry(for: date, accounts: accounts, icons: icons, copiedId: copiedId)
+            }
+            completion(Timeline(entries: entries, policy: .atEnd))
         }
     }
 
@@ -146,7 +155,7 @@ struct MultiOtpTimelineProvider: TimelineProvider {
         var map: [String: Data] = [:]
         for a in accounts {
             if let dom = FaviconProvider.domain(for: a), let data = FaviconProvider.cachedData(for: dom) {
-                map[a.id] = data
+                map[a.id] = OtpTimeline.thumbnail(data)
             }
         }
         return map
@@ -173,8 +182,8 @@ struct MultiOtpTimelineProvider: TimelineProvider {
                 issuer: account.issuerText.isEmpty ? account.accountName : account.issuerText,
                 accountName: account.accountName,
                 code: account.generateCode(at: date) ?? "------",
-                remaining: OtpGenerator.getRemainingSeconds(period: account.period, date: date),
-                progress: OtpGenerator.getProgress(period: account.period, date: date),
+                window: OtpTimeline.window(period: account.period, at: date),
+                isWarning: OtpTimeline.isWarning(period: account.period, at: date),
                 iconData: icons[account.id]
             )
         }
@@ -182,10 +191,11 @@ struct MultiOtpTimelineProvider: TimelineProvider {
     }
 
     static var sampleItems: [OtpRowItem] {
-        [
-            OtpRowItem(id: "1", initial: "G", color: "#4285F4", issuer: "Google", accountName: "me@gmail.com", code: "123456", remaining: 21, progress: 0.7),
-            OtpRowItem(id: "2", initial: "A", color: "#FF9500", issuer: "Amazon", accountName: "me@me.com", code: "482915", remaining: 21, progress: 0.7),
-            OtpRowItem(id: "3", initial: "G", color: "#24292E", issuer: "GitHub", accountName: "octocat", code: "705513", remaining: 21, progress: 0.7),
+        let sampleWindow = OtpTimeline.window(period: 30, at: Date())
+        return [
+            OtpRowItem(id: "1", initial: "G", color: "#4285F4", issuer: "Google", accountName: "me@gmail.com", code: "123456", window: sampleWindow, isWarning: false),
+            OtpRowItem(id: "2", initial: "A", color: "#FF9500", issuer: "Amazon", accountName: "me@me.com", code: "482915", window: sampleWindow, isWarning: false),
+            OtpRowItem(id: "3", initial: "G", color: "#24292E", issuer: "GitHub", accountName: "octocat", code: "705513", window: sampleWindow, isWarning: false),
         ]
     }
 }
@@ -203,6 +213,7 @@ struct MultiOtpWidget: Widget {
         .configurationDisplayName("OTP List")
         .description("Show several accounts. Tap a code to copy it.")
         .supportedFamilies([.systemMedium, .systemLarge])
+        .excludingIPhoneWidgetsOnMac([.systemMedium, .systemLarge])
     }
 }
 
@@ -319,11 +330,10 @@ struct OtpWidgetRow: View {
                             .fontWeight(.bold)
                             .monospacedDigit()
                             .lineLimit(1)
-                            .foregroundColor(item.remaining < 10 ? .red : .primary)
-                        Text("\(item.remaining)s")
+                            .foregroundColor(item.isWarning ? .red : .primary)
+                        CountdownText(window: item.window, width: 40)
                             .font(.system(size: 9))
-                            .monospacedDigit()
-                            .foregroundColor(item.remaining < 10 ? .red : .secondary)
+                            .foregroundColor(item.isWarning ? .red : .secondary)
                     }
                 }
             }

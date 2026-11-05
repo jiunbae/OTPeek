@@ -6,8 +6,10 @@ struct OtpEntry: TimelineEntry {
     let date: Date
     let account: OtpAccount?
     let code: String
-    let progress: Double
-    let remainingSeconds: Int
+    /// 현재 코드 구간. 카운트다운/진행 막대는 이 구간으로 시스템이 실시간으로 그린다.
+    let window: ClosedRange<Date>
+    /// 남은 시간이 경고 기준 미만인지(빨간색). 경고 진입 시각에 엔트리가 따로 있다.
+    let isWarning: Bool
     /// 공유 캐시에서 읽은 파비콘/로고(있으면). 없으면 이니셜 원.
     var iconData: Data? = nil
 
@@ -56,8 +58,8 @@ struct OtpEntry: TimelineEntry {
                 secretKey: "JBSWY3DPEHPK3PXP"
             ),
             code: "123 456",
-            progress: 0.7,
-            remainingSeconds: 21
+            window: OtpTimeline.window(period: 30, at: Date()),
+            isWarning: false
         )
     }
 
@@ -67,8 +69,8 @@ struct OtpEntry: TimelineEntry {
             date: Date(),
             account: nil,
             code: "--- ---",
-            progress: 1.0,
-            remainingSeconds: 30
+            window: OtpTimeline.window(period: 30, at: Date()),
+            isWarning: false
         )
     }
 }

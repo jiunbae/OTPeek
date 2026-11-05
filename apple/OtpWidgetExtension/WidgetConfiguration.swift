@@ -89,6 +89,7 @@ struct ConfigurableOtpWidget: Widget {
         .configurationDisplayName("OTP Code")
         .description("Display a specific account's OTP code")
         .supportedFamilies(supportedFamilies)
+        .excludingIPhoneWidgetsOnMac(supportedFamilies)
     }
 
     private var supportedFamilies: [WidgetFamily] {
@@ -114,8 +115,10 @@ struct ConfigurableOtpEntry: TimelineEntry {
     let date: Date
     let account: OtpAccount?
     let code: String
-    let remainingSeconds: Int
-    let progress: Double
+    /// 현재 코드 구간(카운트다운/진행 막대용).
+    let window: ClosedRange<Date>
+    /// 남은 시간이 경고 기준 미만인지(빨간색).
+    let isWarning: Bool
     let configuration: SelectAccountIntent
     /// 공유 캐시에서 읽은 파비콘/로고(있으면).
     var iconData: Data? = nil
@@ -154,8 +157,8 @@ struct ConfigurableOtpTimelineProvider: AppIntentTimelineProvider {
             date: Date(),
             account: nil,
             code: "123456",
-            remainingSeconds: 30,
-            progress: 1.0,
+            window: OtpTimeline.window(period: 30, at: Date()),
+            isWarning: false,
             configuration: SelectAccountIntent()
         )
     }
@@ -166,23 +169,20 @@ struct ConfigurableOtpTimelineProvider: AppIntentTimelineProvider {
     }
 
     func timeline(for configuration: SelectAccountIntent, in context: Context) async -> Timeline<ConfigurableOtpEntry> {
-        var entries: [ConfigurableOtpEntry] = []
-        let currentDate = Date()
-        let account = getAccount(for: configuration)
-
-        // 파비콘이 캐시에 없으면 받아 둔다(설정 on 일 때).
-        var iconData: Data? = nil
-        if let account { await FaviconStore.shared.prefetch(account); iconData = FaviconProvider.cachedData(for: account) }
-
-        // Generate entries for the next 60 seconds
-        for secondOffset in 0..<60 {
-            let entryDate = currentDate.addingTimeInterval(Double(secondOffset))
-            let entry = createEntry(for: entryDate, account: account, configuration: configuration, iconData: iconData)
-            entries.append(entry)
+        guard let account = getAccount(for: configuration) else {
+            let entry = createEntry(for: Date(), account: nil, configuration: configuration)
+            return Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(OtpTimeline.retryInterval)))
         }
 
-        let nextUpdate = currentDate.addingTimeInterval(60)
-        return Timeline(entries: entries, policy: .after(nextUpdate))
+        // 파비콘이 캐시에 없으면 받아 둔다(설정 on 일 때).
+        await FaviconStore.shared.prefetch(account)
+        let iconData = OtpTimeline.thumbnail(FaviconProvider.cachedData(for: account))
+
+        // 코드가 바뀌는 순간/경고 진입 순간에만 엔트리를 두고, 다 쓰면 다시 받는다.
+        let entries = OtpTimeline.entryDates(from: Date(), periods: [account.period]).map {
+            createEntry(for: $0, account: account, configuration: configuration, iconData: iconData)
+        }
+        return Timeline(entries: entries, policy: .atEnd)
     }
 
     private func getAccount(for configuration: SelectAccountIntent) -> OtpAccount? {
@@ -195,16 +195,12 @@ struct ConfigurableOtpTimelineProvider: AppIntentTimelineProvider {
 
     private func createEntry(for date: Date, account: OtpAccount?, configuration: SelectAccountIntent, iconData: Data? = nil) -> ConfigurableOtpEntry {
         if let account = account {
-            let code = account.generateCode(at: date) ?? "------"
-            let remainingSeconds = OtpGenerator.getRemainingSeconds(period: account.period, date: date)
-            let progress = OtpGenerator.getProgress(period: account.period, date: date)
-
             return ConfigurableOtpEntry(
                 date: date,
                 account: account,
-                code: code,
-                remainingSeconds: remainingSeconds,
-                progress: progress,
+                code: account.generateCode(at: date) ?? "------",
+                window: OtpTimeline.window(period: account.period, at: date),
+                isWarning: OtpTimeline.isWarning(period: account.period, at: date),
                 configuration: configuration,
                 iconData: iconData
             )
@@ -213,8 +209,8 @@ struct ConfigurableOtpTimelineProvider: AppIntentTimelineProvider {
                 date: date,
                 account: nil,
                 code: "------",
-                remainingSeconds: 30,
-                progress: 1.0,
+                window: OtpTimeline.window(period: 30, at: date),
+                isWarning: false,
                 configuration: configuration
             )
         }
@@ -258,10 +254,12 @@ struct ConfigurableSmallWidgetView: View {
 
                 Spacer()
 
-                Text("\(entry.remainingSeconds)s")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(entry.remainingSeconds < 10 ? .red : .secondary)
+                if entry.account != nil {
+                    CountdownText(window: entry.window)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(entry.isWarning ? .red : .secondary)
+                }
             }
 
             Spacer()
@@ -276,8 +274,8 @@ struct ConfigurableSmallWidgetView: View {
                 .fontWeight(.bold)
                 .foregroundColor(.primary)
 
-            ProgressView(value: entry.progress)
-                .tint(entry.remainingSeconds < 10 ? .red : .blue)
+            CountdownBar(window: entry.window)
+                .tint(entry.isWarning ? .red : .blue)
         }
         .padding()
     }
@@ -306,18 +304,20 @@ struct ConfigurableMediumWidgetView: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 8) {
-                Text("\(entry.remainingSeconds)s")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(entry.remainingSeconds < 10 ? .red : .secondary)
+                if entry.account != nil {
+                    CountdownText(window: entry.window)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(entry.isWarning ? .red : .secondary)
+                }
 
                 Text(entry.displayCode)
                     .font(.system(.largeTitle, design: .monospaced))
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
 
-                ProgressView(value: entry.progress)
-                    .tint(entry.remainingSeconds < 10 ? .red : .blue)
+                CountdownBar(window: entry.window)
+                    .tint(entry.isWarning ? .red : .blue)
                     .frame(width: 100)
             }
         }
@@ -352,24 +352,27 @@ struct ConfigurableRectangularAccessoryView: View {
     let entry: ConfigurableOtpEntry
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
+        // Gauge 는 엔트리마다만 값이 바뀌므로, 실시간으로 줄어드는 타이머 막대를 쓴다.
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 4) {
                 Text(entry.displayIssuer)
                     .font(.caption)
                     .fontWeight(.medium)
+                    .lineLimit(1)
 
-                Text(entry.displayCode)
-                    .font(.system(.body, design: .monospaced))
-                    .fontWeight(.bold)
+                Spacer(minLength: 4)
+
+                if entry.account != nil {
+                    CountdownText(window: entry.window, width: 44)
+                        .font(.caption2)
+                }
             }
 
-            Spacer()
+            Text(entry.displayCode)
+                .font(.system(.body, design: .monospaced))
+                .fontWeight(.bold)
 
-            Gauge(value: entry.progress) {
-                Text("\(entry.remainingSeconds)")
-            }
-            .gaugeStyle(.accessoryCircularCapacity)
-            .tint(entry.remainingSeconds < 10 ? .red : .blue)
+            CountdownBar(window: entry.window)
         }
     }
 }
