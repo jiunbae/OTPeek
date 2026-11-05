@@ -110,8 +110,8 @@ targets:
       path: Otpeek/Info-iOS.plist
       properties:
         CFBundleDisplayName: OTPeek
-        CFBundleShortVersionString: "1.1"
-        CFBundleVersion: "26"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSApplicationCategoryType: public.app-category.utilities
         ITSAppUsesNonExemptEncryption: false
         SKIncludeConsumableInAppPurchaseHistory: true
@@ -174,8 +174,8 @@ targets:
       path: Otpeek/Info-macOS.plist
       properties:
         CFBundleDisplayName: OTPeek
-        CFBundleShortVersionString: "1.1"
-        CFBundleVersion: "26"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSApplicationCategoryType: public.app-category.utilities
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
         ITSAppUsesNonExemptEncryption: false
