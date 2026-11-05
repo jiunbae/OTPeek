@@ -186,15 +186,11 @@ struct MultiOtpTimelineProvider: TimelineProvider {
         return map
     }
 
-    /// 캐시에 없는 파비콘만 동시 다운로드(위젯이 스스로 채운다).
+    /// 캐시에 없는 파비콘만 동시 다운로드(위젯이 스스로 채운다). 단일 위젯과 같은 판정을 써서
+    /// 추측 도메인은 받지 않는다(엉뚱한 아이콘이 캐시돼 앱에도 보이는 것을 막는다).
     private func prefetchFavicons(for accounts: [OtpAccount]) async {
-        guard FaviconProvider.faviconsEnabled else { return }
         await withTaskGroup(of: Void.self) { group in
-            for a in accounts {
-                guard let dom = FaviconProvider.domain(for: a),
-                      FaviconProvider.cachedData(for: dom) == nil else { continue }
-                group.addTask { _ = await FaviconStore.shared.iconData(for: dom) }
-            }
+            for a in accounts { group.addTask { await FaviconStore.shared.prefetch(a) } }
         }
     }
 
