@@ -92,7 +92,7 @@ public enum FaviconProvider {
     static let missRetryInterval: TimeInterval = 3 * 24 * 60 * 60
     private static let missesKey = "faviconMisses"
 
-    /// Clearbit 만 시도한 실패(brandOnly)와 전체 소스를 시도한 실패는 따로 기록한다.
+    /// 추측 도메인(brandOnly)과 확신 도메인의 실패는 따로 기록한다.
     private static func missKey(_ domain: String, brandOnly: Bool) -> String {
         brandOnly ? "brand:" + domain : domain
     }
@@ -124,8 +124,9 @@ public enum FaviconProvider {
     /// 도메인과 "확신 여부"를 함께 반환한다.
     /// - confident=true: Known 매핑 / 도메인처럼 생긴 문자열 / 이메일 호스트 → 신뢰. Google·icon.horse
     ///   같은 '항상 무언가 반환하는' 폴백을 써도 대체로 맞다.
-    /// - confident=false: 단순 추측(`{issuer}.com`) → 브랜드 로고(Clearbit)만 조회. Clearbit 이
-    ///   404 면 아이콘 없이 이니셜로 남긴다(엉뚱한 글로브/글자 로고를 확신처럼 보여주지 않기 위함).
+    /// - confident=false: 단순 추측(`{issuer}.com`) → 받지 않고 이니셜로 남긴다(엉뚱한 글로브/글자
+    ///   로고를 확신처럼 보여주지 않기 위함). 예전에는 실제 브랜드 로고만 주는 Clearbit 을 조회했지만
+    ///   서비스가 종료됐다(도메인이 해석되지 않음).
     public static func resolve(for account: OtpAccount) -> (domain: String, confident: Bool)? {
         let issuer = (account.issuer ?? "").trimmingCharacters(in: .whitespaces)
         let name = account.accountName
@@ -184,8 +185,7 @@ public enum FaviconProvider {
 // MARK: - 다운로드 + 캐시 (in-flight 중복 제거)
 
 /// 고화질 로고/파비콘을 받아 App Group 에 캐시한다.
-/// 우선순위: (1) Clearbit 실제 로고(고해상도) → (2) Google 파비콘 128px.
-/// 두 소스 모두 도메인만 있으면 되고, 실패 시 nil.
+/// 우선순위: (1) icon.horse → (2) Google 파비콘 256/128px. 실패 시 nil.
 public actor FaviconStore {
     public static let shared = FaviconStore()
 
@@ -203,7 +203,7 @@ public actor FaviconStore {
     }
 
     /// 메모리 → 디스크 → 네트워크 순으로 이미지를 얻는다.
-    /// brandOnly=true 면 실제 브랜드 로고(Clearbit)만 시도한다(추측 도메인용).
+    /// brandOnly=true(추측 도메인)면 받지 않는다(이니셜).
     public func iconData(for domain: String, brandOnly: Bool = false) async -> Data? {
         if let cached = memory[domain] { return cached }
         if let disk = FaviconProvider.cachedData(for: domain) {
@@ -231,25 +231,23 @@ public actor FaviconStore {
     }
 
     /// 소스들을 화질 우선순위로 시도한다.
-    /// (1) Clearbit — 유명 브랜드의 실제 로고를 256px 로 제공(구글/디스코드 등 고화질).
-    /// (2) icon.horse — 대개 512px PNG.
-    /// (3) Google s2 256/128 — 항상 무언가 반환하는 안정적 폴백.
+    /// (1) icon.horse — 대개 512px PNG.
+    /// (2) Google s2 256/128 — 항상 무언가 반환하는 안정적 폴백.
+    /// (Clearbit 로고 API 는 서비스가 종료돼 도메인이 해석되지 않으므로 뺐다.)
     /// 받은 이미지가 이미 충분히 크면(≥128px) 즉시 사용하고, 모두 작을 때만
     /// 그중 가장 큰 것을 쓴다(16px 짜리 저화질 파비콘을 피한다).
     /// SVG/HTML 등 래스터가 아닌 응답(UIImage/NSImage 로 못 읽음)은 건너뛴다.
     /// - Returns: 받은 이미지와, 실패라면 그것이 확실한 실패(모든 소스가 응답은 했지만 쓸 이미지가
     ///   없음)인지 여부. 오프라인·타임아웃 같은 일시 실패는 definitiveMiss=false 라 다음에 다시 시도한다.
     private static func download(domain: String, brandOnly: Bool = false) async -> (data: Data?, definitiveMiss: Bool) {
-        // 추측 도메인(brandOnly)은 Clearbit 만: 없으면 404 → 아이콘 없이 이니셜(엉뚱한 로고 방지).
-        // 확신 도메인은 전체 체인(icon.horse/Google 폴백 포함).
-        let sources = brandOnly
-            ? ["https://logo.clearbit.com/\(domain)?size=256&format=png"]
-            : [
-                "https://logo.clearbit.com/\(domain)?size=256&format=png",
-                "https://icon.horse/icon/\(domain)",
-                "https://www.google.com/s2/favicons?domain=\(domain)&sz=256",
-                "https://www.google.com/s2/favicons?domain=\(domain)&sz=128",
-            ]
+        // 추측 도메인은 브랜드 로고만 주는 소스가 없어 받지 않는다(이니셜). 일시 실패로 돌려
+        // 기록도 남기지 않는다.
+        guard !brandOnly else { return (nil, false) }
+        let sources = [
+            "https://icon.horse/icon/\(domain)",
+            "https://www.google.com/s2/favicons?domain=\(domain)&sz=256",
+            "https://www.google.com/s2/favicons?domain=\(domain)&sz=128",
+        ]
         var best: Data?
         var bestDim = 0
         var transientFailure = false
@@ -263,7 +261,9 @@ public actor FaviconStore {
                 continue
             }
             if http.statusCode >= 500 || http.statusCode == 429 { transientFailure = true; continue }
-            guard http.statusCode == 200, data.count > 200, isRasterImage(data) else { continue }
+            guard http.statusCode == 200 else { continue }
+            // 200 인데 이미지가 아니면(캡티브 포털의 로그인 페이지 등) 확실한 실패로 보지 않는다.
+            guard data.count > 200, isRasterImage(data) else { transientFailure = true; continue }
             let dim = FaviconProvider.pixelDimension(data)
             if dim >= 128 { return (data, false) }            // 이미 선명 → 채택
             if dim > bestDim { best = data; bestDim = dim }  // 더 큰 후보 기억

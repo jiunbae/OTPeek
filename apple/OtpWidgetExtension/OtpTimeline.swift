@@ -52,7 +52,11 @@ enum OtpTimeline {
             }
         }
         for d in extra { secs.insert(Int(d.timeIntervalSince1970.rounded(.up))) }
-        return secs.filter { $0 >= start && $0 <= end }.sorted().prefix(maxCount).map { Date(timeIntervalSince1970: TimeInterval($0)) }
+        var dates = secs.filter { $0 >= start && $0 <= end }
+        // 주기가 horizon 보다 길어 그 안에 경계가 없으면, 다음 경계에도 엔트리를 하나 둔다.
+        // 리로드가 늦게 돌아도 그 사이 만료된 코드를 보이지 않게 한다.
+        for p in Set(periods.map(normalized)) where p > Int(horizon) { dates.insert(start - start % p + p) }
+        return dates.sorted().prefix(maxCount).map { Date(timeIntervalSince1970: TimeInterval($0)) }
     }
 }
 
