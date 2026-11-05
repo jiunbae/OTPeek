@@ -724,7 +724,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.otpeek.app.widget;
 				PRODUCT_NAME = OtpWidget;
 				PROVISIONING_PROFILE_SPECIFIER = "OTPeek Widget iOS AppStore 2026-07";
@@ -753,7 +753,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.otpeek.app;
 				PRODUCT_NAME = OTPeek;
 				PROVISIONING_PROFILE_SPECIFIER = "OTPeek macOS AppStore 1784287691";
@@ -779,7 +779,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.otpeek.app.widget;
 				PRODUCT_NAME = OtpWidget;
 				PROVISIONING_PROFILE_SPECIFIER = "OTPeek Widget macOS AppStore 1784287697";
@@ -807,7 +807,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.otpeek.app;
 				PRODUCT_NAME = OTPeek;
 				PROVISIONING_PROFILE_SPECIFIER = "OTPeek macOS AppStore 1784287691";
@@ -833,7 +833,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.otpeek.app;
 				PRODUCT_NAME = OTPeek;
 				PROVISIONING_PROFILE_SPECIFIER = "OTPeek iOS AppStore 2026-07";
@@ -919,7 +919,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.otpeek.app.widget;
 				PRODUCT_NAME = OtpWidget;
 				PROVISIONING_PROFILE_SPECIFIER = "OTPeek Widget macOS AppStore 1784287697";
@@ -945,7 +945,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.otpeek.app.widget;
 				PRODUCT_NAME = OtpWidget;
 				PROVISIONING_PROFILE_SPECIFIER = "OTPeek Widget iOS AppStore 2026-07";
@@ -1039,7 +1039,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.otpeek.app;
 				PRODUCT_NAME = OTPeek;
 				PROVISIONING_PROFILE_SPECIFIER = "OTPeek iOS AppStore 2026-07";
