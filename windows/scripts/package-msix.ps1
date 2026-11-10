@@ -22,7 +22,12 @@
 
 .EXAMPLE
     # Store upload bundle (x64 + arm64) for Partner Center
+    # Requires the exact Partner Center identity in Package.appxmanifest.
     ./windows/scripts/package-msix.ps1 -Mode Store -Platforms x64,arm64
+
+.EXAMPLE
+    # Non-submittable local payload QA with the committed placeholder identity
+    ./windows/scripts/package-msix.ps1 -Mode Store -Platforms x64 -PreviewIdentity
 
 .EXAMPLE
     # Locally-installable signed package
@@ -53,6 +58,9 @@ param(
 
     [string]$Configuration = 'Release',
 
+    # Explicitly permit placeholder identity for local package QA only.
+    [switch]$PreviewIdentity,
+
     # Sideload signing (exactly one is required for -Mode Sideload).
     [string]$CertPath,
     [string]$CertThumbprint,
@@ -64,7 +72,32 @@ $ErrorActionPreference = 'Stop'
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot  = Resolve-Path (Join-Path $ScriptDir '..\..')
 $AppProj   = Join-Path $RepoRoot 'windows\Otpeek.App\Otpeek.App.csproj'
+$WidgetProj = Join-Path $RepoRoot 'windows\Otpeek.Widget\Otpeek.Widget.csproj'
 $OutDir    = Join-Path $RepoRoot 'windows\Otpeek.App\AppPackages'
+
+if ($PreviewIdentity -and $Mode -ne 'Store') {
+    throw '-PreviewIdentity is only supported for Store-mode local package QA.'
+}
+if ($Mode -eq 'Store') {
+    [xml]$storeManifest = Get-Content (Join-Path $RepoRoot 'windows\Otpeek.App\Package.appxmanifest') -Raw
+    $identityName = [string]$storeManifest.Package.Identity.Name
+    $identityPublisher = [string]$storeManifest.Package.Identity.Publisher
+    $publisherDisplayName = [string]$storeManifest.Package.Properties.PublisherDisplayName
+    if ([string]::IsNullOrWhiteSpace($identityName) -or
+        [string]::IsNullOrWhiteSpace($identityPublisher) -or
+        [string]::IsNullOrWhiteSpace($publisherDisplayName)) {
+        throw 'Store identity fields are missing. Use the exact Partner Center values.'
+    }
+    $placeholder = $identityName -in @('Otpeek', 'OtpAuthenticator') -or
+        $identityPublisher -in @('CN=Otpeek', 'CN=OtpAuthenticator') -or
+        "$identityName $identityPublisher $publisherDisplayName" -match '(?i)REPLACE[- ]WITH|<PLACEHOLDER>'
+    if ($placeholder -and -not $PreviewIdentity) {
+        throw 'Placeholder Store identity blocked before restore/build. Set exact Partner Center identity, or explicitly pass -PreviewIdentity for local, non-submittable QA.'
+    }
+    if ($PreviewIdentity) {
+        Write-Warning 'PREVIEW ONLY: this package has not been verified against Partner Center and must not be submitted.'
+    }
+}
 
 # OpenSSH and scheduled shells do not always receive rustup's interactive PATH.
 # Prefer the installed stable MSVC toolchain directly when it is available, avoiding
@@ -95,6 +128,9 @@ $bundleMode = if ($Mode -eq 'Dev') { 'Never' } else { 'Always' }
 $common = @(
     "-c", $Configuration,
     "-p:WindowsPackageType=MSIX",
+    # WindowsAppSDKSelfContained covers WinUI, not the .NET runtime. Bundle both
+    # so a clean Windows PC does not need a separate .NET installation/download.
+    "-p:SelfContained=true",
     "-p:GenerateAppxPackageOnBuild=true",
     "-p:AppxBundlePlatforms=$platformList",
     "-p:AppxBundle=$bundleMode",
@@ -102,11 +138,28 @@ $common = @(
     "-p:AppxPackageDir=$OutDir\"
 )
 
+# dotnet SDK discovery can miss the VS-installed native PDB converter, causing
+# StoreUpload symbol packaging to fail even when the required tool is installed.
+if ($Mode -eq 'Store') {
+    $pdbConverter = Get-ChildItem `
+        "${env:ProgramFiles}\Microsoft Visual Studio\*\*\VC\Tools\MSVC\*\bin\Hostx64\x64\mspdbcmf.exe" `
+        -ErrorAction SilentlyContinue |
+        Sort-Object FullName -Descending |
+        Select-Object -First 1
+    if ($pdbConverter) {
+        $common += "-p:MsPdbCmfExeFullpath=$($pdbConverter.FullName)"
+        $common += "-p:PdbCmfx64ExeFullPath=$($pdbConverter.FullName)"
+        $common += "-p:PdbCmfx86ExeFullPath=$($pdbConverter.FullName)"
+    }
+}
+
 # A single-platform package must build the project for that concrete architecture.
 # AppxBundlePlatforms controls packaging only; it does not set MSBuild's Platform and
 # otherwise leaves the self-contained Windows App SDK build at unsupported AnyCPU.
 if ($Platforms.Count -eq 1) {
     $common += "-p:Platform=$($Platforms[0])"
+    $runtime = @{ x64 = 'win-x64'; arm64 = 'win-arm64'; x86 = 'win-x86' }[$Platforms[0]]
+    $common += "-p:RuntimeIdentifier=$runtime"
 }
 
 if ($Mode -in @('Store', 'Dev')) {
@@ -137,8 +190,20 @@ else {
     }
 }
 
+# The widget is built by a custom MSBuild target, not an App ProjectReference.
+# App restore therefore does not create its assets file in a clean checkout.
+foreach ($platform in $Platforms) {
+    $widgetRuntime = @{ x64 = 'win-x64'; arm64 = 'win-arm64'; x86 = 'win-x86' }[$platform]
+    dotnet restore $WidgetProj "-p:Platform=$platform" "-p:SelfContained=true" "-p:RuntimeIdentifier=$widgetRuntime"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Widget restore failed with exit code $LASTEXITCODE."
+    }
+}
+
 Write-Host "==> dotnet build $AppProj $($common -join ' ')" -ForegroundColor DarkGray
-dotnet build $AppProj @common
+# Rebuild packaging inputs: an incremental build can omit unchanged scale
+# resource packs from the new bundle even though they remain in AppPackages.
+dotnet build $AppProj --no-incremental @common
 if ($LASTEXITCODE -ne 0) {
     throw "MSIX build failed with exit code $LASTEXITCODE."
 }

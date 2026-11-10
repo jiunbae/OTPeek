@@ -9,6 +9,25 @@ namespace Otpeek.Core.Windows.Services;
 public class ClipboardService : IClipboardService
 {
     private CancellationTokenSource? _autoClearCts;
+    private const string OwnerProperty = "OTPeek.ClipboardOwner";
+    private string? _owner;
+    private readonly Func<DataPackage, ClipboardContentOptions, bool> _setContent;
+    private readonly Func<DataPackageView> _getContent;
+    private readonly Action _clear;
+    private readonly Action _flush;
+
+    public ClipboardService() : this(Clipboard.SetContentWithOptions, Clipboard.GetContent,
+                                     Clipboard.Clear, Clipboard.Flush) { }
+
+    // Fixture seam: exercise clipboard ownership/timers without touching the user's clipboard.
+    internal ClipboardService(Func<DataPackage, ClipboardContentOptions, bool> setContent,
+                              Func<DataPackageView> getContent, Action clear, Action flush)
+    {
+        _setContent = setContent;
+        _getContent = getContent;
+        _clear = clear;
+        _flush = flush;
+    }
 
     public async Task CopyAsync(string text, int autoClearSeconds = 0)
     {
@@ -16,19 +35,21 @@ public class ClipboardService : IClipboardService
 
         var dataPackage = new DataPackage();
         dataPackage.SetText(text);
+        var owner = Guid.NewGuid().ToString("N");
+        dataPackage.Properties[OwnerProperty] = owner;
 
-        // 클립보드 히스토리에서 제외 (Windows 10 1809+)
-        try
+        // Windows 10 1809+, below this app's minimum supported Windows version.
+        var options = new ClipboardContentOptions
         {
-            dataPackage.Properties["IsFromRoamingClipboard"] = false;
-        }
-        catch
+            IsAllowedInHistory = false,
+            IsRoamable = false
+        };
+        if (!_setContent(dataPackage, options))
         {
-            // 지원되지 않는 경우 무시
+            throw new InvalidOperationException("The clipboard is unavailable.");
         }
-
-        Clipboard.SetContent(dataPackage);
-        Clipboard.Flush(); // 앱이 종료되어도 클립보드 유지
+        _owner = owner;
+        _flush(); // 앱이 종료되어도 클립보드 유지
 
         if (autoClearSeconds > 0)
         {
@@ -40,7 +61,7 @@ public class ClipboardService : IClipboardService
                 await Task.Delay(TimeSpan.FromSeconds(autoClearSeconds), token);
                 if (!token.IsCancellationRequested)
                 {
-                    await ClearAsync();
+                    ClearOwned(owner);
                 }
             }
             catch (TaskCanceledException)
@@ -51,22 +72,33 @@ public class ClipboardService : IClipboardService
 
     public Task ClearAsync()
     {
+        ClearOwned(_owner);
+        return Task.CompletedTask;
+    }
+
+    private void ClearOwned(string? owner)
+    {
+        if (owner is null || owner != _owner) return;
         try
         {
-            Clipboard.Clear();
+            var content = _getContent();
+            if (content.Properties.TryGetValue(OwnerProperty, out var marker) &&
+                marker is string currentOwner && currentOwner == owner)
+            {
+                _clear();
+            }
+            _owner = null;
         }
         catch
         {
         }
-
-        return Task.CompletedTask;
     }
 
     public async Task<string?> GetTextAsync()
     {
         try
         {
-            var content = Clipboard.GetContent();
+            var content = _getContent();
             if (content.Contains(StandardDataFormats.Text))
             {
                 return await content.GetTextAsync();

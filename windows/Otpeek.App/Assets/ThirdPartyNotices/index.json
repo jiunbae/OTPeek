@@ -1,0 +1,3807 @@
+{
+  "scope": "Restored Windows app/widget NuGet packages and otpeek-ffi Windows normal/build graph; includes tooling conservatively",
+  "packages": [
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Diagnostics/8.0.1",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Diagnostics/8.0.1",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Diagnostics/8.0.1",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.WindowsAppSDK.WinUI/1.8.260709004",
+      "license": "license.txt",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "license.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.WinUI/1.8.260709004",
+          "sha256": "5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501",
+          "file": "texts/5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501.txt"
+        },
+        {
+          "originalFile": "NOTICE.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.WinUI/1.8.260709004",
+          "sha256": "e25393c0d340a1821827b093fa4dbbfcccd8feb7bf769e7fa773e3955cd5314b",
+          "file": "texts/e25393c0d340a1821827b093fa4dbbfcccd8feb7bf769e7fa773e3955cd5314b.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Web.WebView2/1.0.3179.45",
+      "license": "LICENSE.txt",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.txt",
+          "source": "NuGet package Microsoft.Web.WebView2/1.0.3179.45",
+          "sha256": "0af8f1b807512aae39c2ac1aa4d0cae65cabecb6fd554b8439a5162a0d6eca55",
+          "file": "texts/0af8f1b807512aae39c2ac1aa4d0cae65cabecb6fd554b8439a5162a0d6eca55.txt"
+        },
+        {
+          "originalFile": "NOTICE.txt",
+          "source": "NuGet package Microsoft.Web.WebView2/1.0.3179.45",
+          "sha256": "106423785c5b7eba0a8e61d1837f2132e9c828e20ad530f565d981c1df60dd90",
+          "file": "texts/106423785c5b7eba0a8e61d1837f2132e9c828e20ad530f565d981c1df60dd90.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.WindowsAppSDK.AI/1.8.79",
+      "license": "license.txt",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "license.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.AI/1.8.79",
+          "sha256": "5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501",
+          "file": "texts/5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "CommunityToolkit.WinUI.Controls.Primitives/8.1.240916",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "License.md",
+          "source": "NuGet package CommunityToolkit.WinUI.Controls.Primitives/8.1.240916",
+          "sha256": "c12410935503a2c9c4d3d4d14fdfdff49d0a37ad0046dc761b07867e8d499e97",
+          "file": "texts/c12410935503a2c9c4d3d4d14fdfdff49d0a37ad0046dc761b07867e8d499e97.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Logging/8.0.1",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging/8.0.1",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging/8.0.1",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "ZXing.Net/0.16.11",
+      "license": "Apache-2.0",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "ZXing.Net-COPYING.txt",
+          "source": "https://raw.githubusercontent.com/micjahn/ZXing.Net/fd58f3c4a5d80ccf45ef1237899a65b0ba5b83a0/COPYING",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "file": "texts/c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "H.GeneratedIcons.System.Drawing/2.1.3",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "H.NotifyIcon-LICENSE.md",
+          "source": "https://raw.githubusercontent.com/HavenDV/H.NotifyIcon/9738c4c7a9b0b1015802035d9db49320f2ae50be/LICENSE.md",
+          "sha256": "b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80",
+          "file": "texts/b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Logging.EventLog/8.0.1",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging.EventLog/8.0.1",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging.EventLog/8.0.1",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.WindowsAppSDK.DWrite/1.8.25122902",
+      "license": "license.txt",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "license.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.DWrite/1.8.25122902",
+          "sha256": "f9ed00147604bdc48c7e62d127d73245781ce53903cef9c3863f8a7ef8120cc2",
+          "file": "texts/f9ed00147604bdc48c7e62d127d73245781ce53903cef9c3863f8a7ef8120cc2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.WindowsAppSDK.InteractiveExperiences/1.8.260708001",
+      "license": "license.txt",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "license.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.InteractiveExperiences/1.8.260708001",
+          "sha256": "5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501",
+          "file": "texts/5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Windows.SDK.BuildTools.MSIX/1.7.20250829.1",
+      "license": "sdk_license.txt",
+      "buildToolOnly": true,
+      "notices": [
+        {
+          "originalFile": "NOTICE.txt",
+          "source": "NuGet package Microsoft.Windows.SDK.BuildTools.MSIX/1.7.20250829.1",
+          "sha256": "f09ebf5de6a5c8e7ebc900bb2e52af2f75e13610a1cf91e1514530e448d956c3",
+          "file": "texts/f09ebf5de6a5c8e7ebc900bb2e52af2f75e13610a1cf91e1514530e448d956c3.txt"
+        },
+        {
+          "originalFile": "sdk_license.txt",
+          "source": "NuGet package Microsoft.Windows.SDK.BuildTools.MSIX/1.7.20250829.1",
+          "sha256": "a7a5c7e7ff998558983d6aca2702117c328aeb0c6404d298cb275f5623c6fd13",
+          "file": "texts/a7a5c7e7ff998558983d6aca2702117c328aeb0c6404d298cb275f5623c6fd13.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "CommunityToolkit.Common/8.2.1",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "License.md",
+          "source": "NuGet package CommunityToolkit.Common/8.2.1",
+          "sha256": "651997ef19dbb9ecb8dd660dbc86444a65af21f18cfe08daa69bf201cd5cfdfc",
+          "file": "texts/651997ef19dbb9ecb8dd660dbc86444a65af21f18cfe08daa69bf201cd5cfdfc.txt"
+        },
+        {
+          "originalFile": "ThirdPartyNotices.txt",
+          "source": "NuGet package CommunityToolkit.Common/8.2.1",
+          "sha256": "7774f8b0ab66bfb47ec154ce24a2d6d574febc44a74d940b8a037d1c56756163",
+          "file": "texts/7774f8b0ab66bfb47ec154ce24a2d6d574febc44a74d940b8a037d1c56756163.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Configuration.FileExtensions/8.0.1",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.FileExtensions/8.0.1",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.FileExtensions/8.0.1",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.NETCore.App.Runtime.win-x64/8.0.32",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.NETCore.App.Runtime.win-x64/8.0.32",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.NETCore.App.Runtime.win-x64/8.0.32",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Configuration.EnvironmentVariables/8.0.0",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.EnvironmentVariables/8.0.0",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.EnvironmentVariables/8.0.0",
+          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
+          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.WindowsAppSDK.Runtime/1.8.260710003",
+      "license": "license.txt",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "license.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.Runtime/1.8.260710003",
+          "sha256": "5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501",
+          "file": "texts/5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501.txt"
+        },
+        {
+          "originalFile": "NOTICE.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.Runtime/1.8.260710003",
+          "sha256": "e25393c0d340a1821827b093fa4dbbfcccd8feb7bf769e7fa773e3955cd5314b",
+          "file": "texts/e25393c0d340a1821827b093fa4dbbfcccd8feb7bf769e7fa773e3955cd5314b.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Configuration.UserSecrets/8.0.1",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.UserSecrets/8.0.1",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.UserSecrets/8.0.1",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Hosting.Abstractions/8.0.1",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Hosting.Abstractions/8.0.1",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Hosting.Abstractions/8.0.1",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "System.Numerics.Tensors/9.0.0",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package System.Numerics.Tensors/9.0.0",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package System.Numerics.Tensors/9.0.0",
+          "sha256": "40686c6447a7d5b5d3693068e4571b5f483d7ed335aeee773ef662440de4c5d5",
+          "file": "texts/40686c6447a7d5b5d3693068e4571b5f483d7ed335aeee773ef662440de4c5d5.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Configuration.Json/8.0.1",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.Json/8.0.1",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.Json/8.0.1",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Logging.Abstractions/8.0.2",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging.Abstractions/8.0.2",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging.Abstractions/8.0.2",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Hosting/8.0.1",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Hosting/8.0.1",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Hosting/8.0.1",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "System.Drawing.Common/9.0.10",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package System.Drawing.Common/9.0.10",
+          "sha256": "a89886665765362eb77e0f8e26602c924520041d1711b2eedc136434fe4d01ab",
+          "file": "texts/a89886665765362eb77e0f8e26602c924520041d1711b2eedc136434fe4d01ab.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package System.Drawing.Common/9.0.10",
+          "sha256": "2ffe89f325685881e9fb3a64451632abe784db07a193a2633b241ea8d85e7a85",
+          "file": "texts/2ffe89f325685881e9fb3a64451632abe784db07a193a2633b241ea8d85e7a85.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.WindowsAppSDK.Widgets/1.8.251231004",
+      "license": "license.txt",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "license.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.Widgets/1.8.251231004",
+          "sha256": "f9ed00147604bdc48c7e62d127d73245781ce53903cef9c3863f8a7ef8120cc2",
+          "file": "texts/f9ed00147604bdc48c7e62d127d73245781ce53903cef9c3863f8a7ef8120cc2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Diagnostics.Abstractions/8.0.1",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Diagnostics.Abstractions/8.0.1",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Diagnostics.Abstractions/8.0.1",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Configuration.Abstractions/8.0.0",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.Abstractions/8.0.0",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.Abstractions/8.0.0",
+          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
+          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Configuration.CommandLine/8.0.0",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.CommandLine/8.0.0",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.CommandLine/8.0.0",
+          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
+          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Configuration/8.0.0",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration/8.0.0",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration/8.0.0",
+          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
+          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "System.Security.Cryptography.ProtectedData/8.0.0",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package System.Security.Cryptography.ProtectedData/8.0.0",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package System.Security.Cryptography.ProtectedData/8.0.0",
+          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
+          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Windows.CsWinRT/2.2.0",
+      "license": "LICENSE",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "NuGet package Microsoft.Windows.CsWinRT/2.2.0",
+          "sha256": "9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b",
+          "file": "texts/9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b.txt"
+        },
+        {
+          "originalFile": "NOTICE.txt",
+          "source": "NuGet package Microsoft.Windows.CsWinRT/2.2.0",
+          "sha256": "5c73ec182c994adc9d90cc576c3188a7f55df4c129a7dfb923e1ce4d91ed154d",
+          "file": "texts/5c73ec182c994adc9d90cc576c3188a7f55df4c129a7dfb923e1ce4d91ed154d.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "CommunityToolkit.Mvvm/8.3.2",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "License.md",
+          "source": "NuGet package CommunityToolkit.Mvvm/8.3.2",
+          "sha256": "651997ef19dbb9ecb8dd660dbc86444a65af21f18cfe08daa69bf201cd5cfdfc",
+          "file": "texts/651997ef19dbb9ecb8dd660dbc86444a65af21f18cfe08daa69bf201cd5cfdfc.txt"
+        },
+        {
+          "originalFile": "ThirdPartyNotices.txt",
+          "source": "NuGet package CommunityToolkit.Mvvm/8.3.2",
+          "sha256": "7774f8b0ab66bfb47ec154ce24a2d6d574febc44a74d940b8a037d1c56756163",
+          "file": "texts/7774f8b0ab66bfb47ec154ce24a2d6d574febc44a74d940b8a037d1c56756163.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "H.NotifyIcon/2.1.3",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "H.NotifyIcon-LICENSE.md",
+          "source": "https://raw.githubusercontent.com/HavenDV/H.NotifyIcon/9738c4c7a9b0b1015802035d9db49320f2ae50be/LICENSE.md",
+          "sha256": "b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80",
+          "file": "texts/b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Options.ConfigurationExtensions/8.0.0",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Options.ConfigurationExtensions/8.0.0",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Options.ConfigurationExtensions/8.0.0",
+          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
+          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "CommunityToolkit.WinUI.Controls.Segmented/8.1.240916",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "License.md",
+          "source": "NuGet package CommunityToolkit.WinUI.Controls.Segmented/8.1.240916",
+          "sha256": "c12410935503a2c9c4d3d4d14fdfdff49d0a37ad0046dc761b07867e8d499e97",
+          "file": "texts/c12410935503a2c9c4d3d4d14fdfdff49d0a37ad0046dc761b07867e8d499e97.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Windows.SDK.BuildTools/10.0.26100.4654",
+      "license": null,
+      "buildToolOnly": true,
+      "notices": []
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.FileSystemGlobbing/8.0.0",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.FileSystemGlobbing/8.0.0",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.FileSystemGlobbing/8.0.0",
+          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
+          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "System.Text.Json/8.0.5",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package System.Text.Json/8.0.5",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package System.Text.Json/8.0.5",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Primitives/8.0.0",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Primitives/8.0.0",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Primitives/8.0.0",
+          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
+          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.FileProviders.Abstractions/8.0.0",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.FileProviders.Abstractions/8.0.0",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.FileProviders.Abstractions/8.0.0",
+          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
+          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Logging.Console/8.0.1",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging.Console/8.0.1",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging.Console/8.0.1",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Win32.SystemEvents/9.0.10",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Win32.SystemEvents/9.0.10",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Win32.SystemEvents/9.0.10",
+          "sha256": "40686c6447a7d5b5d3693068e4571b5f483d7ed335aeee773ef662440de4c5d5",
+          "file": "texts/40686c6447a7d5b5d3693068e4571b5f483d7ed335aeee773ef662440de4c5d5.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.WindowsAppSDK/1.8.260710003",
+      "license": "license.txt",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "license.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK/1.8.260710003",
+          "sha256": "5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501",
+          "file": "texts/5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501.txt"
+        },
+        {
+          "originalFile": "NOTICE.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK/1.8.260710003",
+          "sha256": "e25393c0d340a1821827b093fa4dbbfcccd8feb7bf769e7fa773e3955cd5314b",
+          "file": "texts/e25393c0d340a1821827b093fa4dbbfcccd8feb7bf769e7fa773e3955cd5314b.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.WindowsAppSDK.ML/1.8.2197",
+      "license": "license.txt",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "license.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.ML/1.8.2197",
+          "sha256": "656aab74c15aa9f9964bcdcc993eb2755cbdb4822d5e0e3bc61d2e281897f758",
+          "file": "texts/656aab74c15aa9f9964bcdcc993eb2755cbdb4822d5e0e3bc61d2e281897f758.txt"
+        },
+        {
+          "originalFile": "ThirdPartyNotices.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.ML/1.8.2197",
+          "sha256": "e00f828e0a33de591a355ae6606d2625f5758da7d2c844db7821c9dd3e3647b6",
+          "file": "texts/e00f828e0a33de591a355ae6606d2625f5758da7d2c844db7821c9dd3e3647b6.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Logging.EventSource/8.0.1",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging.EventSource/8.0.1",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging.EventSource/8.0.1",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Configuration.Binder/8.0.2",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.Binder/8.0.2",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.Binder/8.0.2",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.WindowsAppSDK.Foundation/1.8.260709000",
+      "license": "license.txt",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "license.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.Foundation/1.8.260709000",
+          "sha256": "5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501",
+          "file": "texts/5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "ZXing.Net.Bindings.Windows.Compatibility/0.16.14",
+      "license": "Apache-2.0",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "ZXing.Net-COPYING.txt",
+          "source": "https://raw.githubusercontent.com/micjahn/ZXing.Net/fd58f3c4a5d80ccf45ef1237899a65b0ba5b83a0/COPYING",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "file": "texts/c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.DependencyInjection/8.0.1",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.DependencyInjection/8.0.1",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.DependencyInjection/8.0.1",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "System.Diagnostics.EventLog/8.0.1",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package System.Diagnostics.EventLog/8.0.1",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package System.Diagnostics.EventLog/8.0.1",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "CommunityToolkit.WinUI.Extensions/8.1.240916",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "License.md",
+          "source": "NuGet package CommunityToolkit.WinUI.Extensions/8.1.240916",
+          "sha256": "c12410935503a2c9c4d3d4d14fdfdff49d0a37ad0046dc761b07867e8d499e97",
+          "file": "texts/c12410935503a2c9c4d3d4d14fdfdff49d0a37ad0046dc761b07867e8d499e97.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "H.NotifyIcon.WinUI/2.1.3",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "H.NotifyIcon-LICENSE.md",
+          "source": "https://raw.githubusercontent.com/HavenDV/H.NotifyIcon/9738c4c7a9b0b1015802035d9db49320f2ae50be/LICENSE.md",
+          "sha256": "b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80",
+          "file": "texts/b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Options/8.0.2",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Options/8.0.2",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Options/8.0.2",
+          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
+          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.DependencyInjection.Abstractions/8.0.2",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.DependencyInjection.Abstractions/8.0.2",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.DependencyInjection.Abstractions/8.0.2",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Logging.Configuration/8.0.1",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging.Configuration/8.0.1",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging.Configuration/8.0.1",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.WindowsAppSDK.Base/1.8.251216001",
+      "license": "license.txt",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "license.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.Base/1.8.251216001",
+          "sha256": "5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501",
+          "file": "texts/5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501.txt"
+        },
+        {
+          "originalFile": "NOTICE.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.Base/1.8.251216001",
+          "sha256": "e25393c0d340a1821827b093fa4dbbfcccd8feb7bf769e7fa773e3955cd5314b",
+          "file": "texts/e25393c0d340a1821827b093fa4dbbfcccd8feb7bf769e7fa773e3955cd5314b.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.FileProviders.Physical/8.0.0",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.FileProviders.Physical/8.0.0",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.FileProviders.Physical/8.0.0",
+          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
+          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Logging.Debug/8.0.1",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging.Debug/8.0.1",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging.Debug/8.0.1",
+          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
+          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "adler2/2.0.1",
+      "license": "0BSD OR MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-0BSD",
+          "source": "Rust registry crate adler2 2.0.1",
+          "sha256": "861399f8c21c042b110517e76dc6b63a2b334276c8cf17412fc3c8908ca8dc17",
+          "file": "texts/861399f8c21c042b110517e76dc6b63a2b334276c8cf17412fc3c8908ca8dc17.txt"
+        },
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate adler2 2.0.1",
+          "sha256": "8ada45cd9f843acf64e4722ae262c622a2b3b3007c7310ef36ac1061a30f6adb",
+          "file": "texts/8ada45cd9f843acf64e4722ae262c622a2b3b3007c7310ef36ac1061a30f6adb.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate adler2 2.0.1",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "aead/0.5.2",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate aead 0.5.2",
+          "sha256": "b1cf9a3333ca78152b859012cd4a804156e5243e9ca20ad1df7327ba5ea7405c",
+          "file": "texts/b1cf9a3333ca78152b859012cd4a804156e5243e9ca20ad1df7327ba5ea7405c.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate aead 0.5.2",
+          "sha256": "949ab7b3e7140fee216f06fe3a2bd67d68dd511f8ea73c1e01c98cb348e9c8ae",
+          "file": "texts/949ab7b3e7140fee216f06fe3a2bd67d68dd511f8ea73c1e01c98cb348e9c8ae.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "aes/0.8.4",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate aes 0.8.4",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate aes 0.8.4",
+          "sha256": "f7e8ab639afef15573680c97f796166835cbeb3865175882fea41c60d106b733",
+          "file": "texts/f7e8ab639afef15573680c97f796166835cbeb3865175882fea41c60d106b733.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "aes-gcm/0.10.3",
+      "license": "Apache-2.0 OR MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate aes-gcm 0.10.3",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate aes-gcm 0.10.3",
+          "sha256": "3c0dfa33fd2e6976038555b52095699452653b1fcabe113074f14e0848a6b11e",
+          "file": "texts/3c0dfa33fd2e6976038555b52095699452653b1fcabe113074f14e0848a6b11e.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "anstyle/1.0.14",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate anstyle 1.0.14",
+          "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08",
+          "file": "texts/c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate anstyle 1.0.14",
+          "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+          "file": "texts/6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "anyhow/1.0.103",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate anyhow 1.0.103",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "file": "texts/62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate anyhow 1.0.103",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "argon2/0.5.3",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate argon2 0.5.3",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate argon2 0.5.3",
+          "sha256": "33f702959c0ea91c08b21b65cf1f08b6c122ec9e6db0b5db784a7b367d942330",
+          "file": "texts/33f702959c0ea91c08b21b65cf1f08b6c122ec9e6db0b5db784a7b367d942330.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "askama/0.13.1",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate askama 0.13.1",
+          "sha256": "87cb0d734c723c083e51c825930ff42bce28596b52dee15567f6b28f19c195e3",
+          "file": "texts/87cb0d734c723c083e51c825930ff42bce28596b52dee15567f6b28f19c195e3.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate askama 0.13.1",
+          "sha256": "df20e0180764bf5bd76f74d47bc9e8c0069a666401629c390003a1d5eba99c92",
+          "file": "texts/df20e0180764bf5bd76f74d47bc9e8c0069a666401629c390003a1d5eba99c92.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "askama_derive/0.13.1",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate askama_derive 0.13.1",
+          "sha256": "87cb0d734c723c083e51c825930ff42bce28596b52dee15567f6b28f19c195e3",
+          "file": "texts/87cb0d734c723c083e51c825930ff42bce28596b52dee15567f6b28f19c195e3.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate askama_derive 0.13.1",
+          "sha256": "df20e0180764bf5bd76f74d47bc9e8c0069a666401629c390003a1d5eba99c92",
+          "file": "texts/df20e0180764bf5bd76f74d47bc9e8c0069a666401629c390003a1d5eba99c92.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "askama_parser/0.13.0",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate askama_parser 0.13.0",
+          "sha256": "87cb0d734c723c083e51c825930ff42bce28596b52dee15567f6b28f19c195e3",
+          "file": "texts/87cb0d734c723c083e51c825930ff42bce28596b52dee15567f6b28f19c195e3.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate askama_parser 0.13.0",
+          "sha256": "df20e0180764bf5bd76f74d47bc9e8c0069a666401629c390003a1d5eba99c92",
+          "file": "texts/df20e0180764bf5bd76f74d47bc9e8c0069a666401629c390003a1d5eba99c92.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "autocfg/1.5.1",
+      "license": "Apache-2.0 OR MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate autocfg 1.5.1",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate autocfg 1.5.1",
+          "sha256": "27995d58ad5c1145c1a8cd86244ce844886958a35eb2b78c6b772748669999ac",
+          "file": "texts/27995d58ad5c1145c1a8cd86244ce844886958a35eb2b78c6b772748669999ac.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "base64/0.22.1",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate base64 0.22.1",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate base64 0.22.1",
+          "sha256": "0dd882e53de11566d50f8e8e2d5a651bcf3fabee4987d70f306233cf39094ba7",
+          "file": "texts/0dd882e53de11566d50f8e8e2d5a651bcf3fabee4987d70f306233cf39094ba7.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "base64ct/1.8.3",
+      "license": "Apache-2.0 OR MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate base64ct 1.8.3",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate base64ct 1.8.3",
+          "sha256": "2d1c57bff28344b9e698f51063bc8509799cc4c99a4e0cf2aa3f7e7c3e1f9a9d",
+          "file": "texts/2d1c57bff28344b9e698f51063bc8509799cc4c99a4e0cf2aa3f7e7c3e1f9a9d.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "basic-toml/0.1.10",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate basic-toml 0.1.10",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "file": "texts/62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate basic-toml 0.1.10",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "blake2/0.10.6",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate blake2 0.10.6",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate blake2 0.10.6",
+          "sha256": "9c768944eb4a0422ca2efc25ea9fb2fb9e7fbd3fdb04e86b87366339cb7466db",
+          "file": "texts/9c768944eb4a0422ca2efc25ea9fb2fb9e7fbd3fdb04e86b87366339cb7466db.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "block-buffer/0.10.4",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate block-buffer 0.10.4",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate block-buffer 0.10.4",
+          "sha256": "d5c22aa3118d240e877ad41c5d9fa232f9c77d757d4aac0c2f943afc0a95e0ef",
+          "file": "texts/d5c22aa3118d240e877ad41c5d9fa232f9c77d757d4aac0c2f943afc0a95e0ef.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "bytes/1.12.0",
+      "license": "MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate bytes 1.12.0",
+          "sha256": "45f522cacecb1023856e46df79ca625dfc550c94910078bd8aec6e02880b3d42",
+          "file": "texts/45f522cacecb1023856e46df79ca625dfc550c94910078bd8aec6e02880b3d42.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "camino/1.2.4",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate camino 1.2.4",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate camino 1.2.4",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "cargo-platform/0.1.9",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate cargo-platform 0.1.9",
+          "sha256": "8ada45cd9f843acf64e4722ae262c622a2b3b3007c7310ef36ac1061a30f6adb",
+          "file": "texts/8ada45cd9f843acf64e4722ae262c622a2b3b3007c7310ef36ac1061a30f6adb.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate cargo-platform 0.1.9",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "cargo_metadata/0.19.2",
+      "license": "MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate cargo_metadata 0.19.2",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "cc/1.2.65",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate cc 1.2.65",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate cc 1.2.65",
+          "sha256": "378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397",
+          "file": "texts/378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "cfg-if/1.0.4",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate cfg-if 1.0.4",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate cfg-if 1.0.4",
+          "sha256": "378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397",
+          "file": "texts/378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "chrono/0.4.45",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE.txt",
+          "source": "Rust registry crate chrono 0.4.45",
+          "sha256": "946c9835d8034d24404f8cfec5f4654cee5dad17e944afc3d06d742cf2882831",
+          "file": "texts/946c9835d8034d24404f8cfec5f4654cee5dad17e944afc3d06d742cf2882831.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "cipher/0.4.4",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate cipher 0.4.4",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate cipher 0.4.4",
+          "sha256": "5c7bd92d1f096f12203dc1b601e3cb17484fa1b023e30b6b8edcc80e416237ec",
+          "file": "texts/5c7bd92d1f096f12203dc1b601e3cb17484fa1b023e30b6b8edcc80e416237ec.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "clap/4.6.1",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate clap 4.6.1",
+          "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08",
+          "file": "texts/c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate clap 4.6.1",
+          "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+          "file": "texts/6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "clap_builder/4.6.0",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate clap_builder 4.6.0",
+          "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08",
+          "file": "texts/c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate clap_builder 4.6.0",
+          "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+          "file": "texts/6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "clap_derive/4.6.1",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate clap_derive 4.6.1",
+          "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08",
+          "file": "texts/c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate clap_derive 4.6.1",
+          "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+          "file": "texts/6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "clap_lex/1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate clap_lex 1.1.0",
+          "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08",
+          "file": "texts/c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate clap_lex 1.1.0",
+          "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+          "file": "texts/6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "cpufeatures/0.2.17",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate cpufeatures 0.2.17",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate cpufeatures 0.2.17",
+          "sha256": "ae9baa7beea910273c2f384c2a6b721fb7bd02bda3436074a1072e4ee689f985",
+          "file": "texts/ae9baa7beea910273c2f384c2a6b721fb7bd02bda3436074a1072e4ee689f985.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "crc32fast/1.5.0",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate crc32fast 1.5.0",
+          "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08",
+          "file": "texts/c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate crc32fast 1.5.0",
+          "sha256": "61d383b05b87d78f94d2937e2580cce47226d17823c0430fbcad09596537efcf",
+          "file": "texts/61d383b05b87d78f94d2937e2580cce47226d17823c0430fbcad09596537efcf.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "crypto-common/0.1.7",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate crypto-common 0.1.7",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate crypto-common 0.1.7",
+          "sha256": "3521672491a3479422d5fe1aca6645dd2984090f85da6e5205abfb18fb7a6897",
+          "file": "texts/3521672491a3479422d5fe1aca6645dd2984090f85da6e5205abfb18fb7a6897.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "ctr/0.9.2",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate ctr 0.9.2",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate ctr 0.9.2",
+          "sha256": "63af4bea227c94d021e99427f6ca3a4b8efddadcca93ab6130f708cf6138cf68",
+          "file": "texts/63af4bea227c94d021e99427f6ca3a4b8efddadcca93ab6130f708cf6138cf68.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "data-encoding/2.11.0",
+      "license": "MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate data-encoding 2.11.0",
+          "sha256": "b68ad1a3367b825447089e1f8d6829b97f47a89eb78d2f4ebaef4672f5606186",
+          "file": "texts/b68ad1a3367b825447089e1f8d6829b97f47a89eb78d2f4ebaef4672f5606186.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "digest/0.10.7",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate digest 0.10.7",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate digest 0.10.7",
+          "sha256": "9e0dfd2dd4173a530e238cb6adb37aa78c34c6bc7444e0e10c1ab5d8881f63ba",
+          "file": "texts/9e0dfd2dd4173a530e238cb6adb37aa78c34c6bc7444e0e10c1ab5d8881f63ba.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "displaydoc/0.2.6",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate displaydoc 0.2.6",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate displaydoc 0.2.6",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "equivalent/1.0.2",
+      "license": "Apache-2.0 OR MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate equivalent 1.0.2",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate equivalent 1.0.2",
+          "sha256": "7365cc8878a1d7ce155a58c4ca09c3d7a6be413efa5334a80ea842912b669349",
+          "file": "texts/7365cc8878a1d7ce155a58c4ca09c3d7a6be413efa5334a80ea842912b669349.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "fastrand/2.4.1",
+      "license": "Apache-2.0 OR MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate fastrand 2.4.1",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate fastrand 2.4.1",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "fd-lock/4.0.4",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate fd-lock 4.0.4",
+          "sha256": "b00ec75cd7ef2a62ff1f26c0ddafbc508282d15dce149506f983ce6c8e7a4876",
+          "file": "texts/b00ec75cd7ef2a62ff1f26c0ddafbc508282d15dce149506f983ce6c8e7a4876.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate fd-lock 4.0.4",
+          "sha256": "ce688e08d0454a032063ff701c4e88051ed89f0c5c9c391cbe58e4099769ae5d",
+          "file": "texts/ce688e08d0454a032063ff701c4e88051ed89f0c5c9c391cbe58e4099769ae5d.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "find-msvc-tools/0.1.9",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate find-msvc-tools 0.1.9",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate find-msvc-tools 0.1.9",
+          "sha256": "378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397",
+          "file": "texts/378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "flate2/1.1.9",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate flate2 1.1.9",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate flate2 1.1.9",
+          "sha256": "025436edff4cfcdde17a5811fdea78892d8482efd1abdec5a17872d07a4f2112",
+          "file": "texts/025436edff4cfcdde17a5811fdea78892d8482efd1abdec5a17872d07a4f2112.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "form_urlencoded/1.2.2",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate form_urlencoded 1.2.2",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate form_urlencoded 1.2.2",
+          "sha256": "20c7855c364d57ea4c97889a5e8d98470a9952dade37bd9248b9a54431670e5e",
+          "file": "texts/20c7855c364d57ea4c97889a5e8d98470a9952dade37bd9248b9a54431670e5e.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "fs-err/2.11.0",
+      "license": "MIT/Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate fs-err 2.11.0",
+          "sha256": "7cfd738c53d61c79f07e348f622bf7707c9084237054d37fbe07788a75f5881c",
+          "file": "texts/7cfd738c53d61c79f07e348f622bf7707c9084237054d37fbe07788a75f5881c.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate fs-err 2.11.0",
+          "sha256": "36516aefdc84c5d5a1e7485425913a22dbda69eb1930c5e84d6ae4972b5194b9",
+          "file": "texts/36516aefdc84c5d5a1e7485425913a22dbda69eb1930c5e84d6ae4972b5194b9.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "generic-array/0.14.7",
+      "license": "MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate generic-array 0.14.7",
+          "sha256": "c09aae9d3c77b531f56351a9947bc7446511d6b025b3255312d3e3442a9a7583",
+          "file": "texts/c09aae9d3c77b531f56351a9947bc7446511d6b025b3255312d3e3442a9a7583.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "getrandom/0.2.17",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate getrandom 0.2.17",
+          "sha256": "aaff376532ea30a0cd5330b9502ad4a4c8bf769c539c87ffe78819d188a18ebf",
+          "file": "texts/aaff376532ea30a0cd5330b9502ad4a4c8bf769c539c87ffe78819d188a18ebf.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate getrandom 0.2.17",
+          "sha256": "42fa16951ce7f24b5a467a40e5b449a1d41e662f97ca779864f053f39e097737",
+          "file": "texts/42fa16951ce7f24b5a467a40e5b449a1d41e662f97ca779864f053f39e097737.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "getrandom/0.4.3",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate getrandom 0.4.3",
+          "sha256": "aaff376532ea30a0cd5330b9502ad4a4c8bf769c539c87ffe78819d188a18ebf",
+          "file": "texts/aaff376532ea30a0cd5330b9502ad4a4c8bf769c539c87ffe78819d188a18ebf.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate getrandom 0.4.3",
+          "sha256": "523a42c25d245dde9c015f882cec7f4555aad883382a6cf19b4b7d9b2cd5419b",
+          "file": "texts/523a42c25d245dde9c015f882cec7f4555aad883382a6cf19b4b7d9b2cd5419b.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "ghash/0.5.1",
+      "license": "Apache-2.0 OR MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate ghash 0.5.1",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate ghash 0.5.1",
+          "sha256": "c0fabcc308b450cb6fe62c9f56fae6abbeb9768eb80d992484c857d744846c2e",
+          "file": "texts/c0fabcc308b450cb6fe62c9f56fae6abbeb9768eb80d992484c857d744846c2e.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "glob/0.3.3",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate glob 0.3.3",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate glob 0.3.3",
+          "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb",
+          "file": "texts/6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "goblin/0.8.2",
+      "license": "MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate goblin 0.8.2",
+          "sha256": "655e3ee7a4c27430774962e62a6d37d7348e5f2f292010ad674ce1bebefd24bc",
+          "file": "texts/655e3ee7a4c27430774962e62a6d37d7348e5f2f292010ad674ce1bebefd24bc.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "hashbrown/0.17.1",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate hashbrown 0.17.1",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate hashbrown 0.17.1",
+          "sha256": "ff8f68cb076caf8cefe7a6430d4ac086ce6af2ca8ce2c4e5a2004d4552ef52a2",
+          "file": "texts/ff8f68cb076caf8cefe7a6430d4ac086ce6af2ca8ce2c4e5a2004d4552ef52a2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "heck/0.5.0",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate heck 0.5.0",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate heck 0.5.0",
+          "sha256": "7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0",
+          "file": "texts/7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "hmac/0.12.1",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate hmac 0.12.1",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate hmac 0.12.1",
+          "sha256": "9e0dfd2dd4173a530e238cb6adb37aa78c34c6bc7444e0e10c1ab5d8881f63ba",
+          "file": "texts/9e0dfd2dd4173a530e238cb6adb37aa78c34c6bc7444e0e10c1ab5d8881f63ba.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "icu_collections/2.2.0",
+      "license": "Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate icu_collections 2.2.0",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2",
+          "file": "texts/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "icu_locale_core/2.2.0",
+      "license": "Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate icu_locale_core 2.2.0",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2",
+          "file": "texts/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "icu_normalizer/2.2.0",
+      "license": "Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate icu_normalizer 2.2.0",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2",
+          "file": "texts/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "icu_normalizer_data/2.2.0",
+      "license": "Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate icu_normalizer_data 2.2.0",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2",
+          "file": "texts/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "icu_properties/2.2.0",
+      "license": "Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate icu_properties 2.2.0",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2",
+          "file": "texts/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "icu_properties_data/2.2.0",
+      "license": "Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate icu_properties_data 2.2.0",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2",
+          "file": "texts/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "icu_provider/2.2.0",
+      "license": "Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate icu_provider 2.2.0",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2",
+          "file": "texts/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "idna/1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate idna 1.1.0",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate idna 1.1.0",
+          "sha256": "b38f11f6096706e6de553dabe2a7ed142d59b6fa8c97e290c67496154745cdd5",
+          "file": "texts/b38f11f6096706e6de553dabe2a7ed142d59b6fa8c97e290c67496154745cdd5.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "idna_adapter/1.2.2",
+      "license": "Apache-2.0 OR MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate idna_adapter 1.2.2",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate idna_adapter 1.2.2",
+          "sha256": "8b43ce8accd61e9d370b5ca9e9c4f953279b5c239926c62315b40e24df51b726",
+          "file": "texts/8b43ce8accd61e9d370b5ca9e9c4f953279b5c239926c62315b40e24df51b726.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "indexmap/2.14.0",
+      "license": "Apache-2.0 OR MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate indexmap 2.14.0",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate indexmap 2.14.0",
+          "sha256": "ecc269ef87fd38a1d98e30bfac9ba964a9dbd9315c3770fed98d4d7cb5882055",
+          "file": "texts/ecc269ef87fd38a1d98e30bfac9ba964a9dbd9315c3770fed98d4d7cb5882055.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "inout/0.1.4",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate inout 0.1.4",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate inout 0.1.4",
+          "sha256": "304b898acad7f02e03d6d8832d682a3b43ee729ab5d3a069af5a36979083b6b4",
+          "file": "texts/304b898acad7f02e03d6d8832d682a3b43ee729ab5d3a069af5a36979083b6b4.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "itoa/1.0.18",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate itoa 1.0.18",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "file": "texts/62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate itoa 1.0.18",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "litemap/0.8.2",
+      "license": "Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate litemap 0.8.2",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2",
+          "file": "texts/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "log/0.4.33",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate log 0.4.33",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate log 0.4.33",
+          "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb",
+          "file": "texts/6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "memchr/2.8.2",
+      "license": "Unlicense OR MIT",
+      "notices": [
+        {
+          "originalFile": "COPYING",
+          "source": "Rust registry crate memchr 2.8.2",
+          "sha256": "01c266bced4a434da0051174d6bee16a4c82cf634e2679b6155d40d75012390f",
+          "file": "texts/01c266bced4a434da0051174d6bee16a4c82cf634e2679b6155d40d75012390f.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate memchr 2.8.2",
+          "sha256": "0f96a83840e146e43c0ec96a22ec1f392e0680e6c1226e6f3ba87e0740af850f",
+          "file": "texts/0f96a83840e146e43c0ec96a22ec1f392e0680e6c1226e6f3ba87e0740af850f.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "minimal-lexical/0.2.1",
+      "license": "MIT/Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate minimal-lexical 0.2.1",
+          "sha256": "8173d5c29b4f956d532781d2b86e4e30f83e6b7878dce18c919451d6ba707c90",
+          "file": "texts/8173d5c29b4f956d532781d2b86e4e30f83e6b7878dce18c919451d6ba707c90.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate minimal-lexical 0.2.1",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        },
+        {
+          "originalFile": "LICENSE.md",
+          "source": "Rust registry crate minimal-lexical 0.2.1",
+          "sha256": "dbe1fff0fb1314b6af94f161511406275cf01c5a32441fbf24528a57a051d599",
+          "file": "texts/dbe1fff0fb1314b6af94f161511406275cf01c5a32441fbf24528a57a051d599.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "miniz_oxide/0.8.9",
+      "license": "MIT OR Zlib OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate miniz_oxide 0.8.9",
+          "sha256": "4108245a1f2df9d4e94df8abed5b4ba0759bb2f9b40a6b939f1be141077ae50b",
+          "file": "texts/4108245a1f2df9d4e94df8abed5b4ba0759bb2f9b40a6b939f1be141077ae50b.txt"
+        },
+        {
+          "originalFile": "LICENSE-APACHE.md",
+          "source": "Rust registry crate miniz_oxide 0.8.9",
+          "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+          "file": "texts/0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT.md",
+          "source": "Rust registry crate miniz_oxide 0.8.9",
+          "sha256": "799e9ca9d179295ef372f25d3769cdda7d25bb2668add6a6a1e22d1e4c678b8d",
+          "file": "texts/799e9ca9d179295ef372f25d3769cdda7d25bb2668add6a6a1e22d1e4c678b8d.txt"
+        },
+        {
+          "originalFile": "LICENSE-ZLIB.md",
+          "source": "Rust registry crate miniz_oxide 0.8.9",
+          "sha256": "0a54e647fe54104658b5e563c04c6f9edf251710e47bce692e0bd990a4ddaa39",
+          "file": "texts/0a54e647fe54104658b5e563c04c6f9edf251710e47bce692e0bd990a4ddaa39.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "nom/7.1.3",
+      "license": "MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate nom 7.1.3",
+          "sha256": "4dbda04344456f09a7a588140455413a9ac59b6b26a1ef7cdf9c800c012d87f0",
+          "file": "texts/4dbda04344456f09a7a588140455413a9ac59b6b26a1ef7cdf9c800c012d87f0.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "num-traits/0.2.19",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate num-traits 0.2.19",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate num-traits 0.2.19",
+          "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb",
+          "file": "texts/6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "once_cell/1.21.4",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate once_cell 1.21.4",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate once_cell 1.21.4",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "opaque-debug/0.3.1",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate opaque-debug 0.3.1",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate opaque-debug 0.3.1",
+          "sha256": "f59f5a78193597e04fd932ee9af86254d14d08be5c9d0e003ab888feccce2161",
+          "file": "texts/f59f5a78193597e04fd932ee9af86254d14d08be5c9d0e003ab888feccce2161.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "password-hash/0.5.0",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate password-hash 0.5.0",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate password-hash 0.5.0",
+          "sha256": "233b95ccbf90dc67e32f3e8995c489f6312d9191ebd141a931c3b684f1e3be6d",
+          "file": "texts/233b95ccbf90dc67e32f3e8995c489f6312d9191ebd141a931c3b684f1e3be6d.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "pbkdf2/0.12.2",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate pbkdf2 0.12.2",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate pbkdf2 0.12.2",
+          "sha256": "8ea5cea8ddecc46a64a004406414d25529fca7eb71cfd8c0cfe49c343bff79c5",
+          "file": "texts/8ea5cea8ddecc46a64a004406414d25529fca7eb71cfd8c0cfe49c343bff79c5.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "percent-encoding/2.3.2",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate percent-encoding 2.3.2",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate percent-encoding 2.3.2",
+          "sha256": "b38f11f6096706e6de553dabe2a7ed142d59b6fa8c97e290c67496154745cdd5",
+          "file": "texts/b38f11f6096706e6de553dabe2a7ed142d59b6fa8c97e290c67496154745cdd5.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "plain/0.2.3",
+      "license": "MIT/Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate plain 0.2.3",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate plain 0.2.3",
+          "sha256": "bc12b75fd81829814d843a03fa52aad0e53355b1f13665e309ff7fa33c66e5b5",
+          "file": "texts/bc12b75fd81829814d843a03fa52aad0e53355b1f13665e309ff7fa33c66e5b5.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "polyval/0.6.2",
+      "license": "Apache-2.0 OR MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate polyval 0.6.2",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate polyval 0.6.2",
+          "sha256": "a291b6910744d262a9e953c3b5868d74510e20161359f649a11e1791fde84fcd",
+          "file": "texts/a291b6910744d262a9e953c3b5868d74510e20161359f649a11e1791fde84fcd.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "potential_utf/0.1.5",
+      "license": "Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate potential_utf 0.1.5",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2",
+          "file": "texts/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "ppv-lite86/0.2.21",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate ppv-lite86 0.2.21",
+          "sha256": "0218327e7a480793ffdd4eb792379a9709e5c135c7ba267f709d6f6d4d70af0a",
+          "file": "texts/0218327e7a480793ffdd4eb792379a9709e5c135c7ba267f709d6f6d4d70af0a.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate ppv-lite86 0.2.21",
+          "sha256": "4cada0bd02ea3692eee6f16400d86c6508bbd3bafb2b65fed0419f36d4f83e8f",
+          "file": "texts/4cada0bd02ea3692eee6f16400d86c6508bbd3bafb2b65fed0419f36d4f83e8f.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "proc-macro2/1.0.106",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate proc-macro2 1.0.106",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "file": "texts/62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate proc-macro2 1.0.106",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "quote/1.0.46",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate quote 1.0.46",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "file": "texts/62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate quote 1.0.46",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "rand/0.8.6",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "COPYRIGHT",
+          "source": "Rust registry crate rand 0.8.6",
+          "sha256": "90eb64f0279b0d9432accfa6023ff803bc4965212383697eee27a0f426d5f8d5",
+          "file": "texts/90eb64f0279b0d9432accfa6023ff803bc4965212383697eee27a0f426d5f8d5.txt"
+        },
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate rand 0.8.6",
+          "sha256": "35242e7a83f69875e6edeff02291e688c97caafe2f8902e4e19b49d3e78b4cab",
+          "file": "texts/35242e7a83f69875e6edeff02291e688c97caafe2f8902e4e19b49d3e78b4cab.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate rand 0.8.6",
+          "sha256": "209fbbe0ad52d9235e37badf9cadfe4dbdc87203179c0899e738b39ade42177b",
+          "file": "texts/209fbbe0ad52d9235e37badf9cadfe4dbdc87203179c0899e738b39ade42177b.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "rand_chacha/0.3.1",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "COPYRIGHT",
+          "source": "Rust registry crate rand_chacha 0.3.1",
+          "sha256": "90eb64f0279b0d9432accfa6023ff803bc4965212383697eee27a0f426d5f8d5",
+          "file": "texts/90eb64f0279b0d9432accfa6023ff803bc4965212383697eee27a0f426d5f8d5.txt"
+        },
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate rand_chacha 0.3.1",
+          "sha256": "aaff376532ea30a0cd5330b9502ad4a4c8bf769c539c87ffe78819d188a18ebf",
+          "file": "texts/aaff376532ea30a0cd5330b9502ad4a4c8bf769c539c87ffe78819d188a18ebf.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate rand_chacha 0.3.1",
+          "sha256": "209fbbe0ad52d9235e37badf9cadfe4dbdc87203179c0899e738b39ade42177b",
+          "file": "texts/209fbbe0ad52d9235e37badf9cadfe4dbdc87203179c0899e738b39ade42177b.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "rand_core/0.6.4",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "COPYRIGHT",
+          "source": "Rust registry crate rand_core 0.6.4",
+          "sha256": "90eb64f0279b0d9432accfa6023ff803bc4965212383697eee27a0f426d5f8d5",
+          "file": "texts/90eb64f0279b0d9432accfa6023ff803bc4965212383697eee27a0f426d5f8d5.txt"
+        },
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate rand_core 0.6.4",
+          "sha256": "6df43f6f4b5d4587f3d8d71e45532c688fd168afa5fe89d571cb32fa09c4ef51",
+          "file": "texts/6df43f6f4b5d4587f3d8d71e45532c688fd168afa5fe89d571cb32fa09c4ef51.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate rand_core 0.6.4",
+          "sha256": "209fbbe0ad52d9235e37badf9cadfe4dbdc87203179c0899e738b39ade42177b",
+          "file": "texts/209fbbe0ad52d9235e37badf9cadfe4dbdc87203179c0899e738b39ade42177b.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "ring/0.17.14",
+      "license": "Apache-2.0 AND ISC",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate ring 0.17.14",
+          "sha256": "b3d734001a94efff3579978d953391aa7115f877657d25eb54037a43875d078a",
+          "file": "texts/b3d734001a94efff3579978d953391aa7115f877657d25eb54037a43875d078a.txt"
+        },
+        {
+          "originalFile": "LICENSE-BoringSSL",
+          "source": "Rust registry crate ring 0.17.14",
+          "sha256": "005fc765ddc5115da796cca915baa9557abae13ff35e0a47c47affc56f6c414d",
+          "file": "texts/005fc765ddc5115da796cca915baa9557abae13ff35e0a47c47affc56f6c414d.txt"
+        },
+        {
+          "originalFile": "LICENSE-other-bits",
+          "source": "Rust registry crate ring 0.17.14",
+          "sha256": "f025ccfb7dfb6bdfedc75ca0f67acc69e6fb4998143d834f7c2f38a29989680f",
+          "file": "texts/f025ccfb7dfb6bdfedc75ca0f67acc69e6fb4998143d834f7c2f38a29989680f.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "rustc-hash/2.1.3",
+      "license": "Apache-2.0 OR MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate rustc-hash 2.1.3",
+          "sha256": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
+          "file": "texts/95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate rustc-hash 2.1.3",
+          "sha256": "30fefc3a7d6a0041541858293bcbea2dde4caa4c0a5802f996a7f7e8c0085652",
+          "file": "texts/30fefc3a7d6a0041541858293bcbea2dde4caa4c0a5802f996a7f7e8c0085652.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "rustls/0.23.41",
+      "license": "Apache-2.0 OR ISC OR MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate rustls 0.23.41",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-ISC",
+          "source": "Rust registry crate rustls 0.23.41",
+          "sha256": "7cfafc877eccc46c0e346ccbaa5c51bb6b894d2b818e617d970211e232785ad4",
+          "file": "texts/7cfafc877eccc46c0e346ccbaa5c51bb6b894d2b818e617d970211e232785ad4.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate rustls 0.23.41",
+          "sha256": "709e3175b4212f7b13aa93971c9f62ff8c69ec45ad8c6532a7e0c41d7a7d6f8c",
+          "file": "texts/709e3175b4212f7b13aa93971c9f62ff8c69ec45ad8c6532a7e0c41d7a7d6f8c.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "rustls-pki-types/1.15.0",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate rustls-pki-types 1.15.0",
+          "sha256": "45fd05c4865e7c350b98ad7ac50e1b15462d49af4a91e9b0c9dd933dc9a69742",
+          "file": "texts/45fd05c4865e7c350b98ad7ac50e1b15462d49af4a91e9b0c9dd933dc9a69742.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate rustls-pki-types 1.15.0",
+          "sha256": "9117d922e667125508dde62b02c1f57ed22f5ad21eb536aa2e2d99e1c796e639",
+          "file": "texts/9117d922e667125508dde62b02c1f57ed22f5ad21eb536aa2e2d99e1c796e639.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "rustls-webpki/0.103.13",
+      "license": "ISC",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate rustls-webpki 0.103.13",
+          "sha256": "5b698ca13897be3afdb7174256fa1574f8c6892b8bea1a66dd6469d3fe27885a",
+          "file": "texts/5b698ca13897be3afdb7174256fa1574f8c6892b8bea1a66dd6469d3fe27885a.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "scroll/0.12.0",
+      "license": "MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate scroll 0.12.0",
+          "sha256": "6e24b7455f0b9afefdf4f3efd59a56ce76a3020c2dc4371937e281fc5e587fd7",
+          "file": "texts/6e24b7455f0b9afefdf4f3efd59a56ce76a3020c2dc4371937e281fc5e587fd7.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "scroll_derive/0.12.1",
+      "license": "MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate scroll_derive 0.12.1",
+          "sha256": "afb11426e09da40a1ae4f8fa17ddcc6b6a52d14df04c29bc5bcd06eb8730624d",
+          "file": "texts/afb11426e09da40a1ae4f8fa17ddcc6b6a52d14df04c29bc5bcd06eb8730624d.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "semver/1.0.28",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate semver 1.0.28",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "file": "texts/62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate semver 1.0.28",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "serde/1.0.228",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate serde 1.0.228",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "file": "texts/62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate serde 1.0.228",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "serde_core/1.0.228",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate serde_core 1.0.228",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "file": "texts/62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate serde_core 1.0.228",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "serde_derive/1.0.228",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate serde_derive 1.0.228",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "file": "texts/62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate serde_derive 1.0.228",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "serde_json/1.0.150",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate serde_json 1.0.150",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "file": "texts/62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate serde_json 1.0.150",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "sha1/0.10.6",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate sha1 0.10.6",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate sha1 0.10.6",
+          "sha256": "b4eb00df6e2a4d22518fcaa6a2b4646f249b3a3c9814509b22bd2091f1392ff1",
+          "file": "texts/b4eb00df6e2a4d22518fcaa6a2b4646f249b3a3c9814509b22bd2091f1392ff1.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "sha2/0.10.9",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate sha2 0.10.9",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate sha2 0.10.9",
+          "sha256": "b4eb00df6e2a4d22518fcaa6a2b4646f249b3a3c9814509b22bd2091f1392ff1",
+          "file": "texts/b4eb00df6e2a4d22518fcaa6a2b4646f249b3a3c9814509b22bd2091f1392ff1.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "shlex/2.0.1",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate shlex 2.0.1",
+          "sha256": "553fffcd9b1cb158bc3e9edc35da85ca5c3b3d7d2e61c883ebcfa8a65814b583",
+          "file": "texts/553fffcd9b1cb158bc3e9edc35da85ca5c3b3d7d2e61c883ebcfa8a65814b583.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate shlex 2.0.1",
+          "sha256": "4455bf75a91154108304cb283e0fea9948c14f13e20d60887cf2552449dea3b1",
+          "file": "texts/4455bf75a91154108304cb283e0fea9948c14f13e20d60887cf2552449dea3b1.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "simd-adler32/0.3.9",
+      "license": "MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE.md",
+          "source": "Rust registry crate simd-adler32 0.3.9",
+          "sha256": "42a35170233e83e18856792e748de4c1ce4a63b2afce9a370c89ef3fe23f9f2d",
+          "file": "texts/42a35170233e83e18856792e748de4c1ce4a63b2afce9a370c89ef3fe23f9f2d.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "siphasher/0.3.11",
+      "license": "MIT/Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "COPYING",
+          "source": "Rust registry crate siphasher 0.3.11",
+          "sha256": "306b56d1a86d1ff32cffdf3bd26d809354f7f06bcc8c4c1697fcb5e28aeedb7a",
+          "file": "texts/306b56d1a86d1ff32cffdf3bd26d809354f7f06bcc8c4c1697fcb5e28aeedb7a.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "smallvec/1.15.2",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate smallvec 1.15.2",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate smallvec 1.15.2",
+          "sha256": "0b28172679e0009b655da42797c03fd163a3379d5cfa67ba1f1655e974a2a1a9",
+          "file": "texts/0b28172679e0009b655da42797c03fd163a3379d5cfa67ba1f1655e974a2a1a9.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "smawk/0.3.3",
+      "license": "MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate smawk 0.3.3",
+          "sha256": "0173035e025d60b1d19197840a93a887f6da8b075c01dd10601fcb6414a0043b",
+          "file": "texts/0173035e025d60b1d19197840a93a887f6da8b075c01dd10601fcb6414a0043b.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "stable_deref_trait/1.2.1",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate stable_deref_trait 1.2.1",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate stable_deref_trait 1.2.1",
+          "sha256": "5e05b024f653a5ce199e77cbbbd42fb5553562ec714b819421ed0c3e552a75d7",
+          "file": "texts/5e05b024f653a5ce199e77cbbbd42fb5553562ec714b819421ed0c3e552a75d7.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "static_assertions/1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate static_assertions 1.1.0",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "file": "texts/cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate static_assertions 1.1.0",
+          "sha256": "ea084a2373ebc1f0902c09266e7bf25a05ab3814c1805bb017ffa7308f90c061",
+          "file": "texts/ea084a2373ebc1f0902c09266e7bf25a05ab3814c1805bb017ffa7308f90c061.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "strsim/0.11.1",
+      "license": "MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate strsim 0.11.1",
+          "sha256": "1e697ce8d21401fbf1bddd9b5c3fd4c4c79ae1e3bdf51f81761c85e11d5a89cd",
+          "file": "texts/1e697ce8d21401fbf1bddd9b5c3fd4c4c79ae1e3bdf51f81761c85e11d5a89cd.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "subtle/2.6.1",
+      "license": "BSD-3-Clause",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate subtle 2.6.1",
+          "sha256": "d1fc1bc0d155df60b2e7705b6b2ae02a05c96f948e1cec6e2fb86360b09f346b",
+          "file": "texts/d1fc1bc0d155df60b2e7705b6b2ae02a05c96f948e1cec6e2fb86360b09f346b.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "syn/2.0.118",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate syn 2.0.118",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "file": "texts/62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate syn 2.0.118",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "synstructure/0.13.2",
+      "license": "MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate synstructure 0.13.2",
+          "sha256": "219920e865eee70b7dcfc948a86b099e7f4fe2de01bcca2ca9a20c0a033f2b59",
+          "file": "texts/219920e865eee70b7dcfc948a86b099e7f4fe2de01bcca2ca9a20c0a033f2b59.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "tempfile/3.27.0",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate tempfile 3.27.0",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate tempfile 3.27.0",
+          "sha256": "8b427f5bc501764575e52ba4f9d95673cf8f6d80a86d0d06599852e1a9a20a36",
+          "file": "texts/8b427f5bc501764575e52ba4f9d95673cf8f6d80a86d0d06599852e1a9a20a36.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "textwrap/0.16.2",
+      "license": "MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate textwrap 0.16.2",
+          "sha256": "ce93600c49fbb3e14df32efe752264644f6a2f8e08a735ba981725799e5309ef",
+          "file": "texts/ce93600c49fbb3e14df32efe752264644f6a2f8e08a735ba981725799e5309ef.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "thiserror/2.0.18",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate thiserror 2.0.18",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "file": "texts/62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate thiserror 2.0.18",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "thiserror-impl/2.0.18",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate thiserror-impl 2.0.18",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "file": "texts/62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate thiserror-impl 2.0.18",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "tinystr/0.8.3",
+      "license": "Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate tinystr 0.8.3",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2",
+          "file": "texts/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "toml/0.5.11",
+      "license": "MIT/Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate toml 0.5.11",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate toml 0.5.11",
+          "sha256": "378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397",
+          "file": "texts/378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "typenum/1.20.1",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate typenum 1.20.1",
+          "sha256": "db11fec9946737df39ca3898d9cd8c10ec6f6c3a884a6802b0ad0b81b4e8f23a",
+          "file": "texts/db11fec9946737df39ca3898d9cd8c10ec6f6c3a884a6802b0ad0b81b4e8f23a.txt"
+        },
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate typenum 1.20.1",
+          "sha256": "516b24e051bf5630880ebbd55c40a25ce9552ebaf8970a53e8976eb70e522406",
+          "file": "texts/516b24e051bf5630880ebbd55c40a25ce9552ebaf8970a53e8976eb70e522406.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate typenum 1.20.1",
+          "sha256": "a825bd853ab71619a4923d7b4311221427848070ff44d990da39b0b274c1683f",
+          "file": "texts/a825bd853ab71619a4923d7b4311221427848070ff44d990da39b0b274c1683f.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "unicode-ident/1.0.24",
+      "license": "(MIT OR Apache-2.0) AND Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate unicode-ident 1.0.24",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "file": "texts/62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate unicode-ident 1.0.24",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        },
+        {
+          "originalFile": "LICENSE-UNICODE",
+          "source": "Rust registry crate unicode-ident 1.0.24",
+          "sha256": "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1",
+          "file": "texts/f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "uniffi/0.29.5",
+      "license": "MPL-2.0",
+      "notices": [
+        {
+          "originalFile": "UniFFI-MPL-2.0.txt",
+          "source": "https://raw.githubusercontent.com/mozilla/uniffi-rs/856f77b6fdf78fae45bc3c394499df60f8cc5851/LICENSE",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+          "file": "texts/1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5.txt"
+        }
+      ],
+      "sourceArchive": {
+        "file": "sources/uniffi-0.29.5.crate",
+        "sha256": "3291800a6b06569f7d3e15bdb6dc235e0f0c8bd3eb07177f430057feb076415f",
+        "url": "https://crates.io/api/v1/crates/uniffi/0.29.5/download"
+      }
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "uniffi_bindgen/0.29.5",
+      "license": "MPL-2.0",
+      "notices": [
+        {
+          "originalFile": "UniFFI-MPL-2.0.txt",
+          "source": "https://raw.githubusercontent.com/mozilla/uniffi-rs/856f77b6fdf78fae45bc3c394499df60f8cc5851/LICENSE",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+          "file": "texts/1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5.txt"
+        }
+      ],
+      "sourceArchive": {
+        "file": "sources/uniffi_bindgen-0.29.5.crate",
+        "sha256": "a04b99fa7796eaaa7b87976a0dbdd1178dc1ee702ea00aca2642003aef9b669e",
+        "url": "https://crates.io/api/v1/crates/uniffi_bindgen/0.29.5/download"
+      }
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "uniffi_core/0.29.5",
+      "license": "MPL-2.0",
+      "notices": [
+        {
+          "originalFile": "UniFFI-MPL-2.0.txt",
+          "source": "https://raw.githubusercontent.com/mozilla/uniffi-rs/856f77b6fdf78fae45bc3c394499df60f8cc5851/LICENSE",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+          "file": "texts/1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5.txt"
+        }
+      ],
+      "sourceArchive": {
+        "file": "sources/uniffi_core-0.29.5.crate",
+        "sha256": "f38a9a27529ccff732f8efddb831b65b1e07f7dea3fd4cacd4a35a8c4b253b98",
+        "url": "https://crates.io/api/v1/crates/uniffi_core/0.29.5/download"
+      }
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "uniffi_internal_macros/0.29.5",
+      "license": "MPL-2.0",
+      "notices": [
+        {
+          "originalFile": "UniFFI-MPL-2.0.txt",
+          "source": "https://raw.githubusercontent.com/mozilla/uniffi-rs/856f77b6fdf78fae45bc3c394499df60f8cc5851/LICENSE",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+          "file": "texts/1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5.txt"
+        }
+      ],
+      "sourceArchive": {
+        "file": "sources/uniffi_internal_macros-0.29.5.crate",
+        "sha256": "09acd2ce09c777dd65ee97c251d33c8a972afc04873f1e3b21eb3492ade16933",
+        "url": "https://crates.io/api/v1/crates/uniffi_internal_macros/0.29.5/download"
+      }
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "uniffi_macros/0.29.5",
+      "license": "MPL-2.0",
+      "notices": [
+        {
+          "originalFile": "UniFFI-MPL-2.0.txt",
+          "source": "https://raw.githubusercontent.com/mozilla/uniffi-rs/856f77b6fdf78fae45bc3c394499df60f8cc5851/LICENSE",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+          "file": "texts/1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5.txt"
+        }
+      ],
+      "sourceArchive": {
+        "file": "sources/uniffi_macros-0.29.5.crate",
+        "sha256": "5596f178c4f7aafa1a501c4e0b96236a96bc2ef92bdb453d83e609dad0040152",
+        "url": "https://crates.io/api/v1/crates/uniffi_macros/0.29.5/download"
+      }
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "uniffi_meta/0.29.5",
+      "license": "MPL-2.0",
+      "notices": [
+        {
+          "originalFile": "UniFFI-MPL-2.0.txt",
+          "source": "https://raw.githubusercontent.com/mozilla/uniffi-rs/856f77b6fdf78fae45bc3c394499df60f8cc5851/LICENSE",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+          "file": "texts/1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5.txt"
+        }
+      ],
+      "sourceArchive": {
+        "file": "sources/uniffi_meta-0.29.5.crate",
+        "sha256": "beadc1f460eb2e209263c49c4f5b19e9a02e00a3b2b393f78ad10d766346ecff",
+        "url": "https://crates.io/api/v1/crates/uniffi_meta/0.29.5/download"
+      }
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "uniffi_pipeline/0.29.5",
+      "license": "MPL-2.0",
+      "notices": [
+        {
+          "originalFile": "UniFFI-MPL-2.0.txt",
+          "source": "https://raw.githubusercontent.com/mozilla/uniffi-rs/856f77b6fdf78fae45bc3c394499df60f8cc5851/LICENSE",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+          "file": "texts/1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5.txt"
+        }
+      ],
+      "sourceArchive": {
+        "file": "sources/uniffi_pipeline-0.29.5.crate",
+        "sha256": "dd76b3ac8a2d964ca9fce7df21c755afb4c77b054a85ad7a029ad179cc5abb8a",
+        "url": "https://crates.io/api/v1/crates/uniffi_pipeline/0.29.5/download"
+      }
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "uniffi_udl/0.29.5",
+      "license": "MPL-2.0",
+      "notices": [
+        {
+          "originalFile": "UniFFI-MPL-2.0.txt",
+          "source": "https://raw.githubusercontent.com/mozilla/uniffi-rs/856f77b6fdf78fae45bc3c394499df60f8cc5851/LICENSE",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+          "file": "texts/1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5.txt"
+        }
+      ],
+      "sourceArchive": {
+        "file": "sources/uniffi_udl-0.29.5.crate",
+        "sha256": "4319cf905911d70d5b97ce0f46f101619a22e9a189c8c46d797a9955e9233716",
+        "url": "https://crates.io/api/v1/crates/uniffi_udl/0.29.5/download"
+      }
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "universal-hash/0.5.1",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate universal-hash 0.5.1",
+          "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+          "file": "texts/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate universal-hash 0.5.1",
+          "sha256": "6b50510a0400c72172355cc5d2ba0f2c5c2eb33149b8f96539dc345fdc484920",
+          "file": "texts/6b50510a0400c72172355cc5d2ba0f2c5c2eb33149b8f96539dc345fdc484920.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "untrusted/0.9.0",
+      "license": "ISC",
+      "notices": [
+        {
+          "originalFile": "LICENSE.txt",
+          "source": "Rust registry crate untrusted 0.9.0",
+          "sha256": "7abd9b6960dcf7d4d0a48606a5b71bfe37d472db68d70637f3a58a56785f1621",
+          "file": "texts/7abd9b6960dcf7d4d0a48606a5b71bfe37d472db68d70637f3a58a56785f1621.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "ureq/2.12.1",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate ureq 2.12.1",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "file": "texts/c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate ureq 2.12.1",
+          "sha256": "7e5886959f67f8c75063a9d55cd3cb08c5a8cbea9a944fa1df2d4ae038f53721",
+          "file": "texts/7e5886959f67f8c75063a9d55cd3cb08c5a8cbea9a944fa1df2d4ae038f53721.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "url/2.5.8",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate url 2.5.8",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate url 2.5.8",
+          "sha256": "b38f11f6096706e6de553dabe2a7ed142d59b6fa8c97e290c67496154745cdd5",
+          "file": "texts/b38f11f6096706e6de553dabe2a7ed142d59b6fa8c97e290c67496154745cdd5.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "utf8_iter/1.0.4",
+      "license": "Apache-2.0 OR MIT",
+      "notices": [
+        {
+          "originalFile": "COPYRIGHT",
+          "source": "Rust registry crate utf8_iter 1.0.4",
+          "sha256": "c30152c94a6d75e021adbc52b3a52470366a46edb917e17deae3259251af244c",
+          "file": "texts/c30152c94a6d75e021adbc52b3a52470366a46edb917e17deae3259251af244c.txt"
+        },
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate utf8_iter 1.0.4",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "file": "texts/cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate utf8_iter 1.0.4",
+          "sha256": "3fa4ca83dcc9237839b1bdeb2e6d16bdfb5ec0c5ce42b24694d8bbf0dcbef72c",
+          "file": "texts/3fa4ca83dcc9237839b1bdeb2e6d16bdfb5ec0c5ce42b24694d8bbf0dcbef72c.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "uuid/1.23.4",
+      "license": "Apache-2.0 OR MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate uuid 1.23.4",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate uuid 1.23.4",
+          "sha256": "436bc5a105d8e57dcd8778730f3754f7bf39c14d2f530e4cde4bd2d17a83ec3d",
+          "file": "texts/436bc5a105d8e57dcd8778730f3754f7bf39c14d2f530e4cde4bd2d17a83ec3d.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "version_check/0.9.5",
+      "license": "MIT/Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate version_check 0.9.5",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "file": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate version_check 0.9.5",
+          "sha256": "b7e650f3fce5c53249d1cdc608b54df156a97edd636cf9d23498d0cfe7aec63e",
+          "file": "texts/b7e650f3fce5c53249d1cdc608b54df156a97edd636cf9d23498d0cfe7aec63e.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "webpki-roots/0.26.11",
+      "license": "CDLA-Permissive-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate webpki-roots 0.26.11",
+          "sha256": "e271993808fec50ab29350b39539cdec611a9103f827e0aa26d61da70e2d33f8",
+          "file": "texts/e271993808fec50ab29350b39539cdec611a9103f827e0aa26d61da70e2d33f8.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "webpki-roots/1.0.8",
+      "license": "CDLA-Permissive-2.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate webpki-roots 1.0.8",
+          "sha256": "e271993808fec50ab29350b39539cdec611a9103f827e0aa26d61da70e2d33f8",
+          "file": "texts/e271993808fec50ab29350b39539cdec611a9103f827e0aa26d61da70e2d33f8.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "weedle2/5.0.0",
+      "license": "MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE.md",
+          "source": "Rust registry crate weedle2 5.0.0",
+          "sha256": "467e2e44913e850ca4fb6760fa3b78ffefda2a21688a6b1e26a8b706963669eb",
+          "file": "texts/467e2e44913e850ca4fb6760fa3b78ffefda2a21688a6b1e26a8b706963669eb.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "windows-link/0.2.1",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "license-apache-2.0",
+          "source": "Rust registry crate windows-link 0.2.1",
+          "sha256": "c16f8dcf1a368b83be78d826ea23de4079fe1b4469a0ab9ee20563f37ff3d44b",
+          "file": "texts/c16f8dcf1a368b83be78d826ea23de4079fe1b4469a0ab9ee20563f37ff3d44b.txt"
+        },
+        {
+          "originalFile": "license-mit",
+          "source": "Rust registry crate windows-link 0.2.1",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
+          "file": "texts/c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "windows-sys/0.59.0",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "license-apache-2.0",
+          "source": "Rust registry crate windows-sys 0.59.0",
+          "sha256": "c16f8dcf1a368b83be78d826ea23de4079fe1b4469a0ab9ee20563f37ff3d44b",
+          "file": "texts/c16f8dcf1a368b83be78d826ea23de4079fe1b4469a0ab9ee20563f37ff3d44b.txt"
+        },
+        {
+          "originalFile": "license-mit",
+          "source": "Rust registry crate windows-sys 0.59.0",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
+          "file": "texts/c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "windows-sys/0.61.2",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "license-apache-2.0",
+          "source": "Rust registry crate windows-sys 0.61.2",
+          "sha256": "c16f8dcf1a368b83be78d826ea23de4079fe1b4469a0ab9ee20563f37ff3d44b",
+          "file": "texts/c16f8dcf1a368b83be78d826ea23de4079fe1b4469a0ab9ee20563f37ff3d44b.txt"
+        },
+        {
+          "originalFile": "license-mit",
+          "source": "Rust registry crate windows-sys 0.61.2",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
+          "file": "texts/c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "windows-targets/0.52.6",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "license-apache-2.0",
+          "source": "Rust registry crate windows-targets 0.52.6",
+          "sha256": "c16f8dcf1a368b83be78d826ea23de4079fe1b4469a0ab9ee20563f37ff3d44b",
+          "file": "texts/c16f8dcf1a368b83be78d826ea23de4079fe1b4469a0ab9ee20563f37ff3d44b.txt"
+        },
+        {
+          "originalFile": "license-mit",
+          "source": "Rust registry crate windows-targets 0.52.6",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
+          "file": "texts/c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "windows_x86_64_msvc/0.52.6",
+      "license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "originalFile": "license-apache-2.0",
+          "source": "Rust registry crate windows_x86_64_msvc 0.52.6",
+          "sha256": "c16f8dcf1a368b83be78d826ea23de4079fe1b4469a0ab9ee20563f37ff3d44b",
+          "file": "texts/c16f8dcf1a368b83be78d826ea23de4079fe1b4469a0ab9ee20563f37ff3d44b.txt"
+        },
+        {
+          "originalFile": "license-mit",
+          "source": "Rust registry crate windows_x86_64_msvc 0.52.6",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
+          "file": "texts/c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "winnow/0.7.15",
+      "license": "MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate winnow 0.7.15",
+          "sha256": "cb5aedb296c5246d1f22e9099f925a65146f9f0d6b4eebba97fd27a6cdbbab2d",
+          "file": "texts/cb5aedb296c5246d1f22e9099f925a65146f9f0d6b4eebba97fd27a6cdbbab2d.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "writeable/0.6.3",
+      "license": "Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate writeable 0.6.3",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2",
+          "file": "texts/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "yoke/0.8.3",
+      "license": "Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate yoke 0.8.3",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2",
+          "file": "texts/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "yoke-derive/0.8.2",
+      "license": "Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate yoke-derive 0.8.2",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2",
+          "file": "texts/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "zerocopy/0.8.52",
+      "license": "BSD-2-Clause OR Apache-2.0 OR MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate zerocopy 0.8.52",
+          "sha256": "9d185ac6703c4b0453974c0d85e9eee43e6941009296bb1f5eb0b54e2329e9f3",
+          "file": "texts/9d185ac6703c4b0453974c0d85e9eee43e6941009296bb1f5eb0b54e2329e9f3.txt"
+        },
+        {
+          "originalFile": "LICENSE-BSD",
+          "source": "Rust registry crate zerocopy 0.8.52",
+          "sha256": "83c1763356e822adde0a2cae748d938a73fdc263849ccff6b27776dff213bd32",
+          "file": "texts/83c1763356e822adde0a2cae748d938a73fdc263849ccff6b27776dff213bd32.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate zerocopy 0.8.52",
+          "sha256": "1a2f5c12ddc934d58956aa5dbdd3255fe55fd957633ab7d0d39e4f0daa73f7df",
+          "file": "texts/1a2f5c12ddc934d58956aa5dbdd3255fe55fd957633ab7d0d39e4f0daa73f7df.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "zerofrom/0.1.8",
+      "license": "Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate zerofrom 0.1.8",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2",
+          "file": "texts/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "zerofrom-derive/0.1.7",
+      "license": "Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate zerofrom-derive 0.1.7",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2",
+          "file": "texts/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "zeroize/1.9.0",
+      "license": "Apache-2.0 OR MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate zeroize 1.9.0",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "file": "texts/cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate zeroize 1.9.0",
+          "sha256": "8c7516d4b27b1e495be5e38b612298b63de48d05f49cdac94f70f3cd70f8864b",
+          "file": "texts/8c7516d4b27b1e495be5e38b612298b63de48d05f49cdac94f70f3cd70f8864b.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "zeroize_derive/1.5.0",
+      "license": "Apache-2.0 OR MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE-APACHE",
+          "source": "Rust registry crate zeroize_derive 1.5.0",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "file": "texts/cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30.txt"
+        },
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate zeroize_derive 1.5.0",
+          "sha256": "b8c6939380a400f53e11923d50fcc4dd2fa1ba8339fd9d04cda38a0251b6c9b0",
+          "file": "texts/b8c6939380a400f53e11923d50fcc4dd2fa1ba8339fd9d04cda38a0251b6c9b0.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "zerotrie/0.2.4",
+      "license": "Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate zerotrie 0.2.4",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2",
+          "file": "texts/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "zerovec/0.11.6",
+      "license": "Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate zerovec 0.11.6",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2",
+          "file": "texts/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "zerovec-derive/0.11.3",
+      "license": "Unicode-3.0",
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "Rust registry crate zerovec-derive 0.11.3",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2",
+          "file": "texts/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "package": "zmij/1.0.21",
+      "license": "MIT",
+      "notices": [
+        {
+          "originalFile": "LICENSE-MIT",
+          "source": "Rust registry crate zmij 1.0.21",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "file": "texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt"
+        }
+      ]
+    }
+  ],
+  "distinctNoticeTexts": 142,
+  "unmodifiedMplSourceArchives": 8
+}

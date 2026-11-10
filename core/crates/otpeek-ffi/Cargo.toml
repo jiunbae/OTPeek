@@ -10,11 +10,16 @@ crate-type = ["staticlib", "cdylib", "lib"]
 [[bin]]
 name = "uniffi-bindgen"
 path = "src/bin/uniffi-bindgen.rs"
+required-features = ["bindgen"]
+
+[features]
+default = ["bindgen"]
+bindgen = ["uniffi/cli"]
 
 [dependencies]
 otpeek-core = { path = "../otpeek-core" }
 otpeek-vault = { path = "../otpeek-vault" }
 otpeek-sync = { path = "../otpeek-sync" }
-uniffi = { workspace = true, features = ["cli"] }
+uniffi.workspace = true
 thiserror.workspace = true
 uuid.workspace = true

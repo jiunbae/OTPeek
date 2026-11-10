@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RuntimeIdentifiers />
+    <Platforms>AnyCPU</Platforms>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Test the exact managed binding from the extracted package, without building the app. -->
+    <Reference Include="Otpeek.Interop">
+      <HintPath>$(OtpeekPayloadDir)/Otpeek.Interop.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+  <Target Name="RequireExplicitPayload" BeforeTargets="ResolveReferences">
+    <Error Condition="'$(OtpeekPayloadDir)' == '' or !Exists('$(OtpeekPayloadDir)/Otpeek.Interop.dll')"
+           Text="Set OtpeekPayloadDir to the extracted fixture-candidate MSIX payload." />
+  </Target>
+</Project>

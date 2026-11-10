@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Only the debug app may call the signature-protected instrumentation fixture provider. -->
+    <permission android:name="com.otpeek.app.debug.permission.FIXTURE_DOCUMENTS" android:protectionLevel="signature" />
+    <uses-permission android:name="com.otpeek.app.debug.permission.FIXTURE_DOCUMENTS" />
+</manifest>

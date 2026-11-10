@@ -37,6 +37,17 @@ nul
 # Rust core
 core/target/
 
+# Android build tools and local state (isolated to this worktree)
+/.tools/
+/android/.gradle/
+/android/.kotlin/
+/android/local.properties
+/android/qa/__pycache__/
+/android/scripts/__pycache__/
+/android/**/build/
+/android/**/src/main/jniLibs/
+/android/**/src/main/java/uniffi/
+
 # Generated FFI bindings / built frameworks (rebuilt by scripts)
 apple/Generated/
 apple/Frameworks/

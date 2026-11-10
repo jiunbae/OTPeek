@@ -1,0 +1,58 @@
+{
+  "sources": {
+    "H.NotifyIcon-LICENSE.md": {
+      "url": "https://raw.githubusercontent.com/HavenDV/H.NotifyIcon/9738c4c7a9b0b1015802035d9db49320f2ae50be/LICENSE.md",
+      "sha256": "b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80"
+    },
+    "ZXing.Net-COPYING.txt": {
+      "url": "https://raw.githubusercontent.com/micjahn/ZXing.Net/fd58f3c4a5d80ccf45ef1237899a65b0ba5b83a0/COPYING",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    "UniFFI-MPL-2.0.txt": {
+      "url": "https://raw.githubusercontent.com/mozilla/uniffi-rs/856f77b6fdf78fae45bc3c394499df60f8cc5851/LICENSE",
+      "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5"
+    }
+  },
+  "packages": {
+    "H.NotifyIcon.WinUI/2.1.3": [
+      "H.NotifyIcon-LICENSE.md"
+    ],
+    "H.NotifyIcon/2.1.3": [
+      "H.NotifyIcon-LICENSE.md"
+    ],
+    "H.GeneratedIcons.System.Drawing/2.1.3": [
+      "H.NotifyIcon-LICENSE.md"
+    ],
+    "ZXing.Net/0.16.11": [
+      "ZXing.Net-COPYING.txt"
+    ],
+    "ZXing.Net.Bindings.Windows.Compatibility/0.16.14": [
+      "ZXing.Net-COPYING.txt"
+    ],
+    "Rust:uniffi/0.29.5": [
+      "UniFFI-MPL-2.0.txt"
+    ],
+    "Rust:uniffi_bindgen/0.29.5": [
+      "UniFFI-MPL-2.0.txt"
+    ],
+    "Rust:uniffi_core/0.29.5": [
+      "UniFFI-MPL-2.0.txt"
+    ],
+    "Rust:uniffi_internal_macros/0.29.5": [
+      "UniFFI-MPL-2.0.txt"
+    ],
+    "Rust:uniffi_macros/0.29.5": [
+      "UniFFI-MPL-2.0.txt"
+    ],
+    "Rust:uniffi_meta/0.29.5": [
+      "UniFFI-MPL-2.0.txt"
+    ],
+    "Rust:uniffi_pipeline/0.29.5": [
+      "UniFFI-MPL-2.0.txt"
+    ],
+    "Rust:uniffi_udl/0.29.5": [
+      "UniFFI-MPL-2.0.txt"
+    ]
+  },
+  "note": "ZXing license text is taken from its core 0.16.11 release commit; binding package declares the same Apache-2.0 license. No source-code version equivalence is asserted."
+}

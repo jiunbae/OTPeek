@@ -1,0 +1,12 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity android:name="com.otpeek.app.ClipboardFixtureActivity"
+            android:exported="true"
+            android:permission="com.otpeek.app.debug.permission.FIXTURE_DOCUMENTS"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+        <provider android:name="com.otpeek.app.FixtureDocumentProvider"
+            android:authorities="com.otpeek.app.debug.test.fixtures"
+            android:exported="true"
+            android:permission="com.otpeek.app.debug.permission.FIXTURE_DOCUMENTS" />
+    </application>
+</manifest>

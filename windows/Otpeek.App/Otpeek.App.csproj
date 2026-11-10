@@ -40,47 +40,41 @@
     <ProjectReference Include="..\Otpeek.Interop\Otpeek.Interop.csproj" />
   </ItemGroup>
 
-  <Target Name="BuildWidgetForPackage" BeforeTargets="CopyWidgetToPackage" Condition="'$(WindowsPackageType)' == 'MSIX'">
+  <!-- Stage widget content before the SDK assigns/package-computes content paths.
+       Copying after Build and adding AppxPackagePayload missed the actual MSIX. -->
+  <Target Name="StageWidgetForPackage" BeforeTargets="AssignTargetPaths" Condition="'$(WindowsPackageType)' == 'MSIX'">
     <MSBuild Projects="..\Otpeek.Widget\Otpeek.Widget.csproj"
              Targets="Build"
              Properties="Configuration=$(Configuration);Platform=$(Platform)" />
-  </Target>
-
-  <!-- Widget 출력 파일을 패키지에 복사 (Widget.exe만, DLL은 App과 공유) -->
-  <Target Name="CopyWidgetToPackage" AfterTargets="Build" Condition="'$(WindowsPackageType)' == 'MSIX'">
     <PropertyGroup>
       <WidgetOutputPath>..\Otpeek.Widget\bin\$(Platform)\$(Configuration)\net8.0-windows10.0.22621.0</WidgetOutputPath>
+      <WidgetOutputPath Condition="'$(RuntimeIdentifier)' != ''">$(WidgetOutputPath)\$(RuntimeIdentifier)</WidgetOutputPath>
     </PropertyGroup>
     <ItemGroup>
-      <!-- Only copy Widget executable and its unique files, not SDK DLLs -->
-      <WidgetExeFiles Include="$(WidgetOutputPath)\Otpeek.Widget.exe" />
-      <WidgetExeFiles Include="$(WidgetOutputPath)\Otpeek.Widget.dll" />
-      <WidgetExeFiles Include="$(WidgetOutputPath)\Otpeek.Widget.deps.json" />
-      <WidgetExeFiles Include="$(WidgetOutputPath)\Otpeek.Widget.runtimeconfig.json" />
-      <WidgetExeFiles Include="$(WidgetOutputPath)\Templates\*.json" />
-    </ItemGroup>
-    <Copy SourceFiles="@(WidgetExeFiles)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
-    <!-- Copy Templates folder -->
-    <ItemGroup>
-      <WidgetTemplates Include="$(WidgetOutputPath)\Templates\**\*.*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(WidgetTemplates)" DestinationFolder="$(OutputPath)Templates\%(RecursiveDir)" SkipUnchangedFiles="true" />
-  </Target>
-
-  <Target Name="AddWidgetFilesToMsixPayload" BeforeTargets="_ComputeAppxPackagePayload" DependsOnTargets="CopyWidgetToPackage" Condition="'$(WindowsPackageType)' == 'MSIX'">
-    <ItemGroup>
-      <WidgetPackageRootFiles Include="$(OutputPath)Otpeek.Widget.exe" />
-      <WidgetPackageRootFiles Include="$(OutputPath)Otpeek.Widget.dll" />
-      <WidgetPackageRootFiles Include="$(OutputPath)Otpeek.Widget.deps.json" />
-      <WidgetPackageRootFiles Include="$(OutputPath)Otpeek.Widget.runtimeconfig.json" />
-      <WidgetPackageTemplateFiles Include="$(OutputPath)Templates\**\*.*" />
-
-      <AppxPackagePayload Include="@(WidgetPackageRootFiles)">
-        <TargetPath>%(Filename)%(Extension)</TargetPath>
-      </AppxPackagePayload>
-      <AppxPackagePayload Include="@(WidgetPackageTemplateFiles)">
-        <TargetPath>Templates\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
-      </AppxPackagePayload>
+      <Content Include="$(WidgetOutputPath)\Otpeek.Widget.exe">
+        <Link>Otpeek.Widget.exe</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="$(WidgetOutputPath)\Otpeek.Widget.dll">
+        <Link>Otpeek.Widget.dll</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="$(WidgetOutputPath)\Otpeek.Widget.deps.json">
+        <Link>Otpeek.Widget.deps.json</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="$(WidgetOutputPath)\Otpeek.Widget.runtimeconfig.json">
+        <Link>Otpeek.Widget.runtimeconfig.json</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="$(WidgetOutputPath)\Otpeek.Widget.pri">
+        <Link>Otpeek.Widget.pri</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="..\Otpeek.Widget\Templates\OtpWidgetTemplate.json">
+        <Link>Templates\OtpWidgetTemplate.json</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
   </Target>
 
