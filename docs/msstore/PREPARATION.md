@@ -1,5 +1,7 @@
 # OTPeek Microsoft Store 출시 준비
 
+**2026-11-10 후속:** 커밋·푸시와 새 Windows UI 검사, VMK 복구 오류 수정·환경 차단, 실제 Store 로그인 상태는 [최신 제출 시도](SUBMISSION_ATTEMPT_20261110.md)를 따른다. 아래 결과는 당시 기록이다.
+
 **최신 결과:** [자체 포함 후속 QA](SELF_CONTAINED_QA_20261025.md)에서 .NET8 runtime 포함, 격리 QA widget의 내부 coreclr 실행, runtime 고지, 배율 리소스 누락 수정, 최종4개 MSIX native 무결성 및 synthetic15개를 확인했다. Windows SSH는 복구됐지만 현재 대화형 세션은 jiun-test라 새 앱 UI 재확인은 jiun 로그인 후에만 진행한다. 실제 Store identity 연결/계정 인증/제출은 남아 있다. [WACK 잔여3건 분석](WACK_FINDINGS_20261025.md)은 선택 FAIL2/도구 WARNING1의 근거를 기록한다. 아래 날짜별 내용은 이력이다. Android 클립보드 선택 대기는 [정책 반영·회귀](../android/CLIPBOARD_QA_20261025.md)로 해소됐다.
 
 2026-10-23 기준으로 기존 WinUI Windows 앱의 MSIX 경로를 사용해 출시를 준비한다. 이 단계는 로컬 조사와 제출 준비이며, Store 식별자 확정·예약·업로드·심사 제출·게시를 수행하지 않았다. Android 클립보드 정책은 사용자 위임에 따라 반영했다.

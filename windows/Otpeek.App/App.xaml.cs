@@ -287,6 +287,11 @@ public partial class App : Application
                     {
                         // 키 손상/불일치 → 비밀번호로 재시도
                     }
+                    catch (InvalidOperationException)
+                    {
+                        // The file can exist while DPAPI cannot recover its VMK.
+                        // Keep the vault intact and offer the existing password path.
+                    }
                 }
 
                 await OpenWithPasswordLoopAsync(client, xamlRoot);
