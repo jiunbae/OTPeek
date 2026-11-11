@@ -1,5 +1,7 @@
 # jiun-home DPAPI 복구 진행 — 2026-11-10
 
+**2026-11-11 후속:** 공개 DPAPI roundtrip과 새 격리 패키지 UI 복구·재실행 검증이 통과했다. 현재 판정과 인증 대기는 [재검증 결과](DPAPI_UI_REVALIDATION_20261111.md)를 따른다. 아래 내용은 복구 전 이력이다.
+
 ## 실행 명령과 핵심 출력
 
 원격 명령은 이 worktree의 `.tools/msstore/run-remote.py`로 전달했다. 공개 입력 `[1,2,3]`만 암호화/복호화했고 실제 사용자 vault·브라우저·Credential Manager 데이터는 열지 않았다.
