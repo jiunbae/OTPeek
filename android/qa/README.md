@@ -19,7 +19,7 @@ python3 android/qa/fixture-ui.py camera               # denial, regrant, scan, n
 ```sh
 mkdir -p .tools/verification
 QA_JAVA="$PWD/.tools/jdk/jdk-17.0.20.1+1/Contents/Home/bin/java"
-QA_ZXING_JAR=$(rg --files .tools/gradle-home/caches/modules-2/files-2.1/com.google.zxing/core/3.5.3 | rg '/core-3.5.3.jar$')
+QA_ZXING_JAR=$(rg --files "${GRADLE_USER_HOME:-$HOME/.gradle}/caches/modules-2/files-2.1/com.google.zxing/core/3.5.3" | rg '/core-3.5.3.jar$')
 "$QA_JAVA" android/qa/GenerateLegacyFixture.java .tools/verification/legacy-fixture.otpbackup
 "$QA_JAVA" -Djava.awt.headless=true -cp "$QA_ZXING_JAR" \
   android/qa/GenerateQrFixture.java .tools/verification/qr-camera-fixture.png

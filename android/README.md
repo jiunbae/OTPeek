@@ -6,15 +6,17 @@ Implemented flow: password-protected vault, manual TOTP/HOTP registration (SHA1/
 
 ## Build
 
-Use JDK17, Android SDK platform36/build-tools35.0.0, NDK28.2.13676358, Rust1.94 with `aarch64-linux-android` std. Versions are pinned in the Gradle files, wrapper checksum and Cargo lockfile. All bootstrap tools/caches in this worktree are under ignored `.tools/` and `core/target/`; the shell does not modify the Apple/Windows implementation.
+Use JDK17, Android SDK platform36/build-tools35.0.0, NDK28.2.13676358, Rust1.94.0 with `aarch64-linux-android` std. The SDK defaults to `~/Library/Android/sdk`, Gradle downloads/cache to `~/.gradle`, and Rust to the shared rustup toolchain explicitly pinned by `build-rust.sh`. Cargo dependency downloads use `~/.cargo`. Versions remain pinned in the Gradle files, wrapper checksum, Rust script and Cargo lockfile. AVD userdata, Android user state, debug signing keys and QA evidence stay under ignored `.tools/`; compilation outputs stay under `core/target/` and Android build directories.
 
 ```sh
-# From the repository root, using the isolated tools installed for this worktree:
+# One-time shared Rust setup (the default toolchain is unchanged):
+rustup toolchain install 1.94.0 --profile minimal --target aarch64-linux-android
+# From the repository root, using shared tools and project-specific outputs:
 bash android/scripts/gradle-local.sh :app:assembleDebug :app:testDebugUnitTest
 bash android/scripts/gradle-local.sh :app:assembleRelease :app:bundleRelease
 ```
 
-For a separately installed SDK, set JAVA_HOME and ANDROID_SDK_ROOT and use `android/local.properties` for sdk.dir. `build-rust.sh` uses the local `.tools/rust` sysroot when present, otherwise your Rust target installation. It builds Rust ARM64 release and a host metadata library, generates Kotlin from the matching library, and copies native output into `app/build/generated/`. No generated binding/native binaries are checked into sources. NDK macOS/Linux hosts are supported by the script.
+Set JAVA_HOME to a JDK17 installation, or the launcher uses the retained `.tools/jdk` JDK17. Set ANDROID_SDK_ROOT (or ANDROID_HOME) to override the shared SDK and keep `android/local.properties` sdk.dir consistent with it. GRADLE_USER_HOME and CARGO_HOME can override their shared caches. `build-rust.sh` selects rustc, rustdoc and cargo from rustup1.94.0, builds Rust ARM64 release and a host metadata library, generates Kotlin from the matching library, and copies native output into `app/build/generated/`. No generated binding/native binaries are checked into sources. NDK macOS/Linux hosts are supported by the script.
 
 Outputs: `android/app/build/outputs/apk/debug/app-debug.apk` (local debug signed), `apk/release/app-release-unsigned.apk`, and `bundle/release/app-release.aab` (unsigned). Configure production signing only in a separately authorized release task.
 
@@ -58,7 +60,7 @@ env ANDROID_USER_HOME="$PWD/.tools/android-user" \
   ANDROID_EMULATOR_HOME="$PWD/.tools/android-user" \
   ANDROID_AVD_HOME="$PWD/.tools/avd" \
   ANDROID_ADB_SERVER_PORT=5045 ADB_SERVER_SOCKET=tcp:127.0.0.1:5045 \
-  .tools/sdk/emulator/emulator -avd otpeek-fixture-36-16k -port 5662 \
+  "${ANDROID_SDK_ROOT:-${ANDROID_HOME:-$HOME/Library/Android/sdk}}/emulator/emulator" -avd otpeek-fixture-36-16k -port 5662 \
   -memory 3072 -cores 4 -gpu host -no-window -no-audio -no-snapshot -no-metrics
 ```
 

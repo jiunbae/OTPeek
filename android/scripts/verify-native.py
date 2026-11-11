@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Inspect every packaged ELF and APK ZIP page alignment; no device/user data."""
 import argparse
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -8,8 +9,10 @@ import zipfile
 
 parser = argparse.ArgumentParser()
 parser.add_argument("apk", type=Path)
-parser.add_argument("--sdk", type=Path, default=Path(__file__).resolve().parents[2] / ".tools/sdk")
+parser.add_argument("--sdk", type=Path, default=Path(os.environ.get(
+    "ANDROID_SDK_ROOT", os.environ.get("ANDROID_HOME", str(Path.home() / "Library/Android/sdk")))))
 args = parser.parse_args()
+args.sdk = args.sdk.expanduser()
 root = Path(__file__).resolve().parents[2]
 ndk = args.sdk / "ndk/28.2.13676358/toolchains/llvm/prebuilt"
 readelf = next(ndk.glob("*/bin/llvm-readelf"))

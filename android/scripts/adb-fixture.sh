@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-$HOME/Library/Android/sdk}}"
 export ANDROID_USER_HOME="$ROOT/.tools/android-user"
 export ANDROID_EMULATOR_HOME="$ANDROID_USER_HOME"
 export ANDROID_ADB_SERVER_PORT=5045
@@ -12,5 +13,5 @@ case "$SERIAL" in
     *) echo 'Use only OTPeek fixture emulators 5660/5662.' >&2; exit 1 ;;
 esac
 # Explicit TCP transport avoids emulator registration against another ADB server.
-"$ROOT/.tools/sdk/platform-tools/adb" -P 5045 connect "$TARGET" >/dev/null
-exec "$ROOT/.tools/sdk/platform-tools/adb" -P 5045 -s "$TARGET" "$@"
+"$SDK/platform-tools/adb" -P 5045 connect "$TARGET" >/dev/null
+exec "$SDK/platform-tools/adb" -P 5045 -s "$TARGET" "$@"

@@ -3,11 +3,12 @@ import os, subprocess, time, runpy
 from pathlib import Path
 root = Path(__file__).resolve().parents[2]
 os.chdir(root)
+sdk = Path(os.environ.get('ANDROID_SDK_ROOT', os.environ.get('ANDROID_HOME', str(Path.home() / 'Library/Android/sdk')))).expanduser()
 env = os.environ.copy()
-env.update(ANDROID_USER_HOME=str(root / '.tools/android-user'), ANDROID_EMULATOR_HOME=str(root / '.tools/android-user'), ANDROID_AVD_HOME=str(root / '.tools/avd'), ANDROID_ADB_SERVER_PORT='5045', ADB_SERVER_SOCKET='tcp:127.0.0.1:5045', OTPEEK_EMULATOR_SERIAL='emulator-5662', ANDROID_EMULATOR_WAIT_TIME_BEFORE_KILL='5')
+env.update(ANDROID_SDK_ROOT=str(sdk), ANDROID_HOME=str(sdk), ANDROID_USER_HOME=str(root / '.tools/android-user'), ANDROID_EMULATOR_HOME=str(root / '.tools/android-user'), ANDROID_AVD_HOME=str(root / '.tools/avd'), ANDROID_ADB_SERVER_PORT='5045', ADB_SERVER_SOCKET='tcp:127.0.0.1:5045', OTPEEK_EMULATOR_SERIAL='emulator-5662', ANDROID_EMULATOR_WAIT_TIME_BEFORE_KILL='5')
 os.environ.update(env)
 with Path('.tools/logs/emulator-bundle-16k.log').open('w') as log:
-    emu = subprocess.Popen(['.tools/sdk/emulator/emulator', '-avd', 'otpeek-fixture-36-16k', '-port', '5662', '-memory', '3072', '-cores', '4', '-gpu', 'host', '-no-window', '-no-audio', '-no-boot-anim', '-no-snapshot', '-no-metrics'], env=env, stdout=log, stderr=subprocess.STDOUT)
+    emu = subprocess.Popen([str(sdk / 'emulator/emulator'), '-avd', 'otpeek-fixture-36-16k', '-port', '5662', '-memory', '3072', '-cores', '4', '-gpu', 'host', '-no-window', '-no-audio', '-no-boot-anim', '-no-snapshot', '-no-metrics'], env=env, stdout=log, stderr=subprocess.STDOUT)
     owned = False
     try:
         for _ in range(90):

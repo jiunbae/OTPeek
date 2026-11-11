@@ -6,10 +6,10 @@ if [[ -z "${JAVA_HOME:-}" ]]; then
         [[ -x "$JDK/bin/java" ]] && export JAVA_HOME="$JDK" && break
     done
 fi
-export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$ROOT/.tools/gradle-home}"
+export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$HOME/.gradle}"
 export ANDROID_USER_HOME="${ANDROID_USER_HOME:-$ROOT/.tools/android-user}"
 export ANDROID_EMULATOR_HOME="$ANDROID_USER_HOME"
-export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-} -Duser.home=$ROOT/.tools/java-home"
-export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$ROOT/.tools/sdk}"
+export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-$HOME/Library/Android/sdk}}"
+export ANDROID_HOME="$ANDROID_SDK_ROOT"
 cd "$ROOT/android"
 exec ./gradlew --no-daemon "$@"
