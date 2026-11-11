@@ -8,11 +8,11 @@ through generated C# bindings.
 
 | Project | Framework | Role |
 |---|---|---|
-| `Otpeek.Interop` | `net8.0` | UniFFI-generated C# bindings (`Generated/otp.cs`) + native `otpeek_ffi.dll` packaging. No WinUI. |
-| `Otpeek.Core` | `netstandard2.1;net8.0;net8.0-windows` | App-preference models + `SettingsService` + platform-service interfaces. No OTP logic. |
-| `Otpeek.Core.Windows` | `net8.0-windows` | `OtpClientService` (wraps `OtpClient`), `WebDavSyncBackend`, DPAPI `SecureStorageService`, `LegacyMigrationService`, QR/clipboard/screen-capture. |
-| `Otpeek.App` | `net8.0-windows` (WinUI 3) | UI shell, ViewModels, tray. |
-| `Otpeek.Widget` | `net8.0-windows` | Widget COM host; reads the vault via `OtpClient.openWithKey` (DPAPI VMK) + `codesAt`. No WinUI, no Argon2. |
+| `Otpeek.Interop` | `net10.0` | UniFFI-generated C# bindings (`Generated/otp.cs`) + native `otpeek_ffi.dll` packaging. No WinUI. |
+| `Otpeek.Core` | `netstandard2.1;net10.0;net10.0-windows` | App-preference models + `SettingsService` + platform-service interfaces. No OTP logic. |
+| `Otpeek.Core.Windows` | `net10.0-windows` | `OtpClientService` (wraps `OtpClient`), `WebDavSyncBackend`, DPAPI `SecureStorageService`, `LegacyMigrationService`, QR/clipboard/screen-capture. |
+| `Otpeek.App` | `net10.0-windows` (WinUI 3) | UI shell, ViewModels, tray. |
+| `Otpeek.Widget` | `net10.0-windows` | Widget COM host; reads the vault via `OtpClient.openWithKey` (DPAPI VMK) + `codesAt`. No WinUI, no Argon2. |
 
 ## Data layout (`%LOCALAPPDATA%\Otpeek\`)
 
@@ -22,6 +22,11 @@ through generated C# bindings.
 - `accounts.dat` (legacy) → renamed to `accounts.dat.migrated` after first-run migration.
 
 ## Build order
+
+Use the .NET 10 SDK selected by `global.json` (10.0.403, latest patch in that feature band).
+Self-contained app/widget packages pin runtime 10.0.15 through `Directory.Build.targets`;
+the package verifier rejects older runtimes. Windows UI/SDK versions and the Rust ABI
+remain unchanged. The shared `netstandard2.1` Core surface is retained.
 
 The .NET build depends on the native library, so build in this order:
 
@@ -43,7 +48,7 @@ The .NET build depends on the native library, so build in this order:
 3. **.NET solution**
    ```powershell
    dotnet build Otpeek.Windows.sln -c Debug -p:Platform=x64
-   # or open Otpeek.Windows.sln in Visual Studio 2022 (17.8+)
+   # or open Otpeek.Windows.sln in a Visual Studio version that supports the .NET 10 SDK
    ```
 
 ## Run the unpackaged app
@@ -58,7 +63,7 @@ dotnet run --project windows\Otpeek.App\Otpeek.App.csproj -c Release -p:Platform
 Or launch the built executable directly:
 
 ```text
-windows\Otpeek.App\bin\x64\Release\net8.0-windows10.0.22621.0\Otpeek.exe
+windows\Otpeek.App\bin\x64\Release\net10.0-windows10.0.22621.0\Otpeek.exe
 ```
 
 If startup fails, the app records the WinUI exception in

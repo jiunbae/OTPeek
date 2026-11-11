@@ -3,604 +3,6 @@
   "packages": [
     {
       "ecosystem": "NuGet",
-      "package": "H.NotifyIcon/2.1.3",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "H.NotifyIcon-LICENSE.md",
-          "source": "https://raw.githubusercontent.com/HavenDV/H.NotifyIcon/9738c4c7a9b0b1015802035d9db49320f2ae50be/LICENSE.md",
-          "sha256": "b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80",
-          "file": "texts/b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "CommunityToolkit.WinUI.Controls.Segmented/8.1.240916",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "License.md",
-          "source": "NuGet package CommunityToolkit.WinUI.Controls.Segmented/8.1.240916",
-          "sha256": "c12410935503a2c9c4d3d4d14fdfdff49d0a37ad0046dc761b07867e8d499e97",
-          "file": "texts/c12410935503a2c9c4d3d4d14fdfdff49d0a37ad0046dc761b07867e8d499e97.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Diagnostics/8.0.1",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Diagnostics/8.0.1",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Diagnostics/8.0.1",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.WindowsAppSDK.ML/1.8.2197",
-      "license": "license.txt",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "license.txt",
-          "source": "NuGet package Microsoft.WindowsAppSDK.ML/1.8.2197",
-          "sha256": "656aab74c15aa9f9964bcdcc993eb2755cbdb4822d5e0e3bc61d2e281897f758",
-          "file": "texts/656aab74c15aa9f9964bcdcc993eb2755cbdb4822d5e0e3bc61d2e281897f758.txt"
-        },
-        {
-          "originalFile": "ThirdPartyNotices.txt",
-          "source": "NuGet package Microsoft.WindowsAppSDK.ML/1.8.2197",
-          "sha256": "e00f828e0a33de591a355ae6606d2625f5758da7d2c844db7821c9dd3e3647b6",
-          "file": "texts/e00f828e0a33de591a355ae6606d2625f5758da7d2c844db7821c9dd3e3647b6.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.FileProviders.Abstractions/8.0.0",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.FileProviders.Abstractions/8.0.0",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.FileProviders.Abstractions/8.0.0",
-          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
-          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.FileProviders.Physical/8.0.0",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.FileProviders.Physical/8.0.0",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.FileProviders.Physical/8.0.0",
-          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
-          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "System.Text.Json/8.0.5",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package System.Text.Json/8.0.5",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package System.Text.Json/8.0.5",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Configuration.Json/8.0.1",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Configuration.Json/8.0.1",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Configuration.Json/8.0.1",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Win32.SystemEvents/9.0.10",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Win32.SystemEvents/9.0.10",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Win32.SystemEvents/9.0.10",
-          "sha256": "40686c6447a7d5b5d3693068e4571b5f483d7ed335aeee773ef662440de4c5d5",
-          "file": "texts/40686c6447a7d5b5d3693068e4571b5f483d7ed335aeee773ef662440de4c5d5.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Diagnostics.Abstractions/8.0.1",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Diagnostics.Abstractions/8.0.1",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Diagnostics.Abstractions/8.0.1",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Logging.EventSource/8.0.1",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Logging.EventSource/8.0.1",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Logging.EventSource/8.0.1",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Configuration.EnvironmentVariables/8.0.0",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Configuration.EnvironmentVariables/8.0.0",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Configuration.EnvironmentVariables/8.0.0",
-          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
-          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.WindowsAppSDK.DWrite/1.8.25122902",
-      "license": "license.txt",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "license.txt",
-          "source": "NuGet package Microsoft.WindowsAppSDK.DWrite/1.8.25122902",
-          "sha256": "f9ed00147604bdc48c7e62d127d73245781ce53903cef9c3863f8a7ef8120cc2",
-          "file": "texts/f9ed00147604bdc48c7e62d127d73245781ce53903cef9c3863f8a7ef8120cc2.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.NETCore.App.Runtime.win-x64/8.0.33",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.NETCore.App.Runtime.win-x64/8.0.33",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.NETCore.App.Runtime.win-x64/8.0.33",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "H.NotifyIcon.WinUI/2.1.3",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "H.NotifyIcon-LICENSE.md",
-          "source": "https://raw.githubusercontent.com/HavenDV/H.NotifyIcon/9738c4c7a9b0b1015802035d9db49320f2ae50be/LICENSE.md",
-          "sha256": "b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80",
-          "file": "texts/b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Configuration.CommandLine/8.0.0",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Configuration.CommandLine/8.0.0",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Configuration.CommandLine/8.0.0",
-          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
-          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Windows.SDK.BuildTools.MSIX/1.7.20250829.1",
-      "license": "sdk_license.txt",
-      "buildToolOnly": true,
-      "notices": [
-        {
-          "originalFile": "NOTICE.txt",
-          "source": "NuGet package Microsoft.Windows.SDK.BuildTools.MSIX/1.7.20250829.1",
-          "sha256": "f09ebf5de6a5c8e7ebc900bb2e52af2f75e13610a1cf91e1514530e448d956c3",
-          "file": "texts/f09ebf5de6a5c8e7ebc900bb2e52af2f75e13610a1cf91e1514530e448d956c3.txt"
-        },
-        {
-          "originalFile": "sdk_license.txt",
-          "source": "NuGet package Microsoft.Windows.SDK.BuildTools.MSIX/1.7.20250829.1",
-          "sha256": "a7a5c7e7ff998558983d6aca2702117c328aeb0c6404d298cb275f5623c6fd13",
-          "file": "texts/a7a5c7e7ff998558983d6aca2702117c328aeb0c6404d298cb275f5623c6fd13.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "H.GeneratedIcons.System.Drawing/2.1.3",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "H.NotifyIcon-LICENSE.md",
-          "source": "https://raw.githubusercontent.com/HavenDV/H.NotifyIcon/9738c4c7a9b0b1015802035d9db49320f2ae50be/LICENSE.md",
-          "sha256": "b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80",
-          "file": "texts/b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Logging.Configuration/8.0.1",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Logging.Configuration/8.0.1",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Logging.Configuration/8.0.1",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.DependencyInjection.Abstractions/8.0.2",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.DependencyInjection.Abstractions/8.0.2",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.DependencyInjection.Abstractions/8.0.2",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Logging.Console/8.0.1",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Logging.Console/8.0.1",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Logging.Console/8.0.1",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Options.ConfigurationExtensions/8.0.0",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Options.ConfigurationExtensions/8.0.0",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Options.ConfigurationExtensions/8.0.0",
-          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
-          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.DependencyInjection/8.0.1",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.DependencyInjection/8.0.1",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.DependencyInjection/8.0.1",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.WindowsAppSDK.WinUI/1.8.260709004",
-      "license": "license.txt",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "license.txt",
-          "source": "NuGet package Microsoft.WindowsAppSDK.WinUI/1.8.260709004",
-          "sha256": "5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501",
-          "file": "texts/5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501.txt"
-        },
-        {
-          "originalFile": "NOTICE.txt",
-          "source": "NuGet package Microsoft.WindowsAppSDK.WinUI/1.8.260709004",
-          "sha256": "e25393c0d340a1821827b093fa4dbbfcccd8feb7bf769e7fa773e3955cd5314b",
-          "file": "texts/e25393c0d340a1821827b093fa4dbbfcccd8feb7bf769e7fa773e3955cd5314b.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Configuration.Binder/8.0.2",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Configuration.Binder/8.0.2",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Configuration.Binder/8.0.2",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "System.Diagnostics.EventLog/8.0.1",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package System.Diagnostics.EventLog/8.0.1",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package System.Diagnostics.EventLog/8.0.1",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.WindowsAppSDK.InteractiveExperiences/1.8.260708001",
-      "license": "license.txt",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "license.txt",
-          "source": "NuGet package Microsoft.WindowsAppSDK.InteractiveExperiences/1.8.260708001",
-          "sha256": "5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501",
-          "file": "texts/5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "ZXing.Net/0.16.11",
-      "license": "Apache-2.0",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "ZXing.Net-COPYING.txt",
-          "source": "https://raw.githubusercontent.com/micjahn/ZXing.Net/fd58f3c4a5d80ccf45ef1237899a65b0ba5b83a0/COPYING",
-          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
-          "file": "texts/c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.WindowsAppSDK.Runtime/1.8.260710003",
-      "license": "license.txt",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "license.txt",
-          "source": "NuGet package Microsoft.WindowsAppSDK.Runtime/1.8.260710003",
-          "sha256": "5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501",
-          "file": "texts/5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501.txt"
-        },
-        {
-          "originalFile": "NOTICE.txt",
-          "source": "NuGet package Microsoft.WindowsAppSDK.Runtime/1.8.260710003",
-          "sha256": "e25393c0d340a1821827b093fa4dbbfcccd8feb7bf769e7fa773e3955cd5314b",
-          "file": "texts/e25393c0d340a1821827b093fa4dbbfcccd8feb7bf769e7fa773e3955cd5314b.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Logging.Debug/8.0.1",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Logging.Debug/8.0.1",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Logging.Debug/8.0.1",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.FileSystemGlobbing/8.0.0",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.FileSystemGlobbing/8.0.0",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.FileSystemGlobbing/8.0.0",
-          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
-          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Logging/8.0.1",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Logging/8.0.1",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Logging/8.0.1",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
       "package": "Microsoft.WindowsAppSDK/1.8.260710003",
       "license": "license.txt",
       "buildToolOnly": false,
@@ -616,6 +18,34 @@
           "source": "NuGet package Microsoft.WindowsAppSDK/1.8.260710003",
           "sha256": "e25393c0d340a1821827b093fa4dbbfcccd8feb7bf769e7fa773e3955cd5314b",
           "file": "texts/e25393c0d340a1821827b093fa4dbbfcccd8feb7bf769e7fa773e3955cd5314b.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "ZXing.Net.Bindings.Windows.Compatibility/0.16.17",
+      "license": "Apache-2.0",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "ZXing.Net-COPYING.txt",
+          "source": "https://raw.githubusercontent.com/micjahn/ZXing.Net/fd58f3c4a5d80ccf45ef1237899a65b0ba5b83a0/COPYING",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "file": "texts/c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Logging.Configuration/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging.Configuration/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
         }
       ]
     },
@@ -641,61 +71,169 @@
     },
     {
       "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Configuration.FileExtensions/8.0.1",
+      "package": "Microsoft.Extensions.Logging.Debug/10.0.15",
       "license": "MIT",
       "buildToolOnly": false,
       "notices": [
         {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Configuration.FileExtensions/8.0.1",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
           "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Configuration.FileExtensions/8.0.1",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+          "source": "NuGet package Microsoft.Extensions.Logging.Debug/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
         }
       ]
     },
     {
       "ecosystem": "NuGet",
-      "package": "System.Numerics.Tensors/9.0.0",
+      "package": "Microsoft.Extensions.Configuration.Abstractions/10.0.15",
       "license": "MIT",
       "buildToolOnly": false,
       "notices": [
         {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package System.Numerics.Tensors/9.0.0",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
           "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package System.Numerics.Tensors/9.0.0",
-          "sha256": "40686c6447a7d5b5d3693068e4571b5f483d7ed335aeee773ef662440de4c5d5",
-          "file": "texts/40686c6447a7d5b5d3693068e4571b5f483d7ed335aeee773ef662440de4c5d5.txt"
+          "source": "NuGet package Microsoft.Extensions.Configuration.Abstractions/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
         }
       ]
     },
     {
       "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Configuration.UserSecrets/8.0.1",
+      "package": "H.GeneratedIcons.System.Drawing/2.1.3",
       "license": "MIT",
       "buildToolOnly": false,
       "notices": [
         {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Configuration.UserSecrets/8.0.1",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
+          "originalFile": "H.NotifyIcon-LICENSE.md",
+          "source": "https://raw.githubusercontent.com/HavenDV/H.NotifyIcon/9738c4c7a9b0b1015802035d9db49320f2ae50be/LICENSE.md",
+          "sha256": "b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80",
+          "file": "texts/b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Configuration/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
         {
           "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Configuration.UserSecrets/8.0.1",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+          "source": "NuGet package Microsoft.Extensions.Configuration/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.WindowsAppSDK.Widgets/1.8.251231004",
+      "license": "license.txt",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "license.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.Widgets/1.8.251231004",
+          "sha256": "f9ed00147604bdc48c7e62d127d73245781ce53903cef9c3863f8a7ef8120cc2",
+          "file": "texts/f9ed00147604bdc48c7e62d127d73245781ce53903cef9c3863f8a7ef8120cc2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.FileProviders.Abstractions/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.FileProviders.Abstractions/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Hosting.Abstractions/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Hosting.Abstractions/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.WindowsAppSDK.DWrite/1.8.25122902",
+      "license": "license.txt",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "license.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.DWrite/1.8.25122902",
+          "sha256": "f9ed00147604bdc48c7e62d127d73245781ce53903cef9c3863f8a7ef8120cc2",
+          "file": "texts/f9ed00147604bdc48c7e62d127d73245781ce53903cef9c3863f8a7ef8120cc2.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Logging.Console/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging.Console/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Options.ConfigurationExtensions/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Options.ConfigurationExtensions/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Logging/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Configuration.FileExtensions/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.FileExtensions/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
         }
       ]
     },
@@ -705,86 +243,6 @@
       "license": null,
       "buildToolOnly": true,
       "notices": []
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Logging.Abstractions/8.0.2",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Logging.Abstractions/8.0.2",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Logging.Abstractions/8.0.2",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Options/8.0.2",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Options/8.0.2",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Options/8.0.2",
-          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
-          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Primitives/8.0.0",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Primitives/8.0.0",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Primitives/8.0.0",
-          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
-          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.Windows.CsWinRT/2.2.0",
-      "license": "LICENSE",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE",
-          "source": "NuGet package Microsoft.Windows.CsWinRT/2.2.0",
-          "sha256": "9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b",
-          "file": "texts/9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b.txt"
-        },
-        {
-          "originalFile": "NOTICE.txt",
-          "source": "NuGet package Microsoft.Windows.CsWinRT/2.2.0",
-          "sha256": "5c73ec182c994adc9d90cc576c3188a7f55df4c129a7dfb923e1ce4d91ed154d",
-          "file": "texts/5c73ec182c994adc9d90cc576c3188a7f55df4c129a7dfb923e1ce4d91ed154d.txt"
-        }
-      ]
     },
     {
       "ecosystem": "NuGet",
@@ -802,35 +260,147 @@
     },
     {
       "ecosystem": "NuGet",
-      "package": "System.Security.Cryptography.ProtectedData/8.0.0",
+      "package": "Microsoft.Extensions.Diagnostics/10.0.15",
       "license": "MIT",
       "buildToolOnly": false,
       "notices": [
         {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package System.Security.Cryptography.ProtectedData/8.0.0",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
           "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package System.Security.Cryptography.ProtectedData/8.0.0",
-          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
-          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
+          "source": "NuGet package Microsoft.Extensions.Diagnostics/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
         }
       ]
     },
     {
       "ecosystem": "NuGet",
-      "package": "CommunityToolkit.WinUI.Extensions/8.1.240916",
+      "package": "Microsoft.Extensions.Configuration.EnvironmentVariables/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.EnvironmentVariables/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Logging.Abstractions/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging.Abstractions/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Configuration.UserSecrets/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.UserSecrets/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Options/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Options/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "H.NotifyIcon.WinUI/2.1.3",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "H.NotifyIcon-LICENSE.md",
+          "source": "https://raw.githubusercontent.com/HavenDV/H.NotifyIcon/9738c4c7a9b0b1015802035d9db49320f2ae50be/LICENSE.md",
+          "sha256": "b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80",
+          "file": "texts/b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Logging.EventSource/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging.EventSource/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.WindowsAppSDK.Runtime/1.8.260710003",
+      "license": "license.txt",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "license.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.Runtime/1.8.260710003",
+          "sha256": "5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501",
+          "file": "texts/5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501.txt"
+        },
+        {
+          "originalFile": "NOTICE.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.Runtime/1.8.260710003",
+          "sha256": "e25393c0d340a1821827b093fa4dbbfcccd8feb7bf769e7fa773e3955cd5314b",
+          "file": "texts/e25393c0d340a1821827b093fa4dbbfcccd8feb7bf769e7fa773e3955cd5314b.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "CommunityToolkit.WinUI.Controls.Segmented/8.1.240916",
       "license": "MIT",
       "buildToolOnly": false,
       "notices": [
         {
           "originalFile": "License.md",
-          "source": "NuGet package CommunityToolkit.WinUI.Extensions/8.1.240916",
+          "source": "NuGet package CommunityToolkit.WinUI.Controls.Segmented/8.1.240916",
           "sha256": "c12410935503a2c9c4d3d4d14fdfdff49d0a37ad0046dc761b07867e8d499e97",
           "file": "texts/c12410935503a2c9c4d3d4d14fdfdff49d0a37ad0046dc761b07867e8d499e97.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Configuration.Json/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.Json/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
         }
       ]
     },
@@ -856,13 +426,61 @@
     },
     {
       "ecosystem": "NuGet",
-      "package": "CommunityToolkit.WinUI.Controls.Primitives/8.1.240916",
+      "package": "Microsoft.Extensions.Logging.EventLog/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Logging.EventLog/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.WindowsAppSDK.AI/1.8.79",
+      "license": "license.txt",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "license.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.AI/1.8.79",
+          "sha256": "5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501",
+          "file": "texts/5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.WindowsAppSDK.ML/1.8.2197",
+      "license": "license.txt",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "license.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.ML/1.8.2197",
+          "sha256": "656aab74c15aa9f9964bcdcc993eb2755cbdb4822d5e0e3bc61d2e281897f758",
+          "file": "texts/656aab74c15aa9f9964bcdcc993eb2755cbdb4822d5e0e3bc61d2e281897f758.txt"
+        },
+        {
+          "originalFile": "ThirdPartyNotices.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.ML/1.8.2197",
+          "sha256": "e00f828e0a33de591a355ae6606d2625f5758da7d2c844db7821c9dd3e3647b6",
+          "file": "texts/e00f828e0a33de591a355ae6606d2625f5758da7d2c844db7821c9dd3e3647b6.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "CommunityToolkit.WinUI.Extensions/8.1.240916",
       "license": "MIT",
       "buildToolOnly": false,
       "notices": [
         {
           "originalFile": "License.md",
-          "source": "NuGet package CommunityToolkit.WinUI.Controls.Primitives/8.1.240916",
+          "source": "NuGet package CommunityToolkit.WinUI.Extensions/8.1.240916",
           "sha256": "c12410935503a2c9c4d3d4d14fdfdff49d0a37ad0046dc761b07867e8d499e97",
           "file": "texts/c12410935503a2c9c4d3d4d14fdfdff49d0a37ad0046dc761b07867e8d499e97.txt"
         }
@@ -870,79 +488,67 @@
     },
     {
       "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Configuration/8.0.0",
+      "package": "Microsoft.Win32.SystemEvents/10.0.15",
       "license": "MIT",
       "buildToolOnly": false,
       "notices": [
         {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Configuration/8.0.0",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
           "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Configuration/8.0.0",
-          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
-          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
+          "source": "NuGet package Microsoft.Win32.SystemEvents/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
         }
       ]
     },
     {
       "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Configuration.Abstractions/8.0.0",
+      "package": "Microsoft.NETCore.App.Runtime.win-x64/10.0.15",
       "license": "MIT",
       "buildToolOnly": false,
       "notices": [
         {
           "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Configuration.Abstractions/8.0.0",
+          "source": "NuGet package Microsoft.NETCore.App.Runtime.win-x64/10.0.15",
           "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
           "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
         },
         {
           "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Configuration.Abstractions/8.0.0",
-          "sha256": "19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec",
-          "file": "texts/19c19dcac9f3ee6302cfbc6745bb8e79f08efc4c933eb8dc5509bf14b88347ec.txt"
+          "source": "NuGet package Microsoft.NETCore.App.Runtime.win-x64/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
         }
       ]
     },
     {
       "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Hosting/8.0.1",
+      "package": "System.Security.Cryptography.ProtectedData/10.0.15",
       "license": "MIT",
       "buildToolOnly": false,
       "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Hosting/8.0.1",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
         {
           "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Hosting/8.0.1",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+          "source": "NuGet package System.Security.Cryptography.ProtectedData/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
         }
       ]
     },
     {
       "ecosystem": "NuGet",
-      "package": "System.Drawing.Common/9.0.10",
+      "package": "System.Drawing.Common/10.0.15",
       "license": "MIT",
       "buildToolOnly": false,
       "notices": [
         {
           "originalFile": "LICENSE.TXT",
-          "source": "NuGet package System.Drawing.Common/9.0.10",
+          "source": "NuGet package System.Drawing.Common/10.0.15",
           "sha256": "a89886665765362eb77e0f8e26602c924520041d1711b2eedc136434fe4d01ab",
           "file": "texts/a89886665765362eb77e0f8e26602c924520041d1711b2eedc136434fe4d01ab.txt"
         },
         {
           "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package System.Drawing.Common/9.0.10",
+          "source": "NuGet package System.Drawing.Common/10.0.15",
           "sha256": "2ffe89f325685881e9fb3a64451632abe784db07a193a2633b241ea8d85e7a85",
           "file": "texts/2ffe89f325685881e9fb3a64451632abe784db07a193a2633b241ea8d85e7a85.txt"
         }
@@ -950,35 +556,193 @@
     },
     {
       "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Hosting.Abstractions/8.0.1",
+      "package": "Microsoft.Extensions.Configuration.CommandLine/10.0.15",
       "license": "MIT",
       "buildToolOnly": false,
       "notices": [
         {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Hosting.Abstractions/8.0.1",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
           "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Hosting.Abstractions/8.0.1",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
+          "source": "NuGet package Microsoft.Extensions.Configuration.CommandLine/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
         }
       ]
     },
     {
       "ecosystem": "NuGet",
-      "package": "Microsoft.WindowsAppSDK.Widgets/1.8.251231004",
+      "package": "CommunityToolkit.Mvvm/8.3.2",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "License.md",
+          "source": "NuGet package CommunityToolkit.Mvvm/8.3.2",
+          "sha256": "651997ef19dbb9ecb8dd660dbc86444a65af21f18cfe08daa69bf201cd5cfdfc",
+          "file": "texts/651997ef19dbb9ecb8dd660dbc86444a65af21f18cfe08daa69bf201cd5cfdfc.txt"
+        },
+        {
+          "originalFile": "ThirdPartyNotices.txt",
+          "source": "NuGet package CommunityToolkit.Mvvm/8.3.2",
+          "sha256": "7774f8b0ab66bfb47ec154ce24a2d6d574febc44a74d940b8a037d1c56756163",
+          "file": "texts/7774f8b0ab66bfb47ec154ce24a2d6d574febc44a74d940b8a037d1c56756163.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Primitives/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Primitives/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.FileSystemGlobbing/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.FileSystemGlobbing/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Diagnostics.Abstractions/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Diagnostics.Abstractions/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.WindowsAppSDK.WinUI/1.8.260709004",
       "license": "license.txt",
       "buildToolOnly": false,
       "notices": [
         {
           "originalFile": "license.txt",
-          "source": "NuGet package Microsoft.WindowsAppSDK.Widgets/1.8.251231004",
-          "sha256": "f9ed00147604bdc48c7e62d127d73245781ce53903cef9c3863f8a7ef8120cc2",
-          "file": "texts/f9ed00147604bdc48c7e62d127d73245781ce53903cef9c3863f8a7ef8120cc2.txt"
+          "source": "NuGet package Microsoft.WindowsAppSDK.WinUI/1.8.260709004",
+          "sha256": "5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501",
+          "file": "texts/5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501.txt"
+        },
+        {
+          "originalFile": "NOTICE.txt",
+          "source": "NuGet package Microsoft.WindowsAppSDK.WinUI/1.8.260709004",
+          "sha256": "e25393c0d340a1821827b093fa4dbbfcccd8feb7bf769e7fa773e3955cd5314b",
+          "file": "texts/e25393c0d340a1821827b093fa4dbbfcccd8feb7bf769e7fa773e3955cd5314b.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Hosting/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Hosting/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.DependencyInjection.Abstractions/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.DependencyInjection.Abstractions/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "ZXing.Net/0.16.11",
+      "license": "Apache-2.0",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "ZXing.Net-COPYING.txt",
+          "source": "https://raw.githubusercontent.com/micjahn/ZXing.Net/fd58f3c4a5d80ccf45ef1237899a65b0ba5b83a0/COPYING",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "file": "texts/c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.FileProviders.Physical/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.FileProviders.Physical/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "System.Numerics.Tensors/9.0.0",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE.TXT",
+          "source": "NuGet package System.Numerics.Tensors/9.0.0",
+          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
+        },
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package System.Numerics.Tensors/9.0.0",
+          "sha256": "40686c6447a7d5b5d3693068e4571b5f483d7ed335aeee773ef662440de4c5d5",
+          "file": "texts/40686c6447a7d5b5d3693068e4571b5f483d7ed335aeee773ef662440de4c5d5.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Windows.SDK.BuildTools.MSIX/1.7.20250829.1",
+      "license": "sdk_license.txt",
+      "buildToolOnly": true,
+      "notices": [
+        {
+          "originalFile": "NOTICE.txt",
+          "source": "NuGet package Microsoft.Windows.SDK.BuildTools.MSIX/1.7.20250829.1",
+          "sha256": "f09ebf5de6a5c8e7ebc900bb2e52af2f75e13610a1cf91e1514530e448d956c3",
+          "file": "texts/f09ebf5de6a5c8e7ebc900bb2e52af2f75e13610a1cf91e1514530e448d956c3.txt"
+        },
+        {
+          "originalFile": "sdk_license.txt",
+          "source": "NuGet package Microsoft.Windows.SDK.BuildTools.MSIX/1.7.20250829.1",
+          "sha256": "a7a5c7e7ff998558983d6aca2702117c328aeb0c6404d298cb275f5623c6fd13",
+          "file": "texts/a7a5c7e7ff998558983d6aca2702117c328aeb0c6404d298cb275f5623c6fd13.txt"
         }
       ]
     },
@@ -1004,47 +768,13 @@
     },
     {
       "ecosystem": "NuGet",
-      "package": "Microsoft.Extensions.Logging.EventLog/8.0.1",
-      "license": "MIT",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "LICENSE.TXT",
-          "source": "NuGet package Microsoft.Extensions.Logging.EventLog/8.0.1",
-          "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
-          "file": "texts/d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b.txt"
-        },
-        {
-          "originalFile": "THIRD-PARTY-NOTICES.TXT",
-          "source": "NuGet package Microsoft.Extensions.Logging.EventLog/8.0.1",
-          "sha256": "b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977",
-          "file": "texts/b60b2912da28eaa6518593c9e2efb5334ee062d3c42e80d8fdfa806b3dc52977.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "ZXing.Net.Bindings.Windows.Compatibility/0.16.14",
-      "license": "Apache-2.0",
-      "buildToolOnly": false,
-      "notices": [
-        {
-          "originalFile": "ZXing.Net-COPYING.txt",
-          "source": "https://raw.githubusercontent.com/micjahn/ZXing.Net/fd58f3c4a5d80ccf45ef1237899a65b0ba5b83a0/COPYING",
-          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
-          "file": "texts/c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4.txt"
-        }
-      ]
-    },
-    {
-      "ecosystem": "NuGet",
-      "package": "Microsoft.WindowsAppSDK.AI/1.8.79",
+      "package": "Microsoft.WindowsAppSDK.InteractiveExperiences/1.8.260708001",
       "license": "license.txt",
       "buildToolOnly": false,
       "notices": [
         {
           "originalFile": "license.txt",
-          "source": "NuGet package Microsoft.WindowsAppSDK.AI/1.8.79",
+          "source": "NuGet package Microsoft.WindowsAppSDK.InteractiveExperiences/1.8.260708001",
           "sha256": "5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501",
           "file": "texts/5b11e6347756e40fe0274bc08c97f89201b94f0d50181a09a00f1f4740840501.txt"
         }
@@ -1052,21 +782,91 @@
     },
     {
       "ecosystem": "NuGet",
-      "package": "CommunityToolkit.Mvvm/8.3.2",
+      "package": "H.NotifyIcon/2.1.3",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "H.NotifyIcon-LICENSE.md",
+          "source": "https://raw.githubusercontent.com/HavenDV/H.NotifyIcon/9738c4c7a9b0b1015802035d9db49320f2ae50be/LICENSE.md",
+          "sha256": "b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80",
+          "file": "texts/b41f5adb8391601e3c693462925317e4cbe446270bcd646bdb8d02572821fe80.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.DependencyInjection/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.DependencyInjection/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Extensions.Configuration.Binder/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package Microsoft.Extensions.Configuration.Binder/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "System.Diagnostics.EventLog/10.0.15",
+      "license": "MIT",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "THIRD-PARTY-NOTICES.TXT",
+          "source": "NuGet package System.Diagnostics.EventLog/10.0.15",
+          "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+          "file": "texts/6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "CommunityToolkit.WinUI.Controls.Primitives/8.1.240916",
       "license": "MIT",
       "buildToolOnly": false,
       "notices": [
         {
           "originalFile": "License.md",
-          "source": "NuGet package CommunityToolkit.Mvvm/8.3.2",
-          "sha256": "651997ef19dbb9ecb8dd660dbc86444a65af21f18cfe08daa69bf201cd5cfdfc",
-          "file": "texts/651997ef19dbb9ecb8dd660dbc86444a65af21f18cfe08daa69bf201cd5cfdfc.txt"
+          "source": "NuGet package CommunityToolkit.WinUI.Controls.Primitives/8.1.240916",
+          "sha256": "c12410935503a2c9c4d3d4d14fdfdff49d0a37ad0046dc761b07867e8d499e97",
+          "file": "texts/c12410935503a2c9c4d3d4d14fdfdff49d0a37ad0046dc761b07867e8d499e97.txt"
+        }
+      ]
+    },
+    {
+      "ecosystem": "NuGet",
+      "package": "Microsoft.Windows.CsWinRT/2.2.0",
+      "license": "LICENSE",
+      "buildToolOnly": false,
+      "notices": [
+        {
+          "originalFile": "LICENSE",
+          "source": "NuGet package Microsoft.Windows.CsWinRT/2.2.0",
+          "sha256": "9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b",
+          "file": "texts/9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b.txt"
         },
         {
-          "originalFile": "ThirdPartyNotices.txt",
-          "source": "NuGet package CommunityToolkit.Mvvm/8.3.2",
-          "sha256": "7774f8b0ab66bfb47ec154ce24a2d6d574febc44a74d940b8a037d1c56756163",
-          "file": "texts/7774f8b0ab66bfb47ec154ce24a2d6d574febc44a74d940b8a037d1c56756163.txt"
+          "originalFile": "NOTICE.txt",
+          "source": "NuGet package Microsoft.Windows.CsWinRT/2.2.0",
+          "sha256": "5c73ec182c994adc9d90cc576c3188a7f55df4c129a7dfb923e1ce4d91ed154d",
+          "file": "texts/5c73ec182c994adc9d90cc576c3188a7f55df4c129a7dfb923e1ce4d91ed154d.txt"
         }
       ]
     },
@@ -3802,6 +3602,6 @@
       ]
     }
   ],
-  "distinctNoticeTexts": 142,
+  "distinctNoticeTexts": 141,
   "unmodifiedMplSourceArchives": 8
 }

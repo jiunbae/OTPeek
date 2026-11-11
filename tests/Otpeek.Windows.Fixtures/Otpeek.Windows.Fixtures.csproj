@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RuntimeIdentifiers />
     <Platforms>AnyCPU</Platforms>
     <OutputType>Exe</OutputType>
@@ -12,6 +12,7 @@
     <Reference Include="System.Security.Cryptography.ProtectedData"><HintPath>$(OtpeekPayloadDir)/System.Security.Cryptography.ProtectedData.dll</HintPath></Reference>
     <Reference Include="System.Drawing.Common"><HintPath>$(OtpeekPayloadDir)/System.Drawing.Common.dll</HintPath></Reference>
     <Reference Include="System.Private.Windows.Core"><HintPath>$(OtpeekPayloadDir)/System.Private.Windows.Core.dll</HintPath></Reference>
+    <Reference Include="System.Private.Windows.GdiPlus"><HintPath>$(OtpeekPayloadDir)/System.Private.Windows.GdiPlus.dll</HintPath></Reference>
   </ItemGroup>
   <Target Name="RequireExplicitPayload" BeforeTargets="ResolveReferences">
     <Error Condition="'$(OtpeekPayloadDir)' == '' or !Exists('$(OtpeekPayloadDir)/Otpeek.Core.Windows.dll')"

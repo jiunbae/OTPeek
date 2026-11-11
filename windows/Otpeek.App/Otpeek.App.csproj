@@ -29,8 +29,8 @@
     <PackageReference Include="H.NotifyIcon.WinUI" Version="2.1.3" />
 
     <!-- DI -->
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.15" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.15" />
   </ItemGroup>
 
   <ItemGroup>
@@ -47,7 +47,7 @@
              Targets="Build"
              Properties="Configuration=$(Configuration);Platform=$(Platform)" />
     <PropertyGroup>
-      <WidgetOutputPath>..\Otpeek.Widget\bin\$(Platform)\$(Configuration)\net8.0-windows10.0.22621.0</WidgetOutputPath>
+      <WidgetOutputPath>..\Otpeek.Widget\bin\$(Platform)\$(Configuration)\net10.0-windows10.0.22621.0</WidgetOutputPath>
       <WidgetOutputPath Condition="'$(RuntimeIdentifier)' != ''">$(WidgetOutputPath)\$(RuntimeIdentifier)</WidgetOutputPath>
     </PropertyGroup>
     <ItemGroup>

@@ -52,6 +52,9 @@
     ],
     "Rust:uniffi_udl/0.29.5": [
       "UniFFI-MPL-2.0.txt"
+    ],
+    "ZXing.Net.Bindings.Windows.Compatibility/0.16.17": [
+      "ZXing.Net-COPYING.txt"
     ]
   },
   "note": "ZXing license text is taken from its core 0.16.11 release commit; binding package declares the same Apache-2.0 license. No source-code version equivalence is asserted."

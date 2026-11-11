@@ -99,9 +99,9 @@ def verify(path, name, publisher, display_name, version, architectures, preview_
                 require(not options.get("framework") and not options.get("frameworks"),
                         f"External .NET framework required: {config}")
                 require(any(f.get("name") == "Microsoft.NETCore.App" and
-                            str(f.get("version", "")).startswith("8.0.")
+                            f.get("version") == "10.0.15"
                             for f in options.get("includedFrameworks", [])),
-                        f"Bundled .NET 8 not declared: {config}")
+                        f"Bundled .NET 10.0.15 not declared: {config}")
             require("Templates/OtpWidgetTemplate.json" in names,
                     f"Missing widget template: {label}")
             for binary in ("Otpeek.exe", "otpeek_ffi.dll", "Otpeek.Widget.exe", "coreclr.dll", "clrjit.dll", "hostfxr.dll", "hostpolicy.dll"):

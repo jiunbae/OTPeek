@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.22621.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
     <OutputType>Library</OutputType>
     <RootNamespace>Otpeek.Core.Windows</RootNamespace>
@@ -21,16 +21,26 @@
 
   <ItemGroup>
     <!-- QR Code (Windows specific) -->
-    <PackageReference Include="ZXing.Net.Bindings.Windows.Compatibility" Version="0.16.14" />
+    <!-- The net10.0 binding also exposes WPF APIs and references WindowsBase10.
+         This WinUI shell needs only Bitmap APIs. Use the same package's supported
+         netstandard2.0 binding to avoid importing an unused WPF runtime contract. -->
+    <PackageReference Include="ZXing.Net.Bindings.Windows.Compatibility" Version="0.16.17"
+                      GeneratePathProperty="true" ExcludeAssets="compile;runtime" />
+    <!-- Keep the existing transitive decoder explicit when filtering binding assets. -->
+    <PackageReference Include="ZXing.Net" Version="0.16.11" />
+    <Reference Include="ZXing.Windows.Compatibility">
+      <HintPath>$(PkgZXing_Net_Bindings_Windows_Compatibility)\lib\netstandard2.0\ZXing.Windows.Compatibility.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
 
     <!-- System.Drawing for screen capture -->
-    <PackageReference Include="System.Drawing.Common" Version="9.0.10" />
+    <PackageReference Include="System.Drawing.Common" Version="10.0.15" />
 
     <!-- DPAPI for secure storage -->
-    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.15" />
 
     <!-- DI -->
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.15" />
   </ItemGroup>
 
 </Project>

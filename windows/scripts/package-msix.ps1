@@ -17,7 +17,7 @@
     The Rust core (otpeek_ffi.dll) is built automatically by the Interop project's
     MSBuild targets, so Rust + the matching MSVC target must be installed.
 
-    Prerequrisites: Visual Studio 2022 (.NET Desktop + Windows App SDK), .NET 8 SDK,
+    Prerequrisites: Visual Studio 2022 (.NET Desktop + Windows App SDK), .NET 10 SDK,
     Rust with the target(s) for the platforms you build.
 
 .EXAMPLE

@@ -1,0 +1,11 @@
+<Project>
+  <!-- A global RuntimeFrameworkVersion also overrides the Windows SDK reference pack.
+       Pin only the .NET runtime after the implicit FrameworkReferences are available. -->
+  <Target Name="PinOtpeekReleaseRuntime" BeforeTargets="ProcessFrameworkReferences"
+          Condition="'$(SelfContained)' == 'true'">
+    <ItemGroup>
+      <FrameworkReference Update="Microsoft.NETCore.App"
+                          RuntimeFrameworkVersion="$(OtpeekReleaseRuntimeVersion)" />
+    </ItemGroup>
+  </Target>
+</Project>

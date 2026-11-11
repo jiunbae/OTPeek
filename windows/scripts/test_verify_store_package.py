@@ -32,7 +32,7 @@ def pe(machine=0x8664):
 
 
 def payload(name="Example.OTPeek", missing=None, machine=0x8664, private=False,
-            external_runtime=False, runtime_machine=0x8664, scale=None):
+            external_runtime=False, runtime_machine=0x8664, scale=None, runtime_version="10.0.15"):
     manifest = f'''<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10">
     <Identity Name="{name}" Publisher="CN=Fixture" Version="2.0.1.0" ProcessorArchitecture="x64"/>
     <Properties><PublisherDisplayName>Fixture Publisher</PublisherDisplayName></Properties>
@@ -40,9 +40,9 @@ def payload(name="Example.OTPeek", missing=None, machine=0x8664, private=False,
     <Applications><Application><Extensions><Extension Category="windows.comServer"/>
     <Extension><AppExtension Name="com.microsoft.windows.widgets"/></Extension>
     </Extensions></Application></Applications></Package>'''
-    runtime = {"runtimeOptions": {"includedFrameworks": [{"name": "Microsoft.NETCore.App", "version": "8.0.32"}]}}
+    runtime = {"runtimeOptions": {"includedFrameworks": [{"name": "Microsoft.NETCore.App", "version": runtime_version}]}}
     if external_runtime:
-        runtime = {"runtimeOptions": {"framework": {"name": "Microsoft.NETCore.App", "version": "8.0.0"}}}
+        runtime = {"runtimeOptions": {"framework": {"name": "Microsoft.NETCore.App", "version": "10.0.15"}}}
     entries = {"AppxManifest.xml": manifest, "Otpeek.exe": pe(), "otpeek_ffi.dll": pe(machine),
                "Otpeek.Widget.exe": pe(), "Otpeek.Widget.dll": b"fixture",
                "Otpeek.Widget.deps.json": "{}", "Otpeek.Widget.runtimeconfig.json": json.dumps(runtime),
@@ -104,6 +104,21 @@ class StorePackageFixtures(unittest.TestCase):
     def test_external_dotnet_dependency_rejected(self):
         with self.assertRaisesRegex(check.PackageError, "External .NET framework required"):
             self.validate(upload(payload(external_runtime=True)))
+
+    def test_unsupported_or_stale_runtime_rejected(self):
+        for version in ("8.0.34", "9.0.23", "10.0.14", "11.0.0"):
+            with self.subTest(version=version):
+                with self.assertRaisesRegex(check.PackageError, "Bundled .NET 10.0.15"):
+                    self.validate(upload(payload(runtime_version=version)))
+
+    def test_old_widget_runtime_rejected_with_current_app_runtime(self):
+        with zipfile.ZipFile(io.BytesIO(payload())) as archive:
+            entries = {name: archive.read(name) for name in archive.namelist()}
+        config = {"runtimeOptions": {"includedFrameworks": [
+            {"name": "Microsoft.NETCore.App", "version": "8.0.34"}]}}
+        entries["Otpeek.Widget.runtimeconfig.json"] = json.dumps(config)
+        with self.assertRaisesRegex(check.PackageError, "Otpeek.Widget.runtimeconfig.json"):
+            self.validate(upload(zipped(entries)))
 
     def test_wrong_dotnet_runtime_architecture_rejected(self):
         with self.assertRaisesRegex(check.PackageError, "PE architecture mismatch"):

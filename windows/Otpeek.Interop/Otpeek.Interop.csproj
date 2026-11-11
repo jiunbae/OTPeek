@@ -6,14 +6,14 @@
     UniFFI-generated C# bindings (Generated/otp.cs) for the shared Rust core (otpeek-ffi),
     plus MSBuild plumbing that builds and packages the native library (otpeek_ffi.dll).
 
-    IMPORTANT: This project intentionally targets plain net8.0 (NOT net8.0-windows and NOT
+    IMPORTANT: This project intentionally targets plain net10.0 (NOT net10.0-windows and NOT
     WinUI). The generated bindings are platform-independent P/Invoke against the native
     library named "otpeek_ffi" (see [DllImport("otpeek_ffi")] in Generated/otp.cs). Keeping this
     project WinUI-free lets the widget host (which cannot depend on WinUI) reference it.
   -->
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Otpeek.Interop</RootNamespace>
     <AssemblyName>Otpeek.Interop</AssemblyName>
     <LangVersion>12.0</LangVersion>
