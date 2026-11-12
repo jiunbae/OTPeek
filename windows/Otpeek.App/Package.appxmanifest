@@ -10,15 +10,15 @@
   IgnorableNamespaces="uap uap3 uap5 rescap com">
 
   <Identity
-    Name="Otpeek"
-    Publisher="CN=Otpeek"
+    Name="43097Maybe.OTPeek"
+    Publisher="CN=AE9C9F32-5B23-43CB-831B-BD1967F7B403"
     Version="2.0.1.0" />
 
   <mp:PhoneIdentity PhoneProductId="12345678-1234-1234-1234-123456789012" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>OTPeek</DisplayName>
-    <PublisherDisplayName>OTPeek</PublisherDisplayName>
+    <PublisherDisplayName>Jiun Bae</PublisherDisplayName>
     <Logo>Assets\Logo\StoreLogo.png</Logo>
   </Properties>
 
