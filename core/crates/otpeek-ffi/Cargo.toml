@@ -14,7 +14,8 @@ path = "src/bin/uniffi-bindgen.rs"
 [dependencies]
 otpeek-core = { path = "../otpeek-core" }
 otpeek-vault = { path = "../otpeek-vault" }
-otpeek-sync = { path = "../otpeek-sync" }
+# Swift and C# supply their own sync backends over UniFFI.
+otpeek-sync = { path = "../otpeek-sync", default-features = false }
 uniffi = { workspace = true, features = ["cli"] }
 thiserror.workspace = true
 uuid.workspace = true

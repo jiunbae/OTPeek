@@ -76,7 +76,7 @@ struct CopyCodeIntent: AppIntent {
             UIPasteboard.general.string = code
             #elseif os(macOS)
             NSPasteboard.general.clearContents()
-            NSPasteboard.general.setString(code, forType: .string)
+            guard NSPasteboard.general.setString(code, forType: .string) else { return .result() }
             #endif
             // "복사됨" 피드백 기록 후 위젯 새로고침 → 해당 행에 체크마크가 잠깐 뜬다.
             CopyFeedback.record(accountId, at: Date())
@@ -168,7 +168,7 @@ struct MultiOtpTimelineProvider: TimelineProvider {
 
     /// 즐겨찾기 우선, 그다음 정렬 순서. 최대 limit 개.
     private func loadAccounts(limit: Int) -> [OtpAccount] {
-        let all = WidgetVault.openClient()?.listAccounts() ?? []
+        let all = WidgetVault.openClient().map(WidgetVault.accounts(from:)) ?? []
         let favorites = all.filter { $0.isFavorite }
         let others = all.filter { !$0.isFavorite }
         return Array((favorites + others).prefix(limit))

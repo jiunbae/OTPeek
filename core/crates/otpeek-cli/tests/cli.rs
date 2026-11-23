@@ -4,6 +4,8 @@
 //! `$OTPEEK_VAULT_PASSWORD` so no keyring / interactive prompt is involved.
 
 use std::path::{Path, PathBuf};
+use std::process::Stdio;
+use std::time::Duration;
 
 use assert_cmd::Command;
 use predicates::prelude::*;
@@ -14,7 +16,9 @@ const SECRET: &str = "JBSWY3DPEHPK3PXP";
 
 fn otp(vault: &Path) -> Command {
     let mut cmd = Command::cargo_bin("otpeek").expect("binary builds");
-    cmd.env("OTPEEK_VAULT", vault).env("OTPEEK_VAULT_PASSWORD", PW);
+    cmd.env("OTPEEK_VAULT", vault)
+        .env("OTPEEK_VAULT_PASSWORD", PW)
+        .env_remove("OTPEEK_BACKUP_PASSWORD");
     cmd
 }
 
@@ -65,6 +69,14 @@ fn add_from_uri_then_list_and_code() {
         .assert()
         .success()
         .stdout(predicate::str::is_match(r"^\d{6}\n$").unwrap());
+    otp(&v)
+        .args(["code", "GitHub", "--advance"])
+        .assert()
+        .failure()
+        .stdout("")
+        .stderr(predicate::str::contains(
+            "--advance requires a HOTP account",
+        ));
 }
 
 #[test]
@@ -113,7 +125,166 @@ fn list_json_output() {
         .assert()
         .success()
         .stdout(predicate::str::contains("accountName"))
-        .stdout(predicate::str::contains("Acme"));
+        .stdout(predicate::str::contains("Acme"))
+        .stdout(predicate::str::contains("\"secret\"").not())
+        .stdout(predicate::str::contains(SECRET).not());
+}
+
+fn add_hotp(vault: &Path) {
+    otp(vault)
+        .args([
+            "add",
+            "otpauth://hotp/Example?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&counter=0",
+        ])
+        .assert()
+        .success();
+}
+
+#[test]
+fn hotp_peek_and_advance() {
+    let dir = TempDir::new().unwrap();
+    let vault = vault_in(&dir);
+    init(&vault);
+    add_hotp(&vault);
+    let before = std::fs::read(&vault).unwrap();
+    for _ in 0..2 {
+        otp(&vault)
+            .args(["code", "Example"])
+            .assert()
+            .success()
+            .stdout("755224\n");
+    }
+    assert_eq!(std::fs::read(&vault).unwrap(), before);
+    otp(&vault)
+        .args(["code", "Example", "--advance", "--watch"])
+        .assert()
+        .code(2)
+        .stdout("");
+    otp(&vault)
+        .args(["code", "Example", "--advance"])
+        .assert()
+        .success()
+        .stdout("755224\n");
+    otp(&vault)
+        .args(["code", "Example"])
+        .assert()
+        .success()
+        .stdout("287082\n");
+
+    otp(&vault)
+        .args([
+            "add",
+            "otpauth://hotp/Exhausted?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&counter=18446744073709551615",
+        ])
+        .assert()
+        .success();
+    otp(&vault)
+        .args(["code", "Exhausted", "--advance"])
+        .assert()
+        .failure()
+        .stdout("")
+        .stderr(predicate::str::contains("HOTP counter is exhausted"));
+}
+
+#[test]
+fn concurrent_hotp_advances_use_consecutive_counters() {
+    let dir = TempDir::new().unwrap();
+    let vault = vault_in(&dir);
+    init(&vault);
+    add_hotp(&vault);
+
+    let start = || {
+        std::process::Command::new(env!("CARGO_BIN_EXE_otpeek"))
+            .env("OTPEEK_VAULT", &vault)
+            .env("OTPEEK_VAULT_PASSWORD", PW)
+            .args(["code", "Example", "--advance"])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap()
+    };
+    let first = start();
+    let second = start();
+    let mut codes = Vec::new();
+    for child in [first, second] {
+        let output = child.wait_with_output().unwrap();
+        if output.status.success() {
+            codes.push(String::from_utf8(output.stdout).unwrap());
+        } else {
+            assert!(output.stdout.is_empty(), "{output:?}");
+            assert!(
+                String::from_utf8_lossy(&output.stderr).contains("vault file changed"),
+                "{output:?}"
+            );
+        }
+    }
+    if codes.len() == 1 {
+        let output = otp(&vault)
+            .args(["code", "Example", "--advance"])
+            .assert()
+            .success();
+        codes.push(String::from_utf8(output.get_output().stdout.clone()).unwrap());
+    }
+    codes.sort();
+    assert_eq!(codes, ["287082\n", "755224\n"]);
+    otp(&vault)
+        .args(["code", "Example"])
+        .assert()
+        .success()
+        .stdout("359152\n");
+}
+
+#[test]
+fn restore_creates_only_a_new_vault() {
+    let dir = TempDir::new().unwrap();
+    let source = dir.path().join("backup.otpvault");
+    init(&source);
+    add_hotp(&source);
+
+    let occupied = vault_in(&dir);
+    init(&occupied);
+    let before = std::fs::read(&occupied).unwrap();
+    otp(&occupied)
+        .arg("restore")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("choose an unused path"));
+    assert_eq!(std::fs::read(&occupied).unwrap(), before);
+
+    let fresh = dir.path().join("fresh").join("vault.otpvault");
+    otp(&fresh)
+        .env_remove("OTPEEK_VAULT")
+        .arg("--vault")
+        .arg(&fresh)
+        .arg("restore")
+        .arg(&source)
+        .assert()
+        .success();
+    otp(&fresh)
+        .args(["code", "Example"])
+        .assert()
+        .success()
+        .stdout("755224\n");
+}
+
+#[test]
+fn webdav_restore_rejects_http() {
+    let dir = TempDir::new().unwrap();
+    let vault = vault_in(&dir);
+    otp(&vault)
+        .timeout(Duration::from_secs(5))
+        .env("OTP_WEBDAV_PASSWORD", "demo")
+        .args([
+            "restore",
+            "http://example.test/backup.otpvault",
+            "--user",
+            "alice",
+        ])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("WebDAV requires an HTTPS URL"));
+    assert!(!vault.exists());
 }
 
 #[test]
@@ -238,6 +409,24 @@ fn export_then_import_roundtrip() {
         .assert()
         .success()
         .stdout(predicate::str::contains("Acme"));
+}
+
+#[test]
+fn export_cannot_replace_the_active_vault() {
+    let dir = TempDir::new().unwrap();
+    let vault = vault_in(&dir);
+    init(&vault);
+    add_hotp(&vault);
+    let original = std::fs::read(&vault).unwrap();
+
+    otp(&vault)
+        .arg("export")
+        .arg(&vault)
+        .env("OTPEEK_BACKUP_PASSWORD", "backup-only-pw")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("choose an unused output path"));
+    assert_eq!(std::fs::read(&vault).unwrap(), original);
 }
 
 #[test]

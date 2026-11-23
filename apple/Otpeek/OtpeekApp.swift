@@ -8,8 +8,8 @@ import AppKit
 struct OtpeekApp: App {
     @StateObject private var appState = OtpStore()
     @StateObject private var incoming = IncomingVaultFile.shared
-    @StateObject private var appLock = AppLock()
     @StateObject private var store = StoreManager()
+    private var appLock: AppLock { appState.appLock }
 
     #if os(macOS)
     @AppStorage("showInMenuBar") private var showInMenuBar = true
@@ -52,7 +52,10 @@ struct OtpeekApp: App {
         .windowResizability(.contentSize)
 
         Settings {
-            SettingsView()
+            AppLockGate {
+                SettingsView()
+            }
+                .frame(minWidth: 500, minHeight: 420)
                 .environmentObject(appState)
                 .environmentObject(appLock)
                 .environmentObject(store)
@@ -271,7 +274,7 @@ final class WindowActions {
 /// account popover and whose right-click shows an Open / Settings / Quit menu —
 /// the right-click menu that SwiftUI's `MenuBarExtra` cannot provide.
 @MainActor
-final class StatusItemController {
+final class StatusItemController: NSObject, NSPopoverDelegate {
     static let shared = StatusItemController()
 
     private var statusItem: NSStatusItem?
@@ -279,7 +282,9 @@ final class StatusItemController {
     private weak var appState: OtpStore?
     private weak var appLock: AppLock?
 
-    private init() {
+    private override init() {
+        super.init()
+        popover.delegate = self
         popover.behavior = .transient
         popover.animates = true
     }
@@ -328,6 +333,8 @@ final class StatusItemController {
             return
         }
         guard let appState, let appLock else { return }
+        // A status-item popover can become key without activating the app.
+        appLock.didBecomeActive()
         let root = MenuBarView()
             .environmentObject(appState)
             .environmentObject(appLock)
@@ -340,6 +347,10 @@ final class StatusItemController {
         DispatchQueue.main.async { [weak self] in
             self?.popover.contentViewController?.view.window?.makeKey()
         }
+    }
+
+    func popoverDidClose(_ notification: Notification) {
+        if !NSApp.isActive { appLock?.didResignActive() }
     }
 
     private func showMenu(from sender: NSStatusBarButton) {
@@ -526,7 +537,7 @@ struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
-        ZStack {
+        AppLockGate {
             Group {
                 if appState.isReady {
                     ContentView()
@@ -543,18 +554,8 @@ struct RootView: View {
                         .environmentObject(incoming)
                 }
             }
-
-            // Lock gate — fully covers the UI (codes never shown while locked).
-            // Keyed on isLocked alone so "Lock Now" also works with the biometric
-            // toggle off (unlock then falls back to the device password).
-            if appLock.isLocked {
-                LockView()
-                    .environmentObject(appLock)
-                    .transition(.opacity)
-                    .zIndex(1)
-            }
         }
-        .animation(.easeInOut(duration: 0.2), value: appLock.isLocked)
+        #if os(iOS)
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
@@ -565,9 +566,11 @@ struct RootView: View {
             @unknown default:                 break
             }
         }
+        #endif
         // otpeek:// 딥링크로 들어온 계정 추가를 적절한 시점(볼트 열림 + 잠금 해제)에 적용.
         .onChange(of: incoming.pendingAddURI) { _, _ in applyPendingAdd() }
         .onChange(of: appState.isReady) { _, _ in applyPendingAdd() }
+        .onChange(of: appState.isSyncing) { _, _ in applyPendingAdd() }
         .onChange(of: appLock.isLocked) { _, _ in applyPendingAdd() }
         .task { applyPendingAdd() }
     }
@@ -575,6 +578,7 @@ struct RootView: View {
     /// otpeek:// 딥링크로 대기 중인 otpauth URI 를, 볼트가 열리고 잠금이 풀린 뒤 추가한다.
     private func applyPendingAdd() {
         guard appState.isReady,
+              !appState.isSyncing,
               !appLock.isLocked,
               let uri = incoming.pendingAddURI else { return }
         incoming.pendingAddURI = nil
@@ -583,8 +587,10 @@ struct RootView: View {
 
     private var importSheetBinding: Binding<Bool> {
         Binding(
-            get: { appState.isReady && incoming.pendingData != nil },
-            set: { presented in if !presented { incoming.pendingData = nil } }
+            get: { appState.isReady && !appLock.isLocked && incoming.pendingData != nil },
+            set: { presented in
+                if !presented && !appLock.isLocked { incoming.pendingData = nil }
+            }
         )
     }
 }

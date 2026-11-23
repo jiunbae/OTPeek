@@ -4,7 +4,9 @@ import SwiftUI
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var appLock: AppLock
-    @State private var copiedAccountId: String?
+    @State private var copiedAccount: (id: String, code: String)?
+    @State private var copyError: String?
+    @State private var showingCopyError = false
     @State private var searchText = ""
     @FocusState private var searchIsFocused: Bool
 
@@ -33,6 +35,16 @@ struct MenuBarView: View {
                 }
                 .background(MenuBarFocusObserver { focusSearchField() })
                 .onAppear { focusSearchField() }
+                .onDisappear {
+                    copiedAccount = nil
+                    copyError = nil
+                    showingCopyError = false
+                }
+                .alert("Couldn’t Copy Code", isPresented: $showingCopyError) {
+                    Button("OK", role: .cancel) {}
+                } message: {
+                    Text(copyError ?? "")
+                }
             }
         }
         .frame(width: 320)
@@ -130,7 +142,7 @@ struct MenuBarView: View {
     private func row(for account: OtpAccount) -> some View {
         MenuBarAccountRow(
             account: account,
-            isCopied: copiedAccountId == account.id,
+            copiedCode: copiedAccount?.id == account.id ? copiedAccount?.code : nil,
             code: { appState.code(for: account, at: $0) ?? "------" }
         ) {
             copyCode(for: account)
@@ -158,12 +170,17 @@ struct MenuBarView: View {
     }
 
     private func copyCode(for account: OtpAccount) {
-        guard let code = appState.code(for: account) else { return }
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(code, forType: .string)
-        copiedAccountId = account.id
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            if copiedAccountId == account.id { copiedAccountId = nil }
+        do {
+            let code = try appState.copyCodeToClipboard(accountID: account.id)
+            copiedAccount = (account.id, code)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                if copiedAccount?.id == account.id, copiedAccount?.code == code {
+                    copiedAccount = nil
+                }
+            }
+        } catch {
+            copyError = error.localizedDescription
+            showingCopyError = true
         }
     }
 
@@ -255,7 +272,8 @@ private final class MenuBarFocusObserverView: NSView {
 
 struct MenuBarAccountRow: View {
     let account: OtpAccount
-    let isCopied: Bool
+    let copiedCode: String?
+    private var isCopied: Bool { copiedCode != nil }
     let code: (Date) -> String
     let onCopy: () -> Void
 
@@ -288,16 +306,16 @@ struct MenuBarAccountRow: View {
 
             // Live code + countdown (redraws only here, once per second).
             OTPTick(account: account, code: code) { code, remaining, progress in
-                let urgent = remaining < 10
+                let urgent = account.type == .totp && remaining < 10
                 HStack(spacing: 8) {
                     if isCopied {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 20)).foregroundColor(.green)
                             .frame(width: 22, height: 22)
-                    } else {
+                    } else if account.type == .totp {
                         CountdownRing(progress: progress, remaining: remaining, urgent: urgent, size: 22)
                     }
-                    Text(formatOtpCode(code))
+                    Text(formatOtpCode(account.type == .hotp ? copiedCode ?? code : code))
                         .font(.system(size: 15, weight: .semibold, design: .monospaced))
                         .monospacedDigit()
                         .lineLimit(1)
@@ -324,7 +342,9 @@ struct MenuBarAccountRow: View {
 }
 
 #Preview {
+    let store = AppState()
     MenuBarView()
-        .environmentObject(AppState())
+        .environmentObject(store)
+        .environmentObject(store.appLock)
 }
 #endif

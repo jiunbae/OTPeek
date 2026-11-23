@@ -24,16 +24,20 @@ public final class KeychainHelper {
     /// VMK 저장 (기존 값 교체)
     @discardableResult
     public func saveVMK(_ vmk: Data) -> Bool {
-        delete(vmkAccount)
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: vmkAccount,
-            kSecValueData as String: vmk,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
             kSecAttrAccessGroup as String: accessGroup
         ]
-        return SecItemAdd(query as CFDictionary, nil) == errSecSuccess
+        let attributes: [String: Any] = [
+            kSecValueData as String: vmk,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        ]
+        let status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
+        guard status == errSecItemNotFound else { return status == errSecSuccess }
+        let item = query.merging(attributes) { _, new in new }
+        return SecItemAdd(item as CFDictionary, nil) == errSecSuccess
     }
 
     /// VMK 조회
@@ -51,8 +55,13 @@ public final class KeychainHelper {
 
     /// 기존 v1 앱이 "secret_<id>" 로 저장한 비밀키를 읽는다.
     public func loadLegacySecret(forAccountId id: String) -> String? {
-        guard let data = load(account: legacySecretPrefix + id) else { return nil }
-        return String(data: data, encoding: .utf8)
+        let account = legacySecretPrefix + id
+        if let data = load(account: account),
+           let secret = String(data: data, encoding: .utf8), !secret.isEmpty {
+            return secret
+        }
+        return load(account: account, service: "com.otpauthenticator", accessGroup: nil)
+            .flatMap { String(data: $0, encoding: .utf8) }
     }
 
     /// 마이그레이션 완료 후 legacy 비밀키 정리
@@ -64,14 +73,18 @@ public final class KeychainHelper {
     // MARK: - Private
 
     private func load(account: String) -> Data? {
-        let query: [String: Any] = [
+        load(account: account, service: service, accessGroup: accessGroup)
+    }
+
+    private func load(account: String, service: String, accessGroup: String?) -> Data? {
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
             kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-            kSecAttrAccessGroup as String: accessGroup
+            kSecMatchLimit as String: kSecMatchLimitOne
         ]
+        if let accessGroup { query[kSecAttrAccessGroup as String] = accessGroup }
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
         return status == errSecSuccess ? (result as? Data) : nil

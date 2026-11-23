@@ -19,14 +19,15 @@
   <p class="updated">시행일: 2026년 7월 7일</p>
 
   <div class="tldr">
-    <strong>요약:</strong> 2FA 시크릿은 암호화되지 않은 채로 기기를 떠나지 않고, 우리는 서버를 운영하지
-    않으며 어떤 분석 데이터도 수집하지 않습니다. 우리는 당신의 계정이나 코드를 결코 볼 수 없습니다.
+    <strong>요약:</strong> 동기화 데이터와 백업 파일에는 2FA 시크릿이 암호화되어 있습니다. 개발자는 동기화 서버를 운영하거나
+    분석 데이터를 수집하지 않습니다.
   </div>
 
   <h2>1. OTPeek이 저장하는 것</h2>
   <p>OTPeek은 2단계 인증 계정(발급자, 계정 이름, 코드 생성에 쓰이는 공유 시크릿)을 기기 내 암호화 볼트에
-     저장합니다. 볼트는 AES-256-GCM으로 암호화되며, 키는 마스터 암호에서 Argon2id로 파생되거나 기기의
-     보안 키 저장소(Apple 플랫폼의 Keychain, Windows의 DPAPI)에 보관됩니다. 개발자인 우리는 여기에
+     저장합니다. 무작위로 생성한 볼트 키로 AES-256-GCM 암호화를 적용합니다. 마스터 암호는 Argon2id를
+     통해 볼트 키를 보호합니다. 기기의 보안 키 저장소(Apple의 Keychain, Windows의 DPAPI)에 볼트 키를
+     보관할 수 있습니다. 개발자는 여기에
      접근할 수 없습니다.</p>
 
   <h2>2. iCloud 동기화 (선택)</h2>
@@ -59,9 +60,9 @@
 
   <h2>7. 당신의 데이터, 당신의 통제</h2>
   <p>언제든 볼트를
-     <a href="https://github.com/jiunbae/OTPeek/blob/main/docs/BACKUP_FORMAT.md">공개된, 문서화된 형식</a>의
-     암호화 백업으로 내보낼 수 있고, 계정을 삭제하거나 앱을 제거하여(동기화를 켰다면 설정에서 iCloud 사본까지
-     제거하여) 모든 데이터를 삭제할 수 있습니다.</p>
+     <a href="https://github.com/jiunbae/OTPeek/blob/main/docs/ARCHITECTURE.md">공개된 형식</a>의
+     암호화 백업으로 내보낼 수 있습니다. 앱에서 계정을 삭제할 수 있습니다. 모든 사본을 지우려면
+     내보낸 백업과 동기화 서비스에 저장한 볼트도 삭제하세요.</p>
 
   <h2>8. 아동</h2>
   <p>OTPeek은 인증 코드를 관리하는 유틸리티이며 만 13세 미만 아동을 대상으로 하지 않습니다.</p>
@@ -79,7 +80,7 @@
     <a href="https://github.com/jiunbae/OTPeek">GitHub</a>
     <a href="../privacy.html">English</a>
   </nav>
-  © 2026 Jiun Bae · OTPeek은 오픈소스 소프트웨어입니다.
+  © 2026 Jiun Bae
 </footer>
 
 </body>

@@ -21,19 +21,19 @@
   <h2>Get help</h2>
   <ul>
     <li><a href="https://github.com/jiunbae/OTPeek/issues">Open a GitHub issue</a> — the fastest way to report a bug or request a feature.</li>
-    <li>Email <a href="mailto:jiunbae.dev@gmail.com">jiunbae.dev@gmail.com</a> — for anything you'd rather not post publicly.</li>
-    <li>Security issue? Please report it privately — see <a href="https://github.com/jiunbae/OTPeek/security/policy">the security policy</a> instead of a public issue.</li>
+    <li>Email <a href="mailto:jiunbae.dev@gmail.com">jiunbae.dev@gmail.com</a> to report a security issue privately or discuss other sensitive information.</li>
   </ul>
 
   <h2>Frequently asked questions</h2>
 
   <details><summary>I forgot my master password. Can you reset it?</summary>
-    <p>No — and that's by design. Your master password derives the encryption key and never leaves your
-       device, so nobody (including us) can recover it. If you're still signed in on another device,
-       export a backup there and restore it with a new password.</p></details>
+    <p>We cannot recover your master password. If you can still open the vault on another device,
+       export an encrypted backup there and choose a backup password. Use that password to
+       open the backup on your new device.</p></details>
 
   <details><summary>How do I move my codes to a new phone?</summary>
-    <p>Either enable iCloud Sync on both devices, or export an encrypted backup
+    <p>Enable iCloud Sync on your existing device, then choose Restore from iCloud on your new
+       device and enter the vault master password. You can also export an encrypted backup
        (Settings → Export Encrypted Backup), AirDrop or copy the <code>.otpvault</code> file to the new
        device, and open it with OTPeek.</p></details>
 
@@ -50,9 +50,9 @@
     <p>Open the app once after installing so the widget can read the shared vault, and check that the
        account you want is favorited (widgets show favorites first).</p></details>
 
-  <details><summary>Is OTPeek really open source?</summary>
-    <p>Yes — the entire app (Rust core, iOS/macOS, Windows) is at
-       <a href="https://github.com/jiunbae/OTPeek">github.com/jiunbae/OTPeek</a>. Audits and pull requests welcome.</p></details>
+  <details><summary>Where can I read the source code?</summary>
+    <p>The source code is on
+       <a href="https://github.com/jiunbae/OTPeek">github.com/jiunbae/OTPeek</a>.</p></details>
 
   <h2>Enjoying OTPeek?</h2>
   <p class="muted">⭐️ <a href="https://github.com/jiunbae/OTPeek">Star the repo</a> ·
@@ -66,7 +66,7 @@
     <a href="https://github.com/jiunbae/OTPeek">GitHub</a>
     <a href="ko/support.html">한국어</a>
   </nav>
-  © 2026 Jiun Bae · OTPeek is open-source software.
+  © 2026 Jiun Bae
 </footer>
 
 </body>

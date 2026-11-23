@@ -8,17 +8,29 @@ namespace Otpeek.Core.Windows.Services;
 
 /// <summary>
 /// WebDAV 기반 <see cref="SyncBackend"/> 구현 (docs/ARCHITECTURE.md §6.1).
-/// 구성된 컬렉션 URL 하위의 단일 파일 <c>otpeek-vault.otpvault</c>에 암호화된 볼트 blob을
-/// 저장하며, ETag / If-Match / If-None-Match:* 로 낙관적 동시성을 처리합니다.
+/// HTTPS 파일 URL 또는 컬렉션 아래의 <c>otpeek-vault.otpvault</c>에 암호화된 볼트를 저장합니다.
+/// ETag / If-Match / If-None-Match:* 로 낙관적 동시성을 처리합니다.
 /// 코어의 SyncBackend 트레이트는 블로킹 API이므로 <see cref="HttpClient.Send(HttpRequestMessage)"/>
 /// (동기 전송)를 사용합니다.
 /// </summary>
-public sealed class WebDavSyncBackend : SyncBackend, IDisposable
+public sealed class WebDavSyncBackend : SyncBackend
 {
     private const string VaultFileName = "otpeek-vault.otpvault";
+    private const int MaxVaultBytes = 16 * 1024 * 1024;
 
-    private readonly HttpClient _http;
+    private static readonly HttpClient Http = new(new SocketsHttpHandler
+    {
+        AllowAutoRedirect = false,
+        UseCookies = false,
+        ConnectTimeout = TimeSpan.FromSeconds(10),
+        PooledConnectionLifetime = TimeSpan.FromMinutes(5)
+    })
+    {
+        Timeout = TimeSpan.FromSeconds(30),
+        MaxResponseContentBufferSize = MaxVaultBytes
+    };
     private readonly Uri _fileUri;
+    private readonly AuthenticationHeaderValue _authorization;
 
     public WebDavSyncBackend(string collectionUrl, string username, string password)
     {
@@ -27,24 +39,24 @@ public sealed class WebDavSyncBackend : SyncBackend, IDisposable
 
         _fileUri = BuildFileUri(collectionUrl);
 
-        _http = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(30)
-        };
-
-        // Basic 인증 헤더
         var raw = Encoding.UTF8.GetBytes($"{username}:{password}");
-        _http.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Basic", Convert.ToBase64String(raw));
+        _authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(raw));
     }
 
     private static Uri BuildFileUri(string collectionUrl)
     {
-        // 컬렉션 URL 하위에 고정 파일명을 붙입니다.
-        string baseUrl = collectionUrl.EndsWith("/", StringComparison.Ordinal)
-            ? collectionUrl
-            : collectionUrl + "/";
-        return new Uri(new Uri(baseUrl), VaultFileName);
+        if (!Uri.TryCreate(collectionUrl.Trim(), UriKind.Absolute, out var uri)
+            || uri.Scheme != Uri.UriSchemeHttps
+            || uri.UserInfo.Length != 0
+            || uri.Fragment.Length != 0)
+        {
+            throw new OtpException.Backend("Enter an HTTPS WebDAV URL without embedded credentials or a fragment.");
+        }
+
+        if (uri.AbsolutePath.EndsWith(".otpvault", StringComparison.OrdinalIgnoreCase))
+            return uri;
+
+        return new UriBuilder(uri) { Path = $"{uri.AbsolutePath.TrimEnd('/')}/{VaultFileName}" }.Uri;
     }
 
     /// <inheritdoc />
@@ -53,18 +65,19 @@ public sealed class WebDavSyncBackend : SyncBackend, IDisposable
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, _fileUri);
-            using var response = _http.Send(request);
+            request.Headers.Authorization = _authorization;
+            using var response = Http.Send(request);
 
-            if (response.StatusCode == HttpStatusCode.NotFound)
-                return null; // 원격 볼트가 아직 없음
+            if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Gone)
+                return null;
 
             EnsureNotAuthError(response);
 
-            if (!response.IsSuccessStatusCode)
+            if (response.StatusCode != HttpStatusCode.OK)
                 throw new OtpException.Network($"WebDAV GET failed: {(int)response.StatusCode} {response.ReasonPhrase}");
 
-            byte[] data = ReadAllBytes(response);
-            string? etag = response.Headers.ETag?.Tag;
+            byte[] data = response.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
+            string? etag = response.Headers.ETag?.ToString();
             return new RemoteBlob(data, etag);
         }
         catch (OtpException)
@@ -84,18 +97,26 @@ public sealed class WebDavSyncBackend : SyncBackend, IDisposable
     /// <inheritdoc />
     public string Store(byte[] @data, string? @ifMatch)
     {
+        if (@data.Length > MaxVaultBytes)
+            throw new OtpException.Backend("The vault exceeds the WebDAV size limit of 16 MiB.");
+
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Put, _fileUri)
             {
                 Content = new ByteArrayContent(@data)
             };
+            request.Headers.Authorization = _authorization;
             request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
             if (@ifMatch is not null)
             {
-                // 원격이 그 사이에 변경되었으면 412로 실패해야 함
-                request.Headers.IfMatch.Add(ParseETag(@ifMatch));
+                if (!EntityTagHeaderValue.TryParse(@ifMatch, out var etag)
+                    || etag.IsWeak || etag.Tag == "*")
+                {
+                    throw new OtpException.Backend("WebDAV sync requires a strong ETag from the server.");
+                }
+                request.Headers.IfMatch.Add(etag);
             }
             else
             {
@@ -103,23 +124,17 @@ public sealed class WebDavSyncBackend : SyncBackend, IDisposable
                 request.Headers.IfNoneMatch.Add(EntityTagHeaderValue.Any);
             }
 
-            using var response = _http.Send(request);
+            using var response = Http.Send(request);
 
             if (response.StatusCode == HttpStatusCode.PreconditionFailed)
                 throw new OtpException.Conflict();
 
             EnsureNotAuthError(response);
 
-            if (!response.IsSuccessStatusCode)
+            if (response.StatusCode is not (HttpStatusCode.OK or HttpStatusCode.Created or HttpStatusCode.NoContent))
                 throw new OtpException.Network($"WebDAV PUT failed: {(int)response.StatusCode} {response.ReasonPhrase}");
 
-            // 응답에 ETag가 있으면 사용, 없으면 HEAD로 조회
-            string? etag = response.Headers.ETag?.Tag;
-            if (string.IsNullOrEmpty(etag))
-                etag = HeadEtag();
-
-            // ETag를 제공하지 않는 서버도 있으므로 빈 문자열을 허용 (코어는 opaque로 취급)
-            return etag ?? string.Empty;
+            return response.Headers.ETag?.ToString() ?? string.Empty;
         }
         catch (OtpException)
         {
@@ -135,42 +150,9 @@ public sealed class WebDavSyncBackend : SyncBackend, IDisposable
         }
     }
 
-    private string? HeadEtag()
-    {
-        try
-        {
-            using var request = new HttpRequestMessage(HttpMethod.Head, _fileUri);
-            using var response = _http.Send(request);
-            return response.IsSuccessStatusCode ? response.Headers.ETag?.Tag : null;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
     private static void EnsureNotAuthError(HttpResponseMessage response)
     {
         if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
             throw new OtpException.Auth($"WebDAV auth failed: {(int)response.StatusCode} {response.ReasonPhrase}");
     }
-
-    private static EntityTagHeaderValue ParseETag(string etag)
-    {
-        // etag 값이 따옴표로 감싸져 있지 않으면 감싸서 파싱
-        string tag = etag.StartsWith("\"", StringComparison.Ordinal) || etag.StartsWith("W/", StringComparison.Ordinal)
-            ? etag
-            : $"\"{etag}\"";
-        return EntityTagHeaderValue.Parse(tag);
-    }
-
-    private static byte[] ReadAllBytes(HttpResponseMessage response)
-    {
-        using var stream = response.Content.ReadAsStream();
-        using var ms = new MemoryStream();
-        stream.CopyTo(ms);
-        return ms.ToArray();
-    }
-
-    public void Dispose() => _http.Dispose();
 }

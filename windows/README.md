@@ -97,9 +97,11 @@ Generation config (public access modifier, `Uniffi.Otpeek` namespace) lives in
 ## Sync (WebDAV)
 
 `WebDavSyncBackend` implements the generated `SyncBackend` foreign trait using `HttpClient`
-(synchronous `Send`, Basic auth, ETag / `If-Match` / `If-None-Match: *`). It stores a single
-file `otpeek-vault.otpvault` under the configured collection URL. Configure it in
-**Settings → WebDAV Sync**; the password is DPAPI-protected in `settings.dat`.
+(Basic authentication and conditional writes). In **Settings → WebDAV Sync**, enter the
+direct HTTPS `.otpvault` URL or a collection URL that contains `otpeek-vault.otpvault`.
+To share a vault with the CLI, use the same URL ending in `.otpvault` on both clients.
+Use the final URL after any redirects. The server must provide a strong, quoted ETag for existing vaults.
+Vault transfers are limited to 16 MiB. The WebDAV password is DPAPI-protected in `settings.dat`.
 
 ## Windows parity status
 

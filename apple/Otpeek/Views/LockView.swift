@@ -1,5 +1,18 @@
 import SwiftUI
 
+struct AppLockGate<Content: View>: View {
+    @EnvironmentObject private var appLock: AppLock
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        if appLock.isLocked {
+            LockView()
+        } else {
+            content()
+        }
+    }
+}
+
 /// Full-screen lock gate shown when biometric lock is enabled and the app is
 /// locked. Auto-prompts on appear; offers a manual retry.
 struct LockView: View {

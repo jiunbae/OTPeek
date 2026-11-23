@@ -73,8 +73,8 @@
           DependsOnTargets="LocateCargo">
     <Message Condition="'$(CargoAvailable)' == 'true'"
              Importance="high"
-             Text="[Interop] Building native otpeek_ffi.dll: cargo build -p otpeek-ffi --profile $(CargoProfile) --target $(RustTarget)" />
-    <Exec Command="cargo build -p otpeek-ffi --profile $(CargoProfile) --target $(RustTarget)"
+             Text="[Interop] Building native otpeek_ffi.dll: cargo build --locked -p otpeek-ffi --profile $(CargoProfile) --target $(RustTarget)" />
+    <Exec Command="cargo build --locked -p otpeek-ffi --profile $(CargoProfile) --target $(RustTarget)"
           WorkingDirectory="$(RustCoreDir)"
           Condition="'$(CargoAvailable)' == 'true'" />
   </Target>

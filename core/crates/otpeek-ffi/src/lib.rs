@@ -145,6 +145,9 @@ impl From<otpeek_vault::VaultError> for OtpError {
             otpeek_vault::VaultError::WrongKey => OtpError::WrongKey,
             otpeek_vault::VaultError::Corrupt(msg) => OtpError::Corrupt { msg },
             otpeek_vault::VaultError::Io(msg) => OtpError::Io { msg },
+            error @ otpeek_vault::VaultError::StaleFile => OtpError::Io {
+                msg: error.to_string(),
+            },
             otpeek_vault::VaultError::Crypto(msg) => OtpError::Crypto { msg },
             otpeek_vault::VaultError::Core(c) => c.into(),
         }
@@ -160,6 +163,14 @@ impl From<otpeek_sync::SyncError> for OtpError {
             otpeek_sync::SyncError::Conflict => OtpError::Conflict,
             otpeek_sync::SyncError::Backend(msg) => OtpError::Backend { msg },
             otpeek_sync::SyncError::Vault(v) => v.into(),
+        }
+    }
+}
+
+impl From<uniffi::UnexpectedUniFFICallbackError> for OtpError {
+    fn from(_: uniffi::UnexpectedUniFFICallbackError) -> Self {
+        OtpError::Backend {
+            msg: "sync backend callback failed".into(),
         }
     }
 }
@@ -333,12 +344,16 @@ fn otp_error_to_sync(e: OtpError) -> otpeek_sync::SyncError {
         OtpError::Conflict => otpeek_sync::SyncError::Conflict,
         OtpError::Backend { msg } => otpeek_sync::SyncError::Backend(msg),
         OtpError::WrongKey => otpeek_sync::SyncError::Vault(otpeek_vault::VaultError::WrongKey),
-        OtpError::WrongPassword => otpeek_sync::SyncError::Vault(otpeek_vault::VaultError::WrongPassword),
+        OtpError::WrongPassword => {
+            otpeek_sync::SyncError::Vault(otpeek_vault::VaultError::WrongPassword)
+        }
         OtpError::Corrupt { msg } => {
             otpeek_sync::SyncError::Vault(otpeek_vault::VaultError::Corrupt(msg))
         }
         OtpError::Io { msg } => otpeek_sync::SyncError::Vault(otpeek_vault::VaultError::Io(msg)),
-        OtpError::Crypto { msg } => otpeek_sync::SyncError::Vault(otpeek_vault::VaultError::Crypto(msg)),
+        OtpError::Crypto { msg } => {
+            otpeek_sync::SyncError::Vault(otpeek_vault::VaultError::Crypto(msg))
+        }
         other => otpeek_sync::SyncError::Backend(other.to_string()),
     }
 }
@@ -396,13 +411,19 @@ impl OtpClient {
             Err(p) => p.into_inner(),
         }
     }
-}
 
-/// Persist the current vault payload atomically. `now` is the modifiedAt stamp.
-fn persist(state: &mut ClientState, now: i64) -> Result<(), OtpError> {
-    let bytes = state.vault.to_bytes(now)?;
-    otpeek_vault::write_vault_file(Path::new(&state.vault_path), &bytes)?;
-    Ok(())
+    fn mutate<T>(
+        &self,
+        now: i64,
+        change: impl FnOnce(&mut otpeek_vault::Vault) -> Result<T, OtpError>,
+    ) -> Result<T, OtpError> {
+        let mut state = self.lock();
+        let mut staged = state.vault.clone();
+        let result = change(&mut staged)?;
+        staged.save_to_file(Path::new(&state.vault_path), now)?;
+        state.vault = staged;
+        Ok(result)
+    }
 }
 
 #[uniffi::export]
@@ -411,13 +432,9 @@ impl OtpClient {
 
     #[uniffi::constructor]
     pub fn create(vault_path: String, master_password: String) -> Result<Arc<Self>, OtpError> {
-        let vault = otpeek_vault::Vault::create(&master_password)?;
-        let client = OtpClient::from_vault(vault, vault_path);
-        {
-            let mut state = client.lock();
-            persist(&mut state, now_ms())?;
-        }
-        Ok(client)
+        let mut vault = otpeek_vault::Vault::create(&master_password)?;
+        vault.save_to_file(Path::new(&vault_path), now_ms())?;
+        Ok(OtpClient::from_vault(vault, vault_path))
     }
 
     #[uniffi::constructor]
@@ -444,13 +461,9 @@ impl OtpClient {
         blob: Vec<u8>,
         master_password: String,
     ) -> Result<Arc<Self>, OtpError> {
-        let vault = otpeek_vault::Vault::open_with_password(&blob, &master_password)?;
-        let client = OtpClient::from_vault(vault, vault_path);
-        {
-            let mut state = client.lock();
-            persist(&mut state, now_ms())?;
-        }
-        Ok(client)
+        let mut vault = otpeek_vault::Vault::open_with_password(&blob, &master_password)?;
+        vault.restore_to_file(Path::new(&vault_path), now_ms())?;
+        Ok(OtpClient::from_vault(vault, vault_path))
     }
 
     /// The raw 32-byte vault master key, for the platform keystore.
@@ -461,18 +474,16 @@ impl OtpClient {
     /// Re-read the vault file (app ↔ widget coherence).
     pub fn reload(&self) -> Result<(), OtpError> {
         let mut state = self.lock();
-        let vmk = state.vault.vmk();
         let data = otpeek_vault::read_vault_file(Path::new(&state.vault_path))?;
-        let vault = otpeek_vault::Vault::open_with_key(&data, &vmk)?;
-        state.vault = vault;
+        state.vault = state.vault.open_peer(&data)?;
         Ok(())
     }
 
     pub fn change_password(&self, old: String, new: String) -> Result<(), OtpError> {
-        let mut state = self.lock();
-        state.vault.change_password(&old, &new)?;
-        persist(&mut state, now_ms())?;
-        Ok(())
+        self.mutate(now_ms(), |vault| {
+            vault.change_password(&old, &new)?;
+            Ok(())
+        })
     }
 
     // --- accounts (lists exclude tombstones; sorted by sort_order, then issuer) ---
@@ -516,10 +527,10 @@ impl OtpClient {
         }
         core.updated_at = now;
 
-        let mut state = self.lock();
-        state.vault.payload_mut().accounts.push(core.clone());
-        persist(&mut state, now)?;
-        Ok(core.into())
+        self.mutate(now, |vault| {
+            vault.payload_mut().accounts.push(core.clone());
+            Ok(core.into())
+        })
     }
 
     /// Accepts otpauth:// (1 account) or otpauth-migration:// (many).
@@ -531,12 +542,10 @@ impl OtpClient {
             vec![otpeek_core::parse_otpauth_uri(&uri, now)?]
         };
 
-        let mut state = self.lock();
-        for a in &parsed {
-            state.vault.payload_mut().accounts.push(a.clone());
-        }
-        persist(&mut state, now)?;
-        Ok(parsed.into_iter().map(Into::into).collect())
+        self.mutate(now, |vault| {
+            vault.payload_mut().accounts.extend(parsed.iter().cloned());
+            Ok(parsed.into_iter().map(Into::into).collect())
+        })
     }
 
     pub fn update_account(&self, account: OtpAccount) -> Result<OtpAccount, OtpError> {
@@ -544,45 +553,43 @@ impl OtpClient {
         let mut core: otpeek_core::OtpAccount = account.into();
         core.secret = otpeek_core::normalize_secret(&core.secret)?;
 
-        let mut state = self.lock();
-        let existing = state
-            .vault
-            .payload_mut()
-            .accounts
-            .iter_mut()
-            .find(|a| a.id == core.id && a.deleted_at.is_none());
-        let slot = match existing {
-            Some(s) => s,
-            None => return Err(OtpError::NotFound { id: core.id }),
-        };
-        if core.created_at == 0 {
-            core.created_at = slot.created_at;
-        }
-        core.updated_at = now;
-        *slot = core.clone();
-        persist(&mut state, now)?;
-        Ok(core.into())
+        self.mutate(now, |vault| {
+            let existing = vault
+                .payload_mut()
+                .accounts
+                .iter_mut()
+                .find(|a| a.id == core.id && a.deleted_at.is_none());
+            let slot = match existing {
+                Some(s) => s,
+                None => return Err(OtpError::NotFound { id: core.id }),
+            };
+            if core.created_at == 0 {
+                core.created_at = slot.created_at;
+            }
+            core.updated_at = now;
+            *slot = core.clone();
+            Ok(core.into())
+        })
     }
 
     /// Sets a tombstone (deleted_at = now).
     pub fn delete_account(&self, id: String) -> Result<(), OtpError> {
         let now = now_ms();
-        let mut state = self.lock();
-        let existing = state
-            .vault
-            .payload_mut()
-            .accounts
-            .iter_mut()
-            .find(|a| a.id == id && a.deleted_at.is_none());
-        match existing {
-            Some(a) => {
-                a.deleted_at = Some(now);
-                a.updated_at = now;
+        self.mutate(now, |vault| {
+            let existing = vault
+                .payload_mut()
+                .accounts
+                .iter_mut()
+                .find(|a| a.id == id && a.deleted_at.is_none());
+            match existing {
+                Some(a) => {
+                    a.deleted_at = Some(now);
+                    a.updated_at = now;
+                }
+                None => return Err(OtpError::NotFound { id }),
             }
-            None => return Err(OtpError::NotFound { id }),
-        }
-        persist(&mut state, now)?;
-        Ok(())
+            Ok(())
+        })
     }
 
     // --- folders ---
@@ -616,60 +623,59 @@ impl OtpClient {
         }
         core.updated_at = now;
 
-        let mut state = self.lock();
-        state.vault.payload_mut().folders.push(core.clone());
-        persist(&mut state, now)?;
-        Ok(core.into())
+        self.mutate(now, |vault| {
+            vault.payload_mut().folders.push(core.clone());
+            Ok(core.into())
+        })
     }
 
     pub fn update_folder(&self, folder: OtpFolder) -> Result<OtpFolder, OtpError> {
         let now = now_ms();
         let mut core: otpeek_core::OtpFolder = folder.into();
 
-        let mut state = self.lock();
-        let existing = state
-            .vault
-            .payload_mut()
-            .folders
-            .iter_mut()
-            .find(|f| f.id == core.id && f.deleted_at.is_none());
-        let slot = match existing {
-            Some(s) => s,
-            None => return Err(OtpError::NotFound { id: core.id }),
-        };
-        if core.created_at == 0 {
-            core.created_at = slot.created_at;
-        }
-        core.updated_at = now;
-        *slot = core.clone();
-        persist(&mut state, now)?;
-        Ok(core.into())
+        self.mutate(now, |vault| {
+            let existing = vault
+                .payload_mut()
+                .folders
+                .iter_mut()
+                .find(|f| f.id == core.id && f.deleted_at.is_none());
+            let slot = match existing {
+                Some(s) => s,
+                None => return Err(OtpError::NotFound { id: core.id }),
+            };
+            if core.created_at == 0 {
+                core.created_at = slot.created_at;
+            }
+            core.updated_at = now;
+            *slot = core.clone();
+            Ok(core.into())
+        })
     }
 
     /// Accounts in the folder survive with folder_id cleared.
     pub fn delete_folder(&self, id: String) -> Result<(), OtpError> {
         let now = now_ms();
-        let mut state = self.lock();
-        let payload = state.vault.payload_mut();
-        let existing = payload
-            .folders
-            .iter_mut()
-            .find(|f| f.id == id && f.deleted_at.is_none());
-        match existing {
-            Some(f) => {
-                f.deleted_at = Some(now);
-                f.updated_at = now;
+        self.mutate(now, |vault| {
+            let payload = vault.payload_mut();
+            let existing = payload
+                .folders
+                .iter_mut()
+                .find(|f| f.id == id && f.deleted_at.is_none());
+            match existing {
+                Some(f) => {
+                    f.deleted_at = Some(now);
+                    f.updated_at = now;
+                }
+                None => return Err(OtpError::NotFound { id }),
             }
-            None => return Err(OtpError::NotFound { id }),
-        }
-        for a in payload.accounts.iter_mut() {
-            if a.folder_id.as_deref() == Some(id.as_str()) {
-                a.folder_id = None;
-                a.updated_at = now;
+            for a in payload.accounts.iter_mut() {
+                if a.folder_id.as_deref() == Some(id.as_str()) {
+                    a.folder_id = None;
+                    a.updated_at = now;
+                }
             }
-        }
-        persist(&mut state, now)?;
-        Ok(())
+            Ok(())
+        })
     }
 
     // --- codes ---
@@ -694,28 +700,34 @@ impl OtpClient {
     /// HOTP: increments the counter and persists, then returns the code.
     pub fn next_hotp(&self, id: String) -> Result<OtpCode, OtpError> {
         let now = now_ms();
-        let mut state = self.lock();
-        let account = state
-            .vault
-            .payload_mut()
-            .accounts
-            .iter_mut()
-            .find(|a| a.id == id && a.deleted_at.is_none());
-        let account = match account {
-            Some(a) => a,
-            None => return Err(OtpError::NotFound { id }),
-        };
-        if account.otp_type != otpeek_core::OtpType::Hotp {
-            return Err(OtpError::InvalidParameter {
-                msg: "account is not HOTP".to_string(),
-            });
-        }
-        // Code corresponds to the current counter; stored counter becomes +1.
-        let code = otpeek_core::generate_code(account, now)?;
-        account.counter = account.counter.saturating_add(1);
-        account.updated_at = now;
-        persist(&mut state, now)?;
-        Ok(code.into())
+        self.mutate(now, |vault| {
+            let account = vault
+                .payload_mut()
+                .accounts
+                .iter_mut()
+                .find(|a| a.id == id && a.deleted_at.is_none());
+            let account = match account {
+                Some(a) => a,
+                None => return Err(OtpError::NotFound { id }),
+            };
+            if account.otp_type != otpeek_core::OtpType::Hotp {
+                return Err(OtpError::InvalidParameter {
+                    msg: "account is not HOTP".to_string(),
+                });
+            }
+            // Code corresponds to the current counter; stored counter becomes +1.
+            let next =
+                account
+                    .counter
+                    .checked_add(1)
+                    .ok_or_else(|| OtpError::InvalidParameter {
+                        msg: "HOTP counter exhausted".into(),
+                    })?;
+            let code = otpeek_core::generate_code(account, now)?;
+            account.counter = next;
+            account.updated_at = account.updated_at.max(now);
+            Ok(code.into())
+        })
     }
 
     /// Codes for all (non-deleted) TOTP accounts — for widget timelines.
@@ -748,8 +760,7 @@ impl OtpClient {
     /// v2 container encrypted under `password` (independent salt/KEK).
     pub fn export_backup(&self, password: String) -> Result<Vec<u8>, OtpError> {
         let now = now_ms();
-        let state = self.lock();
-        let payload_clone = state.vault.payload().clone();
+        let payload_clone = self.lock().vault.payload().clone();
         let mut container = otpeek_vault::Vault::create(&password)?;
         *container.payload_mut() = payload_clone;
         let bytes = container.to_bytes(now)?;
@@ -781,23 +792,37 @@ impl OtpClient {
     }
 
     pub fn set_sync_backend(&self, backend: Arc<dyn SyncBackend>) {
-        self.lock().backend = Some(backend);
+        let old = self.lock().backend.replace(backend);
+        drop(old);
     }
 
     pub fn clear_sync_backend(&self) {
-        self.lock().backend = None;
+        let old = self.lock().backend.take();
+        drop(old);
     }
 
     pub fn sync(&self, unix_time_ms: i64) -> Result<SyncOutcome, OtpError> {
-        let mut state = self.lock();
-        let backend = match state.backend.clone() {
-            Some(b) => b,
-            None => return Err(OtpError::NotConfigured),
+        let (backend, mut candidate) = {
+            let state = self.lock();
+            let backend = state.backend.clone().ok_or(OtpError::NotConfigured)?;
+            state
+                .vault
+                .check_file_revision(Path::new(&state.vault_path))?;
+            (backend, state.vault.clone())
         };
         let adapter = BackendAdapter { inner: backend };
-        let outcome = otpeek_sync::SyncEngine::sync(&mut state.vault, &adapter, unix_time_ms)?;
-        // Persist the merged local state.
-        persist(&mut state, unix_time_ms)?;
+        let outcome = otpeek_sync::SyncEngine::sync(&mut candidate, &adapter, unix_time_ms)?;
+
+        let mut state = self.lock();
+        if !state
+            .backend
+            .as_ref()
+            .is_some_and(|active| Arc::ptr_eq(active, &adapter.inner))
+        {
+            return Err(OtpError::Conflict);
+        }
+        candidate.save_to_file(Path::new(&state.vault_path), unix_time_ms)?;
+        state.vault = candidate;
         Ok(SyncOutcome {
             pushed: outcome.pushed,
             pulled: outcome.pulled,
@@ -811,59 +836,62 @@ impl OtpClient {
     /// `merge = true` adds unknown ids and resurrects locally-tombstoned
     /// entities that are live in the backup (updated_at is bumped so a later
     /// sync doesn't re-delete them via LWW).
-    fn apply_import(&self, payload: otpeek_vault::VaultPayload, merge: bool) -> Result<u32, OtpError> {
+    fn apply_import(
+        &self,
+        payload: otpeek_vault::VaultPayload,
+        merge: bool,
+    ) -> Result<u32, OtpError> {
         let now = now_ms();
-        let mut state = self.lock();
-        let count: u32;
-        if !merge {
-            let total = payload.accounts.len() + payload.folders.len();
-            *state.vault.payload_mut() = payload;
-            count = total as u32;
-        } else {
-            let mut imported: u32 = 0;
-            let local = state.vault.payload_mut();
-            for f in payload.folders {
-                if f.deleted_at.is_some() {
-                    continue;
-                }
-                match local.folders.iter().position(|e| e.id == f.id) {
-                    Some(i) => {
-                        if local.folders[i].deleted_at.is_some() {
-                            let mut restored = f;
-                            restored.updated_at = now;
-                            local.folders[i] = restored;
-                            imported += 1;
-                        }
-                    }
-                    None => {
-                        local.folders.push(f);
-                        imported += 1;
-                    }
-                }
+        self.mutate(now, |vault| {
+            let local = vault.payload_mut();
+            if !merge {
+                let total = payload.accounts.len() + payload.folders.len();
+                *local = payload;
+                return Ok(total as u32);
             }
-            for a in payload.accounts {
-                if a.deleted_at.is_some() {
-                    continue;
-                }
-                match local.accounts.iter().position(|e| e.id == a.id) {
-                    Some(i) => {
-                        if local.accounts[i].deleted_at.is_some() {
-                            let mut restored = a;
-                            restored.updated_at = now;
-                            local.accounts[i] = restored;
-                            imported += 1;
-                        }
+
+            let mut imported = 0;
+            for mut folder in payload
+                .folders
+                .into_iter()
+                .filter(|f| f.deleted_at.is_none())
+            {
+                match local
+                    .folders
+                    .iter()
+                    .position(|existing| existing.id == folder.id)
+                {
+                    Some(i) if local.folders[i].deleted_at.is_some() => {
+                        folder.updated_at = now.max(local.folders[i].updated_at.saturating_add(1));
+                        local.folders[i] = folder;
                     }
-                    None => {
-                        local.accounts.push(a);
-                        imported += 1;
-                    }
+                    Some(_) => continue,
+                    None => local.folders.push(folder),
                 }
+                imported += 1;
             }
-            count = imported;
-        }
-        persist(&mut state, now)?;
-        Ok(count)
+            for mut account in payload
+                .accounts
+                .into_iter()
+                .filter(|a| a.deleted_at.is_none())
+            {
+                match local
+                    .accounts
+                    .iter()
+                    .position(|existing| existing.id == account.id)
+                {
+                    Some(i) if local.accounts[i].deleted_at.is_some() => {
+                        account.updated_at =
+                            now.max(local.accounts[i].updated_at.saturating_add(1));
+                        local.accounts[i] = account;
+                    }
+                    Some(_) => continue,
+                    None => local.accounts.push(account),
+                }
+                imported += 1;
+            }
+            Ok(imported)
+        })
     }
 }
 
@@ -878,6 +906,144 @@ fn sort_accounts(accounts: &mut [otpeek_core::OtpAccount]) {
                 .cmp(&b.issuer.as_deref().unwrap_or("").to_lowercase())
         })
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Weak;
+
+    const HOTP_URI: &str = "otpauth://hotp/Test?secret=JBSWY3DPEHPK3PXP&counter=0";
+
+    #[test]
+    fn unexpected_foreign_callback_error_uses_public_backend_error() {
+        let error = OtpError::from(uniffi::UnexpectedUniFFICallbackError::new(
+            "foreign details",
+        ));
+        assert!(
+            matches!(error, OtpError::Backend { msg } if msg == "sync backend callback failed")
+        );
+    }
+
+    fn client() -> (std::path::PathBuf, Arc<OtpClient>) {
+        let directory = std::env::temp_dir().join(uuid::Uuid::new_v4().to_string());
+        std::fs::create_dir(&directory).unwrap();
+        let path = directory.join("vault.otpvault");
+        let client = OtpClient::create(path.to_str().unwrap().into(), "password".into()).unwrap();
+        (directory, client)
+    }
+
+    #[test]
+    fn stale_hotp_write_does_not_advance_the_cached_counter() {
+        let (directory, client) = client();
+        let account = client.add_from_uri(HOTP_URI.into()).unwrap().remove(0);
+        let second = OtpClient::open_with_key(
+            directory.join("vault.otpvault").to_str().unwrap().into(),
+            client.vault_key(),
+        )
+        .unwrap();
+        second.next_hotp(account.id.clone()).unwrap();
+
+        assert!(matches!(
+            client.next_hotp(account.id.clone()),
+            Err(OtpError::Io { .. })
+        ));
+        assert_eq!(client.get_account(account.id.clone()).unwrap().counter, 0);
+        client.reload().unwrap();
+        assert_eq!(client.get_account(account.id.clone()).unwrap().counter, 1);
+        client.next_hotp(account.id.clone()).unwrap();
+        assert_eq!(client.get_account(account.id).unwrap().counter, 2);
+        std::fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn hotp_increment_preserves_future_timestamp_and_rejects_overflow() {
+        let (directory, client) = client();
+        let account = client.add_from_uri(HOTP_URI.into()).unwrap().remove(0);
+        client
+            .mutate(now_ms(), |vault| {
+                let stored = &mut vault.payload_mut().accounts[0];
+                stored.updated_at = i64::MAX;
+                stored.counter = u64::MAX - 1;
+                Ok(())
+            })
+            .unwrap();
+
+        client.next_hotp(account.id.clone()).unwrap();
+        assert!(matches!(
+            client.next_hotp(account.id.clone()),
+            Err(OtpError::InvalidParameter { .. })
+        ));
+        client.reload().unwrap();
+        let stored = client.get_account(account.id).unwrap();
+        assert_eq!(stored.updated_at, i64::MAX);
+        assert_eq!(stored.counter, u64::MAX);
+        std::fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn backup_merge_can_restore_an_account_from_a_compacted_tombstone() {
+        let (directory, client) = client();
+        let account = client.add_from_uri(HOTP_URI.into()).unwrap().remove(0);
+        let backup = client.lock().vault.payload().clone();
+        client.delete_account(account.id.clone()).unwrap();
+        let deletion_time = client.lock().vault.payload().accounts[0].updated_at;
+        assert!(client.get_account(account.id.clone()).is_none());
+
+        assert_eq!(client.apply_import(backup, true).unwrap(), 1);
+        let restored = client.get_account(account.id).unwrap();
+        assert_eq!(restored.secret, account.secret);
+        assert!(restored.updated_at > deletion_time);
+        std::fs::remove_dir_all(directory).unwrap();
+    }
+
+    struct EditingBackend {
+        client: Weak<OtpClient>,
+        remote: Vec<u8>,
+    }
+
+    impl SyncBackend for EditingBackend {
+        fn fetch(&self) -> Result<Option<RemoteBlob>, OtpError> {
+            let client = self.client.upgrade().unwrap();
+            assert!(client.inner.try_lock().is_ok());
+            client.add_from_uri(HOTP_URI.into())?;
+            Ok(Some(RemoteBlob {
+                data: self.remote.clone(),
+                etag: Some("revision".into()),
+            }))
+        }
+
+        fn store(&self, _: Vec<u8>, if_match: Option<String>) -> Result<String, OtpError> {
+            assert_eq!(if_match.as_deref(), Some("revision"));
+            assert!(self.client.upgrade().unwrap().inner.try_lock().is_ok());
+            Ok("updated".into())
+        }
+    }
+
+    #[test]
+    fn sync_callbacks_can_edit_locally_and_stale_sync_cannot_commit() {
+        let (directory, client) = client();
+        let mut remote = client.lock().vault.clone();
+        remote
+            .payload_mut()
+            .accounts
+            .push(otpeek_core::parse_otpauth_uri(HOTP_URI, now_ms()).unwrap());
+        let data = remote.to_bytes(now_ms()).unwrap();
+        client.set_sync_backend(Arc::new(EditingBackend {
+            client: Arc::downgrade(&client),
+            remote: data,
+        }));
+
+        assert!(matches!(client.sync(now_ms()), Err(OtpError::Io { .. })));
+        assert_eq!(client.list_accounts().len(), 1);
+        assert_ne!(
+            client.list_accounts()[0].id,
+            remote.payload().accounts[0].id
+        );
+        client.reload().unwrap();
+        assert_eq!(client.list_accounts().len(), 1);
+        std::fs::remove_dir_all(directory).unwrap();
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -909,6 +1075,7 @@ pub fn generate_totp_now(
     period: u32,
     unix_time_secs: i64,
 ) -> Result<String, OtpError> {
-    let code = otpeek_core::generate_totp(&secret, algorithm.into(), digits, period, unix_time_secs)?;
+    let code =
+        otpeek_core::generate_totp(&secret, algorithm.into(), digits, period, unix_time_secs)?;
     Ok(code)
 }

@@ -61,9 +61,14 @@ public enum WidgetVault {
         return client
     }
 
+    /// Widgets are read-only vault clients. Counter-based codes are consumed in the app.
+    public static func accounts(from client: OtpClient) -> [OtpAccount] {
+        client.listAccounts().filter { $0.type == .totp }
+    }
+
     /// 위젯에 표시할 기본 계정 (즐겨찾기 우선, 없으면 첫 계정).
     public static func firstAccount(from client: OtpClient) -> OtpAccount? {
-        let accounts = client.listAccounts()
+        let accounts = accounts(from: client)
         return accounts.first(where: { $0.isFavorite }) ?? accounts.first
     }
 }

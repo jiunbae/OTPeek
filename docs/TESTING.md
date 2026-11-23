@@ -39,23 +39,24 @@ WebDAV sync (needs a WebDAV server, e.g. Nextcloud):
 ```bash
 $OTP sync setup webdav https://host/remote.php/dav/files/you/otpeek-vault.otpvault --user you
 $OTP sync now               # first push
-# second machine: otpeek restore <same-url>  → enter master password → otpeek list
+# second machine: otpeek restore <same-url> --user you → enter both passwords → otpeek list
 ```
 
 ## 1. macOS / iOS
 
-Prereqs: full Xcode 15+ selected (`xcode-select -p` should point into Xcode.app,
-not CommandLineTools), XcodeGen, iOS Rust targets:
+Use an Apple Silicon Mac with full Xcode 15+ selected and XcodeGen installed.
 
 ```bash
-rustup target add aarch64-apple-ios aarch64-apple-ios-sim
-apple/scripts/build-core.sh          # builds XCFramework + Swift bindings
+rustup target add aarch64-apple-darwin x86_64-apple-darwin \
+  aarch64-apple-ios aarch64-apple-ios-sim
+apple/scripts/build-core.sh --require-all-targets
 cd apple && xcodegen generate
 xcodebuild -project Otpeek.xcodeproj -scheme Otpeek-macOS build CODE_SIGNING_ALLOWED=NO
 ```
 
-- [ ] `build-core.sh` completes: all 3 slices + `Frameworks/OtpCore.xcframework` + `Generated/otp.swift`
-- [ ] macOS scheme builds; iOS scheme builds
+- [ ] `build-core.sh` produces `Frameworks/OtpeekCore.xcframework` with universal
+      macOS, iOS device, and arm64 iOS simulator libraries, plus Swift bindings.
+- [ ] The macOS scheme builds. The iOS scheme builds for device and arm64 simulator.
 - [ ] First launch (fresh): onboarding asks to create a master password; app opens empty
 - [ ] First launch (upgrade from v1 data): migration screen appears, all legacy
       accounts survive with correct codes; legacy UserDefaults key renamed `migrated_*`
@@ -177,10 +178,9 @@ Verified on a Windows 11 x64 workstation on 2026-07-18:
 
 - [ ] Export a backup on macOS → import on Windows and via CLI → identical codes
       at the same instant (and vice versa)
-- [ ] CLI and macOS app pointed at the SAME WebDAV vault stay consistent:
-      add on CLI (`otpeek sync now`) → sync in app → account appears
-- [ ] HOTP account: generate on two devices alternately → counters never reuse
-      after sync (counter takes the max)
+- [ ] Two CLI devices using the same WebDAV vault converge after `otpeek sync now`.
+- [ ] HOTP account: `code` keeps the current counter. `code --advance` saves the
+      next counter before printing. Syncing keeps the higher counter.
 
 ## Where to report
 

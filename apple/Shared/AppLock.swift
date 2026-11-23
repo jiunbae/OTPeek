@@ -1,6 +1,10 @@
 import Foundation
 import SwiftUI
 import LocalAuthentication
+#if os(macOS)
+import AppKit
+import Combine
+#endif
 
 /// App-level biometric lock (Touch ID / Face ID, with device-password fallback)
 /// plus auto-lock after a period in the background. This gates the UI; the vault
@@ -12,11 +16,20 @@ public final class AppLock: ObservableObject {
     public static let timeoutKey = "autoLockMinutes"   // 0 = immediately
 
     /// True while the UI should be hidden behind the lock screen.
-    @Published public private(set) var isLocked: Bool
+    @Published public private(set) var isLocked: Bool {
+        didSet {
+            if isLocked && !oldValue { lockGeneration &+= 1 }
+        }
+    }
+    private(set) var lockGeneration: UInt64 = 0
     /// A transient auth error to surface on the lock screen.
     @Published public var authError: String?
 
     private var backgroundedAt: Date?
+    private var isAuthenticating = false
+    #if os(macOS)
+    private var lifecycleObservers: Set<AnyCancellable> = []
+    #endif
 
     public var isEnabled: Bool { UserDefaults.standard.bool(forKey: Self.enabledKey) }
 
@@ -27,6 +40,14 @@ public final class AppLock: ObservableObject {
     public init() {
         // Start locked when the feature is on, so a launch always requires auth.
         isLocked = UserDefaults.standard.bool(forKey: Self.enabledKey)
+        #if os(macOS)
+        NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)
+            .sink { [weak self] _ in MainActor.assumeIsolated { self?.didResignActive() } }
+            .store(in: &lifecycleObservers)
+        NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+            .sink { [weak self] _ in MainActor.assumeIsolated { self?.didBecomeActive() } }
+            .store(in: &lifecycleObservers)
+        #endif
     }
 
     /// Whether the device can actually do biometric/owner auth right now.
@@ -37,7 +58,7 @@ public final class AppLock: ObservableObject {
 
     /// Prompt for biometric (or device password) authentication.
     public func authenticate() {
-        guard isLocked else { return }
+        guard isLocked, !isAuthenticating else { return }
         let context = LAContext()
         context.localizedFallbackTitle = "Enter Password"
         var error: NSError?
@@ -58,12 +79,16 @@ public final class AppLock: ObservableObject {
             authError = "Biometrics unavailable — \(detail) (biometryType=\(context.biometryType.rawValue))"
         }
 
-        // If the device can't authenticate at all, don't trap the user out.
         guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
-            isLocked = false
+            if (error as? LAError)?.code == .passcodeNotSet {
+                authError = "Set a device passcode in system settings, then try unlocking again."
+            } else {
+                authError = error?.localizedDescription ?? "Device authentication is unavailable."
+            }
             return
         }
 
+        isAuthenticating = true
         // Biometrics-first, two-step: the combined `.deviceOwnerAuthentication`
         // policy sometimes skips straight to the passcode sheet; evaluating the
         // biometrics-only policy first guarantees the Face ID / Touch ID prompt,
@@ -78,18 +103,23 @@ public final class AppLock: ObservableObject {
                       "success=\(success) error=\((err as? LAError).map { "LAError \($0.code.rawValue) \($0.localizedDescription)" } ?? String(describing: err))")
                 #endif
                 if success {
+                    self.isAuthenticating = false
                     self.authError = nil
                     self.isLocked = false
                     return
                 }
                 let laCode = (err as? LAError)?.code
-                if laCode == .userCancel { return }
+                if laCode == .userCancel {
+                    self.isAuthenticating = false
+                    return
+                }
                 // Face ID failed / user tapped the fallback → offer the passcode.
                 if policy == .deviceOwnerAuthenticationWithBiometrics {
                     let passcode = LAContext()
                     passcode.evaluatePolicy(.deviceOwnerAuthentication,
                                             localizedReason: "Unlock OTPeek") { ok, err2 in
                         Task { @MainActor in
+                            self.isAuthenticating = false
                             #if DEBUG
                             print("[AppLock] evaluate(passcode) success=\(ok) " +
                                   "error=\((err2 as? LAError).map { "LAError \($0.code.rawValue) \($0.localizedDescription)" } ?? String(describing: err2))")
@@ -102,8 +132,9 @@ public final class AppLock: ObservableObject {
                             }
                         }
                     }
-                } else if let e = err as? LAError {
-                    self.authError = e.localizedDescription
+                } else {
+                    self.isAuthenticating = false
+                    self.authError = err?.localizedDescription
                 }
             }
         }
@@ -123,7 +154,7 @@ public final class AppLock: ObservableObject {
     // MARK: - Auto-lock lifecycle
 
     public func didResignActive() {
-        guard isEnabled, !isLocked else { return }
+        guard isEnabled, !isLocked, backgroundedAt == nil else { return }
         backgroundedAt = Date()
     }
 

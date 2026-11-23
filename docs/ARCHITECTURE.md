@@ -51,8 +51,9 @@ Model fields follow `docs/DATA_FORMAT.md` with these v2 changes:
   the vault JSON payload, and the FFI. (Legacy v1 JSON used RFC 3339 strings; the v1
   importer converts.) Rationale: deterministic merge comparison, trivial FFI.
 - New field `deleted_at: Option<i64>` on accounts and folders — sync tombstone.
-  Entities with `deleted_at != null` are hidden from all list APIs and purged after
-  90 days (purge happens during vault save).
+  List APIs hide deleted entities. Save and merge compact their tombstones to
+  the ID, timestamps, and account counter, with default values for other fields.
+  Retaining tombstones keeps an older offline copy from resurrecting a deletion.
 - `icon_url` in DATA_FORMAT maps to `icon` here (string, URL or platform asset name).
 
 ### Rust types (`otpeek-core::types`) — frozen
@@ -164,7 +165,7 @@ Notes:
 [4 bytes]  Header length H: u32 LE
 [H bytes]  Header: UTF-8 JSON (see below)
 [rest]     Ciphertext: AES-256-GCM(key = VMK, nonce = header.vaultNonce,
-           aad = magic || version || header bytes), 16-byte tag appended.
+           aad = magic || version || header length || header bytes), 16-byte tag appended.
 ```
 
 Header JSON:
@@ -175,13 +176,16 @@ Header JSON:
   "wrappedVmk": { "nonce": "<base64 12B>", "ct": "<base64 48B>" },
   "vaultNonce": "<base64 12B>",
   "modifiedAt": 1730000000000,
-  "generation": 42
+  "generation": 42,
+  "passwordRevision": 1
 }
 ```
 
 - `wrappedVmk.ct` = AES-256-GCM(key = KEK, nonce, plaintext = VMK) — 32B + 16B tag.
 - `vaultNonce` is regenerated on **every** save (never reuse a nonce with the same VMK).
-- `generation` is a monotonically increasing save counter (used as a merge tiebreaker).
+- `generation` tracks vault saves. The optional `passwordRevision` starts at 1
+  on the first password change and increments with each rewrap of the VMK.
+  Ordinary saves leave it unchanged.
 
 Decrypted payload JSON:
 
@@ -201,6 +205,7 @@ pub enum VaultError {
     WrongKey,
     Corrupt(String),         // bad magic/version/header/json
     Io(String),
+    StaleFile,               // destination changed since this snapshot
     Crypto(String),
     Core(CoreError),
 }
@@ -215,16 +220,17 @@ impl Vault {
     // Parse + decrypt from bytes:
     pub fn open_with_key(data: &[u8], vmk: &[u8]) -> Result<Vault, VaultError>;
     pub fn open_with_password(data: &[u8], master_password: &str) -> Result<Vault, VaultError>;
-    // Serialize (fresh nonce, generation += 1, purge tombstones > 90 days old vs now_ms):
+    // Serialize with a fresh nonce, incremented generation, and compacted tombstones:
     pub fn to_bytes(&mut self, now_ms: i64) -> Result<Vec<u8>, VaultError>;
+    pub fn save_to_file(&mut self, path: &Path, now_ms: i64) -> Result<(), VaultError>;
+    pub fn restore_to_new_file(&mut self, path: &Path, now_ms: i64) -> Result<(), VaultError>;
     pub fn change_password(&mut self, old: &str, new: &str) -> Result<(), VaultError>;
     pub fn payload(&self) -> &VaultPayload;
     pub fn payload_mut(&mut self) -> &mut VaultPayload;
     pub fn generation(&self) -> u64;
 }
 
-// Atomic file I/O: write temp file in same dir + fsync + rename. Advisory lock
-// (fd-lock) around read-modify-write so app and widget processes don't race.
+// Bounded reads and atomic file replacement:
 pub fn read_vault_file(path: &Path) -> Result<Vec<u8>, VaultError>;
 pub fn write_vault_file(path: &Path, data: &[u8]) -> Result<(), VaultError>;
 
@@ -233,6 +239,13 @@ pub fn write_vault_file(path: &Path, data: &[u8]) -> Result<(), VaultError>;
 pub fn import_backup_v1(data: &[u8], password: &str, now_ms: i64)
     -> Result<VaultPayload, VaultError>;
 ```
+
+For a normal save, `save_to_file` compares the SHA-256 digest of the encrypted
+file against the snapshot's digest while holding the destination's sidecar
+lock. The digest stays in memory. A mismatch returns `StaleFile` and leaves
+the current file in place. New vaults and `restore_to_new_file` require an
+unused destination. Writes sync a temporary file in the same directory before
+committing it. Reopen or reload after a stale-file error before retrying.
 
 ## 6. `otpeek-sync` — sync engine
 
@@ -260,8 +273,9 @@ pub trait SyncBackend: Send + Sync {
 
 Implementations:
 - **WebDAV** (in `otpeek-sync`, feature `webdav`, `ureq` + rustls): single file
-  `otpeek-vault.otpvault` at a configured URL; ETag / `If-Match` / `If-None-Match: *`
-  for optimistic concurrency; Basic auth.
+  `otpeek-vault.otpvault` at a direct HTTPS URL. Uses Basic authentication.
+  An update requires a strong ETag in `If-Match`. A first write uses
+  `If-None-Match: *`. Redirects are disabled.
 - **CloudKit** (Swift, in `apple/`): implements the FFI mirror of this trait
   (see §7). Private DB, record type `Vault`, record name `"vault"`, blob in a
   `bytes` field (or CKAsset if > 1 MB), `recordChangeTag` as etag.
@@ -274,11 +288,19 @@ Per-entity (accounts and folders independently), matched by `id`:
 
 1. Present on one side only → keep it.
 2. Present on both → the one with greater `updated_at` wins entirely (LWW).
-   Tie → the one with `deleted_at` set wins; still tied → lexicographically
-   greater `id` wins (any deterministic tiebreak is fine, but be deterministic).
+   With equal timestamps, a tombstone wins over a live entity. If both have the
+   same deletion state, the lexicographically greater serialized record wins.
 3. Exception: `counter` (HOTP) = `max(local.counter, remote.counter)` regardless
-   of which side won LWW (never reuse an HOTP counter).
+   of which side won LWW. Two devices can still advance the same counter if
+   both generate a code before syncing.
 4. Tombstones merge like normal entities (deletion propagates via `deleted_at`).
+
+Sync also reconciles authenticated password wraps for the same VMK. A
+wrap with a `passwordRevision` wins over a wrap without one. For two versioned
+wraps, the larger revision wins. If the revisions match, sync compares the
+salt, nonce, and wrapped-key ciphertext in order and keeps the greater wrap.
+If neither wrap has a revision, sync keeps the local wrap. A vault's
+`modifiedAt` reflects regular saves and cannot order password changes.
 
 ### 6.3 Engine (frozen)
 
@@ -287,10 +309,9 @@ pub struct SyncOutcome { pub pushed: bool, pub pulled: bool, pub merged_changes:
 
 pub struct SyncEngine;
 impl SyncEngine {
-    /// fetch → decrypt remote with local VMK → merge → save merged locally (via
-    /// callback) → store remote with if_match, retry on Conflict (max 3, refetch+remerge).
-    /// If remote is None: push local. If remote can't decrypt with VMK: SyncError::Vault(WrongKey)
-    /// (caller resolves by re-bootstrapping with master password).
+    /// Fetch and merge into a staged snapshot. Commit the snapshot to the
+    /// backend conditionally, then publish it to the caller's in-memory vault.
+    /// Retry remote conflicts up to three total attempts.
     pub fn sync(local: &mut Vault, backend: &dyn SyncBackend, now_ms: i64)
         -> Result<SyncOutcome, SyncError>;
     pub fn merge(local: &VaultPayload, remote: &VaultPayload) -> (VaultPayload, u32);
@@ -299,6 +320,11 @@ impl SyncEngine {
 
 Bootstrap on a new device: fetch remote blob → `Vault::open_with_password` → stash VMK
 in platform keystore → save locally. This is platform-side glue using the APIs above.
+
+The CLI and FFI check the local file revision before contacting the backend and
+check it again under lock when saving. If an edit lands during network sync,
+the final save can report a local conflict after the remote commit has
+succeeded. The caller can reopen the latest local snapshot and sync again.
 
 ## 7. `otpeek-ffi` — UniFFI facade (frozen surface)
 
@@ -404,40 +430,44 @@ Change notification across processes (app ↔ widget) is platform-side
 - VMK storage: `keyring` crate (Secret Service / macOS Keychain / Windows Credential
   Manager), service `"otpeek"`, user = vault path. Fallback when no keystore
   (headless): prompt for master password (`rpassword`), or `$OTPEEK_VAULT_PASSWORD`.
-- WebDAV password: keyring entry `"otpeek-webdav"`, or `$OTP_WEBDAV_PASSWORD`.
+- WebDAV password: `$OTP_WEBDAV_PASSWORD`, the `"otpeek-webdav"` keyring entry
+  for the URL and username, or a prompt.
 
 Commands (clap v4, kebab-case):
 
 ```
-otp init                                     # create vault (prompts password twice)
-otp add <otpauth-uri>                        # also accepts otpauth-migration://
-otp add --issuer GitHub --account me [--secret -] [--hotp] [--digits N] [--period N] [--algorithm sha256]
-otp list [--folder NAME] [--json]            # table: index, issuer, account, folder, fav
-otp code <query> [--copy] [--watch]          # query: index | fuzzy issuer/account match;
-                                             #   ambiguous → list matches, exit 2
-otp uri <query>                              # print otpauth:// URI
-otp qr <query>                               # render QR to terminal (qrcode crate)
-otp rm <query> [--yes]
-otp edit <query> [--issuer X] [--account X] [--folder NAME|--no-folder] [--favorite|--no-favorite]
-otp folder list|add <name>|rm <name>
-otp export <file> [--password-stdin]         # v2 container
-otp import <file> [--merge] [--legacy]       # --legacy = v1 .otpbackup
-otp sync setup webdav <url> --user <u>       # prompts password, stores in keyring
-otp sync now | otp sync status
-otp restore <file-or-webdav-url>             # new-device bootstrap
-otp passwd                                   # change master password
+otpeek init                                  # create vault
+otpeek add <otpauth-uri>                     # also accepts otpauth-migration://
+otpeek add --issuer GitHub --account me [--secret -] [--hotp] [--digits N] [--period N] [--algorithm sha256]
+otpeek list [--folder NAME] [--json]          # JSON omits OTP seeds
+otpeek code <query> [--copy] [--watch | --advance]
+otpeek uri <query>                           # print otpauth:// URI
+otpeek qr <query>                            # render QR to terminal
+otpeek rm <query> [--yes]
+otpeek edit <query> [--issuer X] [--account X] [--folder NAME|--no-folder] [--favorite|--no-favorite]
+otpeek folder list|add <name>|rm <name>
+otpeek export <unused-file> [--password-stdin]
+otpeek import <file> [--merge] [--legacy]     # --legacy = v1 .otpbackup
+otpeek sync setup webdav <https-url> --user <u>
+otpeek sync now | otpeek sync status
+otpeek restore <file-or-https-url> [--user USER] # new-device bootstrap at an unused path
+otpeek passwd                                # change master password
 ```
 
 Output: human tables to stdout, errors to stderr, exit codes 0/1/2 (ok/error/ambiguous).
 `--json` on list/code for scripting. `--watch` redraws TOTP with a countdown.
+For HOTP, `code` displays the current code and `code --advance` saves the next
+counter before displaying or copying the current code.
 
 ## 9. Apple integration (`apple/`)
 
 1. **Build plumbing**: `apple/scripts/build-core.sh` —
    `cargo build -p otpeek-ffi --release` for `aarch64-apple-darwin`, `aarch64-apple-ios`,
-   `aarch64-apple-ios-sim` → `xcodebuild -create-xcframework` → `apple/Frameworks/OtpCore.xcframework`;
+   arm64 `aarch64-apple-ios-sim` → `xcodebuild -create-xcframework` →
+   `apple/Frameworks/OtpeekCore.xcframework`;
    `uniffi-bindgen generate --library ... --language swift` → `apple/Generated/`.
-   Wire as a pre-build script phase in `project.yml` (XcodeGen), or committed build output.
+   Run the script before running XcodeGen and after changing Rust inputs.
+   Xcode's build phase verifies the framework and bindings are current.
 2. **Replace logic**: delete `OtpGenerator.swift`, `AccountStore.swift` internals;
    introduce `OtpStore` (ObservableObject) wrapping `OtpClient`. Keychain keeps ONLY
    the VMK: account `"vmk"`, access group shared with the widget,
@@ -513,7 +543,8 @@ Output: human tables to stdout, errors to stderr, exit codes 0/1/2 (ok/error/amb
   cases (lowercase, padding, invalid chars).
 - **otpeek-vault**: round-trip create→save→open (key and password paths), wrong password →
   `WrongPassword`, corrupt/truncated data → `Corrupt`, AAD tamper detection, v1 backup
-  import against a fixture generated with the documented v1 parameters, tombstone purge.
+  import against a fixture generated with the documented v1 parameters, tombstone compaction,
+  and stale-file rejection.
   Commit a small fixture `core/crates/otpeek-vault/tests/fixtures/vault-v2.otpvault`
   (password `"test-password-123"`) so future refactors can't silently break the format.
 - **otpeek-sync**: merge property tests (LWW, tombstone, counter-max, determinism),

@@ -1,0 +1,6 @@
+[advisories]
+unmaintained = "all"
+ignore = [
+    { id = "RUSTSEC-2026-0374", reason = "Maintenance advisory for basic-toml, used by the current UniFFI binding generator" },
+    { id = "RUSTSEC-2026-0543", reason = "Maintenance advisory for chrono, used by the vault for timestamps" },
+]

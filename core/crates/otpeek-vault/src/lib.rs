@@ -10,9 +10,13 @@ use base64::Engine;
 use otpeek_core::{CoreError, HashAlgorithm, OtpAccount, OtpFolder, OtpType};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::borrow::Cow;
+use std::fs::{self, File, OpenOptions};
+use std::io::{self, Read, Write};
 use std::path::Path;
 use thiserror::Error;
-use zeroize::Zeroize;
+use zeroize::{Zeroize, Zeroizing};
 
 #[derive(Debug, Error)]
 pub enum VaultError {
@@ -24,6 +28,8 @@ pub enum VaultError {
     Corrupt(String),
     #[error("io error: {0}")]
     Io(String),
+    #[error("vault file changed; reload or reopen it, then retry")]
+    StaleFile,
     #[error("crypto error: {0}")]
     Crypto(String),
     #[error(transparent)]
@@ -39,6 +45,54 @@ pub struct VaultPayload {
     pub folders: Vec<OtpFolder>,
 }
 
+impl VaultPayload {
+    /// Keep the data needed to merge a deletion while dropping deleted secrets
+    /// and metadata. The serialized records still use the v2 account and folder types.
+    pub fn compact_tombstones(&mut self) {
+        for account in self.accounts.iter_mut().filter(|a| a.deleted_at.is_some()) {
+            *account = compact_account(account);
+        }
+        for folder in self.folders.iter_mut().filter(|f| f.deleted_at.is_some()) {
+            *folder = compact_folder(folder);
+        }
+    }
+}
+
+fn compact_account(account: &OtpAccount) -> OtpAccount {
+    OtpAccount {
+        id: account.id.clone(),
+        otp_type: OtpType::Totp,
+        secret: String::new(),
+        issuer: None,
+        account_name: String::new(),
+        algorithm: HashAlgorithm::Sha1,
+        digits: 6,
+        period: 30,
+        counter: account.counter,
+        folder_id: None,
+        is_favorite: false,
+        sort_order: 0,
+        icon: None,
+        color: None,
+        created_at: account.created_at,
+        updated_at: account.updated_at,
+        deleted_at: account.deleted_at,
+    }
+}
+
+fn compact_folder(folder: &OtpFolder) -> OtpFolder {
+    OtpFolder {
+        id: folder.id.clone(),
+        name: String::new(),
+        icon: None,
+        color: None,
+        sort_order: 0,
+        created_at: folder.created_at,
+        updated_at: folder.updated_at,
+        deleted_at: folder.deleted_at,
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Constants / format
 // ---------------------------------------------------------------------------
@@ -51,7 +105,8 @@ const SALT_LEN: usize = 32;
 const NONCE_LEN: usize = 12;
 const TAG_LEN: usize = 16;
 const WRAPPED_CT_LEN: usize = VMK_LEN + TAG_LEN; // 48
-const NINETY_DAYS_MS: i64 = 90 * 24 * 60 * 60 * 1000;
+pub const MAX_VAULT_BYTES: usize = 16 * 1024 * 1024;
+const MAX_HEADER_BYTES: usize = 4 * 1024;
 
 // Argon2id params (frozen §5.1).
 const ARGON2_M_KIB: u32 = 65536;
@@ -86,6 +141,8 @@ struct HeaderJson {
     vault_nonce: String,
     modified_at: i64,
     generation: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    password_revision: Option<u64>,
 }
 
 // Encrypted payload wire representation (adds `version`).
@@ -93,8 +150,8 @@ struct HeaderJson {
 #[serde(rename_all = "camelCase")]
 struct PayloadWireRef<'a> {
     version: u32,
-    accounts: &'a [OtpAccount],
-    folders: &'a [OtpFolder],
+    accounts: Vec<Cow<'a, OtpAccount>>,
+    folders: Vec<Cow<'a, OtpFolder>>,
 }
 
 #[derive(Deserialize)]
@@ -111,18 +168,23 @@ struct PayloadWireOwned {
 // ---------------------------------------------------------------------------
 
 /// Decrypted, in-memory vault. Not `Sync` by contract — callers wrap in a Mutex.
+#[derive(Clone)]
 pub struct Vault {
     payload: VaultPayload,
     vmk: Vec<u8>,
     generation: u64,
+    file_revision: Option<[u8; 32]>,
+    password_revision: Option<u64>,
     // KDF salt + wrapped VMK are preserved across saves so key-path opens can
     // re-serialize the header without knowing the password.
-    kdf_salt: Vec<u8>,
-    wrapped_nonce: Vec<u8>,
-    wrapped_ct: Vec<u8>,
-    kdf_m_kib: u32,
-    kdf_t: u32,
-    kdf_p: u32,
+    password_wrap: PasswordWrap,
+}
+
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
+struct PasswordWrap {
+    salt: Vec<u8>,
+    nonce: Vec<u8>,
+    ct: Vec<u8>,
 }
 
 impl Drop for Vault {
@@ -135,14 +197,8 @@ fn os_random(buf: &mut [u8]) {
     rand::rngs::OsRng.fill_bytes(buf);
 }
 
-fn argon2_kek(
-    password: &str,
-    salt: &[u8],
-    m_kib: u32,
-    t: u32,
-    p: u32,
-) -> Result<[u8; 32], VaultError> {
-    let params = Params::new(m_kib, t, p, Some(VMK_LEN))
+fn argon2_kek(password: &str, salt: &[u8]) -> Result<[u8; 32], VaultError> {
+    let params = Params::new(ARGON2_M_KIB, ARGON2_T, ARGON2_P, Some(VMK_LEN))
         .map_err(|e| VaultError::Crypto(format!("argon2 params: {e}")))?;
     let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
     let mut out = [0u8; 32];
@@ -166,7 +222,7 @@ impl Vault {
         let mut wrapped_nonce = vec![0u8; NONCE_LEN];
         os_random(&mut wrapped_nonce);
 
-        let mut kek = argon2_kek(master_password, &salt, ARGON2_M_KIB, ARGON2_T, ARGON2_P)?;
+        let mut kek = argon2_kek(master_password, &salt)?;
         let wrap_result = cipher_from(&kek).and_then(|c| {
             c.encrypt(Nonce::from_slice(&wrapped_nonce), vmk.as_slice())
                 .map_err(|e| VaultError::Crypto(format!("wrap vmk: {e}")))
@@ -178,12 +234,13 @@ impl Vault {
             payload: VaultPayload::default(),
             vmk,
             generation: 0,
-            kdf_salt: salt,
-            wrapped_nonce,
-            wrapped_ct,
-            kdf_m_kib: ARGON2_M_KIB,
-            kdf_t: ARGON2_T,
-            kdf_p: ARGON2_P,
+            file_revision: None,
+            password_revision: None,
+            password_wrap: PasswordWrap {
+                salt,
+                nonce: wrapped_nonce,
+                ct: wrapped_ct,
+            },
         })
     }
 
@@ -204,20 +261,19 @@ impl Vault {
         Ok(parsed.into_vault(vmk.to_vec(), payload))
     }
 
+    /// Open another encrypted copy of this vault using its existing VMK.
+    pub fn open_peer(&self, data: &[u8]) -> Result<Vault, VaultError> {
+        Self::open_with_key(data, &self.vmk)
+    }
+
     pub fn open_with_password(data: &[u8], master_password: &str) -> Result<Vault, VaultError> {
         let parsed = ParsedFile::parse(data)?;
         // Unwrap VMK with the password-derived KEK.
-        let mut kek = argon2_kek(
-            master_password,
-            &parsed.kdf_salt,
-            parsed.kdf_m_kib,
-            parsed.kdf_t,
-            parsed.kdf_p,
-        )?;
+        let mut kek = argon2_kek(master_password, &parsed.password_wrap.salt)?;
         let unwrap = cipher_from(&kek).and_then(|c| {
             c.decrypt(
-                Nonce::from_slice(&parsed.wrapped_nonce),
-                parsed.wrapped_ct.as_slice(),
+                Nonce::from_slice(&parsed.password_wrap.nonce),
+                parsed.password_wrap.ct.as_slice(),
             )
             .map_err(|e| VaultError::Crypto(format!("unwrap vmk: {e}")))
         });
@@ -234,40 +290,75 @@ impl Vault {
         Ok(parsed.into_vault(vmk, payload))
     }
 
-    /// Serialize with a fresh nonce; generation += 1; purge tombstones older
-    /// than 90 days relative to `now_ms`.
+    /// Serialize with a fresh nonce and increment the generation on success.
+    /// Keep tombstones so a device returning after a long gap cannot resurrect them.
     pub fn to_bytes(&mut self, now_ms: i64) -> Result<Vec<u8>, VaultError> {
-        self.generation += 1;
-        purge_tombstones(&mut self.payload, now_ms);
+        let (generation, data) = self.serialize(now_ms)?;
+        self.payload.compact_tombstones();
+        self.generation = generation;
+        Ok(data)
+    }
 
+    fn serialize(&self, now_ms: i64) -> Result<(u64, Vec<u8>), VaultError> {
+        let generation = self
+            .generation
+            .checked_add(1)
+            .ok_or_else(|| VaultError::Corrupt("vault generation exhausted".into()))?;
         let mut vault_nonce = vec![0u8; NONCE_LEN];
         os_random(&mut vault_nonce);
 
         let header = HeaderJson {
             kdf: KdfJson {
                 algo: "argon2id".to_string(),
-                m_kib: self.kdf_m_kib,
-                t: self.kdf_t,
-                p: self.kdf_p,
-                salt: B64.encode(&self.kdf_salt),
+                m_kib: ARGON2_M_KIB,
+                t: ARGON2_T,
+                p: ARGON2_P,
+                salt: B64.encode(&self.password_wrap.salt),
             },
             wrapped_vmk: WrappedVmkJson {
-                nonce: B64.encode(&self.wrapped_nonce),
-                ct: B64.encode(&self.wrapped_ct),
+                nonce: B64.encode(&self.password_wrap.nonce),
+                ct: B64.encode(&self.password_wrap.ct),
             },
             vault_nonce: B64.encode(&vault_nonce),
             modified_at: now_ms,
-            generation: self.generation,
+            generation,
+            password_revision: self.password_revision,
         };
         let header_bytes = serde_json::to_vec(&header)
             .map_err(|e| VaultError::Crypto(format!("header encode: {e}")))?;
 
-        let payload_json = serde_json::to_vec(&PayloadWireRef {
+        let payload = PayloadWireRef {
             version: PAYLOAD_VERSION,
-            accounts: &self.payload.accounts,
-            folders: &self.payload.folders,
-        })
-        .map_err(|e| VaultError::Crypto(format!("payload encode: {e}")))?;
+            accounts: self
+                .payload
+                .accounts
+                .iter()
+                .map(|account| {
+                    if account.deleted_at.is_some() {
+                        Cow::Owned(compact_account(account))
+                    } else {
+                        Cow::Borrowed(account)
+                    }
+                })
+                .collect(),
+            folders: self
+                .payload
+                .folders
+                .iter()
+                .map(|folder| {
+                    if folder.deleted_at.is_some() {
+                        Cow::Owned(compact_folder(folder))
+                    } else {
+                        Cow::Borrowed(folder)
+                    }
+                })
+                .collect(),
+        };
+        let payload_json = Zeroizing::new(
+            serde_json::to_vec(&payload)
+                .map_err(|e| VaultError::Crypto(format!("payload encode: {e}")))?,
+        );
+        ensure_size(16 + header_bytes.len() + payload_json.len() + TAG_LEN)?;
 
         // AAD = magic || version || header length || header bytes (the whole prefix).
         let mut prefix = Vec::with_capacity(16 + header_bytes.len());
@@ -289,23 +380,61 @@ impl Vault {
 
         let mut out = prefix;
         out.extend_from_slice(&ct);
-        Ok(out)
+        Ok((generation, out))
+    }
+
+    /// Commit only if the destination still matches the file this vault was
+    /// opened from or last saved to. For a new vault, the destination must be absent.
+    pub fn save_to_file(&mut self, path: &Path, now_ms: i64) -> Result<(), VaultError> {
+        self.save_file(path, now_ms, FileWrite::Compare(self.file_revision))
+    }
+
+    /// Check a snapshot before starting external work. The eventual save still
+    /// compares under lock, since the file can change after this check.
+    pub fn check_file_revision(&self, path: &Path) -> Result<(), VaultError> {
+        check_file_revision(path, self.file_revision)
+    }
+
+    /// Explicitly replace an existing local file with an authenticated restore.
+    pub fn restore_to_file(&mut self, path: &Path, now_ms: i64) -> Result<(), VaultError> {
+        self.save_file(path, now_ms, FileWrite::Replace)
+    }
+
+    /// Restore an authenticated snapshot into a destination that must be absent.
+    pub fn restore_to_new_file(&mut self, path: &Path, now_ms: i64) -> Result<(), VaultError> {
+        self.save_file(path, now_ms, FileWrite::Compare(None))
+    }
+
+    fn save_file(&mut self, path: &Path, now_ms: i64, mode: FileWrite) -> Result<(), VaultError> {
+        let (generation, data) = self.serialize(now_ms)?;
+        commit_vault_file(path, &data, mode)?;
+        self.payload.compact_tombstones();
+        self.file_revision = Some(Sha256::digest(&data).into());
+        self.generation = generation;
+        Ok(())
     }
 
     /// Re-wrap the VMK under a new password-derived KEK (no payload re-encryption).
     pub fn change_password(&mut self, old: &str, new: &str) -> Result<(), VaultError> {
         // Verify the old password by unwrapping the stored VMK.
-        let mut old_kek = argon2_kek(old, &self.kdf_salt, self.kdf_m_kib, self.kdf_t, self.kdf_p)?;
+        let next_revision = self
+            .password_revision
+            .unwrap_or(0)
+            .checked_add(1)
+            .ok_or_else(|| VaultError::Corrupt("password revision exhausted".into()))?;
+        let mut old_kek = argon2_kek(old, &self.password_wrap.salt)?;
         let check = cipher_from(&old_kek).and_then(|c| {
             c.decrypt(
-                Nonce::from_slice(&self.wrapped_nonce),
-                self.wrapped_ct.as_slice(),
+                Nonce::from_slice(&self.password_wrap.nonce),
+                self.password_wrap.ct.as_slice(),
             )
             .map_err(|e| VaultError::Crypto(format!("unwrap vmk: {e}")))
         });
         old_kek.zeroize();
-        let recovered = check.map_err(|_| VaultError::WrongPassword)?;
-        if recovered != self.vmk {
+        let mut recovered = check.map_err(|_| VaultError::WrongPassword)?;
+        let matches = recovered == self.vmk;
+        recovered.zeroize();
+        if !matches {
             return Err(VaultError::WrongPassword);
         }
 
@@ -314,7 +443,7 @@ impl Vault {
         os_random(&mut new_salt);
         let mut new_nonce = vec![0u8; NONCE_LEN];
         os_random(&mut new_nonce);
-        let mut new_kek = argon2_kek(new, &new_salt, ARGON2_M_KIB, ARGON2_T, ARGON2_P)?;
+        let mut new_kek = argon2_kek(new, &new_salt)?;
         let wrap = cipher_from(&new_kek).and_then(|c| {
             c.encrypt(Nonce::from_slice(&new_nonce), self.vmk.as_slice())
                 .map_err(|e| VaultError::Crypto(format!("rewrap vmk: {e}")))
@@ -322,13 +451,32 @@ impl Vault {
         new_kek.zeroize();
         let new_ct = wrap?;
 
-        self.kdf_salt = new_salt;
-        self.wrapped_nonce = new_nonce;
-        self.wrapped_ct = new_ct;
-        self.kdf_m_kib = ARGON2_M_KIB;
-        self.kdf_t = ARGON2_T;
-        self.kdf_p = ARGON2_P;
+        self.password_wrap = PasswordWrap {
+            salt: new_salt,
+            nonce: new_nonce,
+            ct: new_ct,
+        };
+        self.password_revision = Some(next_revision);
         Ok(())
+    }
+
+    /// Reconcile authenticated password wraps for two copies of the same vault.
+    /// The password revision advances only on rewraps, independent of regular saves.
+    /// Keep the local wrap when both copies predate revisions. Their timestamps
+    /// track regular saves as well, so they cannot identify the newer password.
+    pub fn merge_password_wrap(&mut self, remote: &Vault) -> Result<bool, VaultError> {
+        if self.vmk != remote.vmk {
+            return Err(VaultError::WrongKey);
+        }
+
+        let local_wrap = (&self.password_revision, &self.password_wrap);
+        let remote_wrap = (&remote.password_revision, &remote.password_wrap);
+        if remote.password_revision.is_none() || remote_wrap <= local_wrap {
+            return Ok(false);
+        }
+        self.password_wrap = remote.password_wrap.clone();
+        self.password_revision = remote.password_revision;
+        Ok(true)
     }
 
     pub fn payload(&self) -> &VaultPayload {
@@ -344,31 +492,24 @@ impl Vault {
     }
 }
 
-fn purge_tombstones(payload: &mut VaultPayload, now_ms: i64) {
-    let cutoff = now_ms - NINETY_DAYS_MS;
-    payload
-        .accounts
-        .retain(|a| a.deleted_at.map(|d| d >= cutoff).unwrap_or(true));
-    payload
-        .folders
-        .retain(|f| f.deleted_at.map(|d| d >= cutoff).unwrap_or(true));
-}
-
 // ---------------------------------------------------------------------------
 // Parsed on-disk file (shared by both open paths)
 // ---------------------------------------------------------------------------
 
-struct ParsedFile {
-    kdf_salt: Vec<u8>,
-    kdf_m_kib: u32,
-    kdf_t: u32,
-    kdf_p: u32,
-    wrapped_nonce: Vec<u8>,
-    wrapped_ct: Vec<u8>,
+struct ParsedFile<'a> {
+    password_wrap: PasswordWrap,
     vault_nonce: Vec<u8>,
     generation: u64,
-    aad: Vec<u8>,
-    ciphertext: Vec<u8>,
+    password_revision: Option<u64>,
+    data: &'a [u8],
+    header_end: usize,
+}
+
+fn ensure_size(len: usize) -> Result<(), VaultError> {
+    if len > MAX_VAULT_BYTES {
+        return Err(VaultError::Corrupt("vault exceeds the size limit".into()));
+    }
+    Ok(())
 }
 
 fn b64_fixed(s: &str, expected: usize, what: &str) -> Result<Vec<u8>, VaultError> {
@@ -384,8 +525,9 @@ fn b64_fixed(s: &str, expected: usize, what: &str) -> Result<Vec<u8>, VaultError
     Ok(bytes)
 }
 
-impl ParsedFile {
-    fn parse(data: &[u8]) -> Result<ParsedFile, VaultError> {
+impl<'a> ParsedFile<'a> {
+    fn parse(data: &'a [u8]) -> Result<Self, VaultError> {
+        ensure_size(data.len())?;
         if data.len() < 16 {
             return Err(VaultError::Corrupt("file too short".into()));
         }
@@ -399,35 +541,36 @@ impl ParsedFile {
             )));
         }
         let header_len = u32::from_le_bytes([data[12], data[13], data[14], data[15]]) as usize;
-        let header_end = 16usize
-            .checked_add(header_len)
-            .ok_or_else(|| VaultError::Corrupt("header length overflow".into()))?;
-        if header_end > data.len() {
-            return Err(VaultError::Corrupt("header length exceeds file".into()));
+        if header_len > MAX_HEADER_BYTES {
+            return Err(VaultError::Corrupt("header exceeds the size limit".into()));
+        }
+        let header_end = 16 + header_len;
+        if header_end + TAG_LEN > data.len() {
+            return Err(VaultError::Corrupt("truncated header or payload".into()));
         }
         let header_bytes = &data[16..header_end];
         let header: HeaderJson = serde_json::from_slice(header_bytes)
             .map_err(|e| VaultError::Corrupt(format!("header json: {e}")))?;
 
-        let kdf_salt = b64_fixed(&header.kdf.salt, SALT_LEN, "salt")?;
-        let wrapped_nonce = b64_fixed(&header.wrapped_vmk.nonce, NONCE_LEN, "wrapped nonce")?;
-        let wrapped_ct = b64_fixed(&header.wrapped_vmk.ct, WRAPPED_CT_LEN, "wrapped ct")?;
+        if header.kdf.algo != "argon2id"
+            || (header.kdf.m_kib, header.kdf.t, header.kdf.p) != (ARGON2_M_KIB, ARGON2_T, ARGON2_P)
+        {
+            return Err(VaultError::Corrupt("unsupported v2 KDF parameters".into()));
+        }
+        let password_wrap = PasswordWrap {
+            salt: b64_fixed(&header.kdf.salt, SALT_LEN, "salt")?,
+            nonce: b64_fixed(&header.wrapped_vmk.nonce, NONCE_LEN, "wrapped nonce")?,
+            ct: b64_fixed(&header.wrapped_vmk.ct, WRAPPED_CT_LEN, "wrapped ct")?,
+        };
         let vault_nonce = b64_fixed(&header.vault_nonce, NONCE_LEN, "vault nonce")?;
 
-        let aad = data[..header_end].to_vec();
-        let ciphertext = data[header_end..].to_vec();
-
         Ok(ParsedFile {
-            kdf_salt,
-            kdf_m_kib: header.kdf.m_kib,
-            kdf_t: header.kdf.t,
-            kdf_p: header.kdf.p,
-            wrapped_nonce,
-            wrapped_ct,
+            password_wrap,
             vault_nonce,
             generation: header.generation,
-            aad,
-            ciphertext,
+            password_revision: header.password_revision,
+            data,
+            header_end,
         })
     }
 
@@ -435,15 +578,17 @@ impl ParsedFile {
     /// remap to WrongKey/WrongPassword); JSON failure → `Corrupt`.
     fn decrypt_payload(&self, vmk: &[u8]) -> Result<VaultPayload, VaultError> {
         let cipher = cipher_from(vmk)?;
-        let plaintext = cipher
-            .decrypt(
-                Nonce::from_slice(&self.vault_nonce),
-                Payload {
-                    msg: &self.ciphertext,
-                    aad: &self.aad,
-                },
-            )
-            .map_err(|e| VaultError::Crypto(format!("decrypt payload: {e}")))?;
+        let plaintext = Zeroizing::new(
+            cipher
+                .decrypt(
+                    Nonce::from_slice(&self.vault_nonce),
+                    Payload {
+                        msg: &self.data[self.header_end..],
+                        aad: &self.data[..self.header_end],
+                    },
+                )
+                .map_err(|e| VaultError::Crypto(format!("decrypt payload: {e}")))?,
+        );
         let wire: PayloadWireOwned = serde_json::from_slice(&plaintext)
             .map_err(|e| VaultError::Corrupt(format!("payload json: {e}")))?;
         Ok(VaultPayload {
@@ -452,17 +597,15 @@ impl ParsedFile {
         })
     }
 
-    fn into_vault(self, vmk: Vec<u8>, payload: VaultPayload) -> Vault {
+    fn into_vault(self, vmk: Vec<u8>, mut payload: VaultPayload) -> Vault {
+        payload.compact_tombstones();
         Vault {
             payload,
             vmk,
             generation: self.generation,
-            kdf_salt: self.kdf_salt,
-            wrapped_nonce: self.wrapped_nonce,
-            wrapped_ct: self.wrapped_ct,
-            kdf_m_kib: self.kdf_m_kib,
-            kdf_t: self.kdf_t,
-            kdf_p: self.kdf_p,
+            file_revision: Some(Sha256::digest(self.data).into()),
+            password_revision: self.password_revision,
+            password_wrap: self.password_wrap,
         }
     }
 }
@@ -471,65 +614,118 @@ impl ParsedFile {
 // File I/O
 // ---------------------------------------------------------------------------
 
-/// Read the whole vault file under a shared advisory lock.
+/// Read a bounded snapshot. Atomic replacement keeps an opened file coherent.
 pub fn read_vault_file(path: &Path) -> Result<Vec<u8>, VaultError> {
-    use std::io::Read;
-    let file = std::fs::File::open(path).map_err(|e| VaultError::Io(e.to_string()))?;
-    let lock = fd_lock::RwLock::new(file);
-    let guard = lock.read().map_err(|e| VaultError::Io(e.to_string()))?;
-    let mut buf = Vec::new();
-    (&*guard)
-        .read_to_end(&mut buf)
-        .map_err(|e| VaultError::Io(e.to_string()))?;
-    Ok(buf)
+    read_vault_reader(File::open(path).map_err(io_error)?)
 }
 
-/// Atomic write: temp file in same dir + fsync + rename, under an exclusive
-/// advisory lock held on the destination file.
-pub fn write_vault_file(path: &Path, data: &[u8]) -> Result<(), VaultError> {
-    use std::io::Write;
-    let dir = path.parent().filter(|p| !p.as_os_str().is_empty());
-    let dir = dir.unwrap_or_else(|| Path::new("."));
+/// Read a bounded encrypted vault or backup from a stream.
+pub fn read_vault_reader(reader: impl Read) -> Result<Vec<u8>, VaultError> {
+    let mut data = Vec::new();
+    reader
+        .take(MAX_VAULT_BYTES as u64 + 1)
+        .read_to_end(&mut data)
+        .map_err(io_error)?;
+    ensure_size(data.len())?;
+    Ok(data)
+}
 
-    // Open (creating if needed) the destination purely to hold the advisory lock.
-    let lock_file = std::fs::OpenOptions::new()
+fn io_error(error: io::Error) -> VaultError {
+    VaultError::Io(error.to_string())
+}
+
+enum FileWrite {
+    Compare(Option<[u8; 32]>),
+    Replace,
+}
+
+fn check_file_revision(path: &Path, expected: Option<[u8; 32]>) -> Result<(), VaultError> {
+    match (File::open(path), expected) {
+        (Ok(file), Some(expected)) => {
+            let current: [u8; 32] = Sha256::digest(read_vault_reader(file)?).into();
+            if current == expected {
+                return Ok(());
+            }
+        }
+        (Err(error), expected) if error.kind() == io::ErrorKind::NotFound => {
+            if expected.is_none() {
+                return Ok(());
+            }
+        }
+        (Err(error), _) => return Err(io_error(error)),
+        _ => {}
+    }
+    Err(VaultError::StaleFile)
+}
+
+/// Atomically replace a file. For read-modify-write, use [Vault::save_to_file].
+pub fn write_vault_file(path: &Path, data: &[u8]) -> Result<(), VaultError> {
+    commit_vault_file(path, data, FileWrite::Replace)
+}
+
+fn commit_vault_file(path: &Path, data: &[u8], mode: FileWrite) -> Result<(), VaultError> {
+    ensure_size(data.len())?;
+    let name = path
+        .file_name()
+        .ok_or_else(|| VaultError::Io("missing vault file name".into()))?;
+    let mut lock_name = std::ffi::OsString::from(".");
+    lock_name.push(name);
+    lock_name.push(".lock");
+
+    // Keep the sidecar in place so every writer locks the same inode across renames.
+    let lock_file = OpenOptions::new()
         .read(true)
         .write(true)
         .create(true)
         .truncate(false)
-        .open(path)
-        .map_err(|e| VaultError::Io(e.to_string()))?;
+        .open(path.with_file_name(lock_name))
+        .map_err(io_error)?;
     let mut lock = fd_lock::RwLock::new(lock_file);
-    let _guard = lock.write().map_err(|e| VaultError::Io(e.to_string()))?;
+    let _guard = lock.write().map_err(io_error)?;
 
-    let mut suffix = [0u8; 8];
-    os_random(&mut suffix);
-    let tmp = dir.join(format!(".otpvault-{}.tmp", hex(&suffix)));
-
-    let write_result = (|| -> std::io::Result<()> {
-        let mut f = std::fs::File::create(&tmp)?;
-        f.write_all(data)?;
-        f.sync_all()?;
-        Ok(())
-    })();
-    if let Err(e) = write_result {
-        let _ = std::fs::remove_file(&tmp);
-        return Err(VaultError::Io(e.to_string()));
+    // A rename replaces a symlink itself, while opening the file would read its target.
+    match fs::symlink_metadata(path) {
+        Ok(meta) if !meta.is_file() => {
+            return Err(VaultError::Io(
+                "vault destination is not a regular file".into(),
+            ));
+        }
+        Ok(_) => {}
+        Err(e) if e.kind() == io::ErrorKind::NotFound => {}
+        Err(e) => return Err(io_error(e)),
+    };
+    if let FileWrite::Compare(expected) = mode {
+        check_file_revision(path, expected)?;
     }
 
-    if let Err(e) = std::fs::rename(&tmp, path) {
-        let _ = std::fs::remove_file(&tmp);
-        return Err(VaultError::Io(e.to_string()));
+    let dir = path
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    let mut file = tempfile::Builder::new()
+        .prefix(".otpvault-")
+        .suffix(".tmp")
+        .tempfile_in(dir)
+        .map_err(io_error)?;
+    file.write_all(data).map_err(io_error)?;
+    file.as_file().sync_all().map_err(io_error)?;
+    let tmp = file.into_temp_path();
+    if matches!(mode, FileWrite::Compare(None)) {
+        tmp.persist_noclobber(path).map_err(|e| {
+            if e.error.kind() == io::ErrorKind::AlreadyExists {
+                VaultError::StaleFile
+            } else {
+                io_error(e.error)
+            }
+        })?;
+    } else {
+        tmp.persist(path).map_err(|e| io_error(e.error))?;
     }
+    // The rename is already committed in this process. A directory sync makes
+    // it durable on filesystems that support it.
+    #[cfg(unix)]
+    let _ = File::open(dir).and_then(|dir| dir.sync_all());
     Ok(())
-}
-
-fn hex(bytes: &[u8]) -> String {
-    let mut s = String::with_capacity(bytes.len() * 2);
-    for b in bytes {
-        s.push_str(&format!("{b:02x}"));
-    }
-    s
 }
 
 // ---------------------------------------------------------------------------
@@ -614,6 +810,7 @@ pub fn import_backup_v1(
     password: &str,
     now_ms: i64,
 ) -> Result<VaultPayload, VaultError> {
+    ensure_size(data.len())?;
     // Layout: magic(4) version(4) salt(32) nonce(12) tag(16) ciphertext(..)
     const HEADER: usize = 4 + 4 + SALT_LEN + NONCE_LEN + TAG_LEN;
     if data.len() < HEADER {
@@ -688,4 +885,25 @@ pub fn import_backup_v1(
         .collect();
 
     Ok(VaultPayload { accounts, folders })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Vault;
+
+    #[test]
+    fn an_unversioned_peer_cannot_replace_the_local_password_wrap() {
+        let mut local = Vault::create("local-password").unwrap();
+        let mut remote = local.clone();
+        remote
+            .change_password("local-password", "peer-password")
+            .unwrap();
+        remote.password_revision = None;
+        let blob = remote.to_bytes(200).unwrap();
+        let remote = local.open_peer(&blob).unwrap();
+
+        assert!(!local.merge_password_wrap(&remote).unwrap());
+        let blob = local.to_bytes(300).unwrap();
+        assert!(Vault::open_with_password(&blob, "local-password").is_ok());
+    }
 }

@@ -349,7 +349,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0E0BE6CC1A44624478902A4D /* Build configuration list for PBXNativeTarget "Otpeek-macOS" */;
 			buildPhases = (
-				E88461A71A5143D98C20401D /* Build Rust Core (otpeek-ffi) */,
+				647C2B921B373435B6376691 /* Verify Rust Core (otpeek-ffi) */,
 				53CA4957D20063C4EAEE4A0B /* Sources */,
 				3E965CBBD0F5BBEF471BAA3C /* Resources */,
 				EE80F9E651316739C6CCCDED /* Frameworks */,
@@ -371,7 +371,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 5F848243841E2ABFB52F5D9B /* Build configuration list for PBXNativeTarget "OtpWidgetExtension-iOS" */;
 			buildPhases = (
-				E63A72F110702233FA3D8A6F /* Build Rust Core (otpeek-ffi) */,
+				607450305818071C605617A9 /* Verify Rust Core (otpeek-ffi) */,
 				287469BFF72D1AC261F46AEE /* Sources */,
 				EFB16A0CC096CFAE420EEC88 /* Frameworks */,
 			);
@@ -390,7 +390,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 44F81646940678B5948C8FE5 /* Build configuration list for PBXNativeTarget "Otpeek-iOS" */;
 			buildPhases = (
-				CC93D44C7E8EFF0D2C9C494C /* Build Rust Core (otpeek-ffi) */,
+				2E28C9F3E4AAEB8FCC58B0F4 /* Verify Rust Core (otpeek-ffi) */,
 				BD7B0CD3753225ECF0F39D90 /* Sources */,
 				EC8F98394DAB4994C4288FEB /* Resources */,
 				B694121AB4F93692FB02AB14 /* Frameworks */,
@@ -412,7 +412,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 11501D224835E61602483F5E /* Build configuration list for PBXNativeTarget "OtpWidgetExtension-macOS" */;
 			buildPhases = (
-				C62606062B85A8B0DB2A9FD3 /* Build Rust Core (otpeek-ffi) */,
+				C975F833BE158CBA304BCB56 /* Verify Rust Core (otpeek-ffi) */,
 				A598F99FA3B76FBAA50346BA /* Sources */,
 				128D67BFC91482E1E43D81E0 /* Frameworks */,
 			);
@@ -498,7 +498,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		C62606062B85A8B0DB2A9FD3 /* Build Rust Core (otpeek-ffi) */ = {
+		2E28C9F3E4AAEB8FCC58B0F4 /* Verify Rust Core (otpeek-ffi) */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -508,16 +508,16 @@
 			);
 			inputPaths = (
 			);
-			name = "Build Rust Core (otpeek-ffi)";
+			name = "Verify Rust Core (otpeek-ffi)";
 			outputFileListPaths = (
 			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\nif [ ! -d \"${PROJECT_DIR}/Frameworks/OtpeekCore.xcframework\" ]; then\n  \"${PROJECT_DIR}/scripts/build-core.sh\"\nfi\n";
+			shellScript = "\"${PROJECT_DIR}/scripts/build-core.sh\" --verify";
 		};
-		CC93D44C7E8EFF0D2C9C494C /* Build Rust Core (otpeek-ffi) */ = {
+		607450305818071C605617A9 /* Verify Rust Core (otpeek-ffi) */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -527,16 +527,16 @@
 			);
 			inputPaths = (
 			);
-			name = "Build Rust Core (otpeek-ffi)";
+			name = "Verify Rust Core (otpeek-ffi)";
 			outputFileListPaths = (
 			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\nif [ ! -d \"${PROJECT_DIR}/Frameworks/OtpeekCore.xcframework\" ]; then\n  \"${PROJECT_DIR}/scripts/build-core.sh\"\nfi\n";
+			shellScript = "\"${PROJECT_DIR}/scripts/build-core.sh\" --verify";
 		};
-		E63A72F110702233FA3D8A6F /* Build Rust Core (otpeek-ffi) */ = {
+		647C2B921B373435B6376691 /* Verify Rust Core (otpeek-ffi) */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -546,16 +546,16 @@
 			);
 			inputPaths = (
 			);
-			name = "Build Rust Core (otpeek-ffi)";
+			name = "Verify Rust Core (otpeek-ffi)";
 			outputFileListPaths = (
 			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\nif [ ! -d \"${PROJECT_DIR}/Frameworks/OtpeekCore.xcframework\" ]; then\n  \"${PROJECT_DIR}/scripts/build-core.sh\"\nfi\n";
+			shellScript = "\"${PROJECT_DIR}/scripts/build-core.sh\" --verify";
 		};
-		E88461A71A5143D98C20401D /* Build Rust Core (otpeek-ffi) */ = {
+		C975F833BE158CBA304BCB56 /* Verify Rust Core (otpeek-ffi) */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -565,14 +565,14 @@
 			);
 			inputPaths = (
 			);
-			name = "Build Rust Core (otpeek-ffi)";
+			name = "Verify Rust Core (otpeek-ffi)";
 			outputFileListPaths = (
 			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\nif [ ! -d \"${PROJECT_DIR}/Frameworks/OtpeekCore.xcframework\" ]; then\n  \"${PROJECT_DIR}/scripts/build-core.sh\"\nfi\n";
+			shellScript = "\"${PROJECT_DIR}/scripts/build-core.sh\" --verify";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -710,10 +710,11 @@
 		1BC38FD8869F32238EAFD168 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"ARCHS[sdk=iphonesimulator*]" = arm64;
 				CODE_SIGN_ENTITLEMENTS = OtpWidgetExtension/OtpWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 27;
+				CURRENT_PROJECT_VERSION = 28;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
@@ -742,7 +743,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 27;
+				CURRENT_PROJECT_VERSION = 28;
 				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -768,7 +769,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 27;
+				CURRENT_PROJECT_VERSION = 28;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
@@ -796,7 +797,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 27;
+				CURRENT_PROJECT_VERSION = 28;
 				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -818,11 +819,12 @@
 		9BDBE8B387D1D05BA32F1A96 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"ARCHS[sdk=iphonesimulator*]" = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Otpeek/Otpeek.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 27;
+				CURRENT_PROJECT_VERSION = 28;
 				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -908,7 +910,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 27;
+				CURRENT_PROJECT_VERSION = 28;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
@@ -931,10 +933,11 @@
 		C46C7832A716D9FAE06E4D1E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"ARCHS[sdk=iphonesimulator*]" = arm64;
 				CODE_SIGN_ENTITLEMENTS = OtpWidgetExtension/OtpWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 27;
+				CURRENT_PROJECT_VERSION = 28;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
@@ -1024,11 +1027,12 @@
 		FB94A791D5B07D929FF2D8E0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"ARCHS[sdk=iphonesimulator*]" = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Otpeek/Otpeek.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 27;
+				CURRENT_PROJECT_VERSION = 28;
 				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",

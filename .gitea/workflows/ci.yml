@@ -75,15 +75,20 @@ jobs:
         with:
           workspaces: core
 
+      - name: Check RustSec advisories
+        run: |
+          cargo install cargo-deny --version 0.20.2 --locked
+          cargo deny --locked --config ../.gitea/deny.toml check advisories
+
       - name: Test workspace
-        run: cargo test --workspace
+        run: cargo test --locked --workspace
 
       - name: Build CLI (release)
-        run: cargo build -p otpeek-cli --release
+        run: cargo build --locked -p otpeek-cli --release
 
   # ---------------------------------------------------------------------------
   # Apple app. Builds the Rust xcframework + Swift bindings, generates the
-  # Xcode project with XcodeGen, then builds the macOS scheme unsigned.
+  # Xcode project with XcodeGen, then builds both app schemes unsigned.
   #
   # This job runs in *host* mode on the mac mini, so unlike the GitHub version
   # it deliberately does not install a toolchain or seed a cargo cache: the
@@ -92,7 +97,7 @@ jobs:
   # runs, which is additive and idempotent.
   # ---------------------------------------------------------------------------
   apple:
-    name: Apple (Otpeek-macOS)
+    name: Apple (macOS and iOS)
     runs-on: macos-arm64
     timeout-minutes: 60
     steps:
@@ -111,17 +116,13 @@ jobs:
       - name: Add Apple Rust targets
         run: |
           export PATH="$HOME/.cargo/bin:$PATH"
-          # build-core.sh skips any target that is not installed and only hard
-          # requires aarch64-apple-darwin, so each add is best-effort.
-          for t in aarch64-apple-darwin x86_64-apple-darwin \
-                   aarch64-apple-ios aarch64-apple-ios-sim; do
-            rustup target add "$t"
-          done
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin \
+            aarch64-apple-ios aarch64-apple-ios-sim
 
       - name: Build Rust core (xcframework + Swift bindings)
         run: |
           export PATH="$HOME/.cargo/bin:/opt/homebrew/bin:$PATH"
-          apple/scripts/build-core.sh
+          apple/scripts/build-core.sh --require-all-targets
 
       - name: Generate Xcode project
         working-directory: apple
@@ -132,5 +133,20 @@ jobs:
       - name: Build macOS app (unsigned)
         run: |
           xcodebuild -project apple/Otpeek.xcodeproj -scheme Otpeek-macOS \
-            -configuration Debug -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            -destination 'generic/platform=macOS' \
+            -configuration Debug -derivedDataPath "$RUNNER_TEMP/DerivedData-macOS" \
+            build CODE_SIGNING_ALLOWED=NO
+
+      - name: Build iOS device app (unsigned)
+        run: |
+          xcodebuild -project apple/Otpeek.xcodeproj -scheme Otpeek-iOS \
+            -destination 'generic/platform=iOS' \
+            -configuration Debug -derivedDataPath "$RUNNER_TEMP/DerivedData-iOS" \
+            build CODE_SIGNING_ALLOWED=NO
+
+      - name: Build iOS Simulator app (arm64, unsigned)
+        run: |
+          xcodebuild -project apple/Otpeek.xcodeproj -scheme Otpeek-iOS \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug -derivedDataPath "$RUNNER_TEMP/DerivedData-iOS-Sim" \
             build CODE_SIGNING_ALLOWED=NO
