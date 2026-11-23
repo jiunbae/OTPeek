@@ -24,7 +24,13 @@ jobs:
           dotnet-version: 8.0.x
       - uses: microsoft/setup-msbuild@v2
       - name: Restore app and widget dependencies
-        run: dotnet restore Otpeek.Windows.sln
+        shell: pwsh
+        run: |
+          dotnet restore windows/Otpeek.App/Otpeek.App.csproj -p:Platform=x64 -p:WindowsPackageType=MSIX
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet restore windows/Otpeek.Widget/Otpeek.Widget.csproj -p:Platform=x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (!(Test-Path 'windows/Otpeek.Widget/obj/project.assets.json')) { throw 'Missing widget restore output' }
       - name: Build x64 MSIX bundle
         shell: pwsh
         run: |
