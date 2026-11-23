@@ -34,7 +34,13 @@ jobs:
       - name: Build x64 MSIX bundle
         shell: pwsh
         run: |
-          dotnet build windows/Otpeek.App/Otpeek.App.csproj -c Release -p:Platform=x64 -p:WindowsPackageType=MSIX -p:GenerateAppxPackageOnBuild=true -p:AppxBundlePlatforms=x64 -p:AppxBundle=Always -p:UapAppxPackageBuildMode=SideloadOnly -p:AppxPackageSigningEnabled=false --no-restore
+          $archive = Join-Path $env:RUNNER_TEMP 'windows-sdk-contracts.zip'
+          $sdk = Join-Path $env:RUNNER_TEMP 'windows-sdk-contracts'
+          Invoke-WebRequest 'https://api.nuget.org/v3-flatcontainer/microsoft.windows.sdk.contracts/10.0.22621.3233/microsoft.windows.sdk.contracts.10.0.22621.3233.nupkg' -OutFile $archive
+          Expand-Archive -Path $archive -DestinationPath $sdk
+          $metadata = Join-Path $sdk 'ref\netstandard2.0'
+          if (!(Test-Path (Join-Path $metadata 'Windows.Foundation.UniversalApiContract.winmd'))) { throw 'Missing Windows SDK metadata' }
+          dotnet build windows/Otpeek.App/Otpeek.App.csproj -c Release -p:Platform=x64 -p:WindowsPackageType=MSIX -p:GenerateAppxPackageOnBuild=true -p:AppxBundlePlatforms=x64 -p:AppxBundle=Always -p:UapAppxPackageBuildMode=SideloadOnly -p:AppxPackageSigningEnabled=false "-p:CsWinRTWindowsMetadata=$metadata" --no-restore
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Upload bundle for release signing
         uses: actions/upload-artifact@v4
