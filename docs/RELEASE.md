@@ -14,7 +14,8 @@ to `main`. GitHub Actions contains the Windows CI and CLI release workflows.
 
 ## Versioning
 
-Keep every surface on the same marketing version before tagging a release.
+The Apple apps, Windows package, and CLI have independent release versions.
+Keep the CLI version and its GitHub release tag in sync.
 
 | Surface | Where | Field |
 |---------|-------|-------|
