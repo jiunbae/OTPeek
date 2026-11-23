@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import Darwin
 
 /// 기존 뷰들이 `AppState` 라는 이름의 EnvironmentObject 를 사용하므로 alias 로 연결.
 public typealias AppState = OtpStore
@@ -39,7 +40,9 @@ public final class OtpStore: ObservableObject {
 
     // MARK: - Published (iCloud 동기화)
 
-    @Published public var iCloudSyncEnabled = false
+    @Published public private(set) var iCloudSyncEnabled = false
+    @Published private(set) var webDAVSyncEnabled = false
+    @Published private(set) var automaticSyncEnabled = true
     @Published public private(set) var isSyncing = false
     @Published public private(set) var lastSyncStatus = "Never synced"
 
@@ -51,10 +54,24 @@ public final class OtpStore: ObservableObject {
     // MARK: - Private
 
     private var client: OtpClient?
+    private var webDAVConfiguration: WebDAVConfiguration?
+    private var isRestoringVault = false
+    private var syncTimer: Task<Void, Never>?
+    private var lockObserver: AnyCancellable?
+    private var pendingChanges = false
+    #if os(macOS)
+    private var syncForeground = true
+    #else
+    private var syncForeground = false
+    #endif
+    private static let syncInterval: Duration = .seconds(300)
 
     private let legacyAccountsKey = "otp_accounts"
     private let legacyFoldersKey = "otp_folders"
     private let syncEnabledKey = "icloudSyncEnabled"
+    private let webDAVEnabledKey = "webDAVSyncEnabled"
+    private let automaticSyncKey = "automaticVaultSync"
+    private let webDAVRecoveryKey = "webDAVRecoveryBackupName"
     private static let legacyBackupMagic = Data("OTPB".utf8)
 
     private var legacyDefaults: UserDefaults? {
@@ -70,6 +87,17 @@ public final class OtpStore: ObservableObject {
             return
         }
         #endif
+        automaticSyncEnabled = legacyDefaults?.object(forKey: automaticSyncKey) as? Bool ?? true
+        lockObserver = appLock.$isLocked.dropFirst().sink { [weak self] locked in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if locked {
+                    self.syncTimer?.cancel()
+                } else {
+                    self.scheduleAutomaticSync(after: .seconds(1))
+                }
+            }
+        }
         vaultExists = VaultAccess.vaultExists
         detectLegacyData()
         openIfPossible()
@@ -143,6 +171,7 @@ public final class OtpStore: ObservableObject {
         refresh()
         // 생성/잠금해제/복원 직후 위젯이 "No accounts" 에 머물지 않도록 바로 새로고침.
         VaultAccess.notifyChange()
+        scheduleAutomaticSync(after: .seconds(1))
     }
 
     /// 새 볼트 생성 (기존 데이터 없음).
@@ -222,6 +251,10 @@ public final class OtpStore: ObservableObject {
     @discardableResult
     public func restore(blob: Data, password: String) -> Bool {
         guard canAccessVault(), let path = VaultAccess.vaultPath else { return false }
+        guard !isSyncing else {
+            lastError = "Wait for vault sync to finish, then try again."
+            return false
+        }
         do {
             let client = try OtpClient.restore(vaultPath: path, blob: blob, masterPassword: password)
             KeychainHelper.shared.saveVMK(client.vaultKey())
@@ -234,29 +267,38 @@ public final class OtpStore: ObservableObject {
         }
     }
 
-    /// iCloud(CloudKit)에서 원격 볼트를 가져와 이 기기로 복원한다(새 기기 부트스트랩).
-    ///
-    /// 멀티 기기 설정의 정석 경로다. 새 기기에서 "볼트 새로 생성"을 하면 이 기기만의
-    /// 랜덤 VMK 가 생겨, 첫 기기가 올린 원격(다른 VMK 로 암호화)을 열 때 `WrongKey` 로
-    /// 동기화가 깨진다. 여기서는 원격 blob 을 비밀번호로 열어(open_with_password) 첫 기기의
-    /// VMK 를 그대로 복구·저장하므로, 이후 두 기기가 같은 VMK 를 공유해 동기화가 성립한다.
-    ///
-    /// CloudKit fetch 는 블로킹이므로 메인 스레드 밖에서 수행하고, 복원(상태 변경)만 메인에서 한다.
     public func restoreFromICloud(password: String) {
-        guard canAccessVault() else { return }
+        restoreRemoteVault(label: "iCloud", makeBackend: { CloudKitSyncBackend() }) { blob in
+            guard self.restore(blob: blob, password: password) else { return false }
+            self.setICloudSync(enabled: true)
+            return true
+        }
+    }
+
+    func restoreFromWebDAV(_ configuration: WebDAVConfiguration, password: String) {
+        restoreRemoteVault(label: "WebDAV", makeBackend: { WebDAVSyncBackend(configuration) }) { blob in
+            self.joinWebDAVVault(blob: blob, password: password, configuration: configuration)
+        }
+    }
+
+    private func restoreRemoteVault(label: String, makeBackend: @escaping @Sendable () -> any SyncBackend,
+                                    apply: @escaping (Data) -> Bool) {
+        guard !isSyncing, canAccessVault() else { return }
         guard VaultAccess.vaultPath != nil else {
-            lastError = "App Group container unavailable"
+            lastError = "App Group container unavailable."
             return
         }
         lastError = nil
         isSyncing = true
-        lastSyncStatus = "Fetching from iCloud…"
+        isRestoringVault = true
+        syncTimer?.cancel()
+        lastSyncStatus = "Fetching from \(label)…"
         let generation = appLock.lockGeneration
         Task {
-            let fetched = await Self.runCloudWork {
-                Result { try CloudKitSyncBackend().fetch() }
-            }
+            let fetched = await Self.runCloudWork { Result { try makeBackend().fetch() } }
             isSyncing = false
+            isRestoringVault = false
+            defer { scheduleAutomaticSync(after: Self.syncInterval) }
             guard !appLock.isLocked, generation == appLock.lockGeneration else {
                 lastSyncStatus = "Restore interrupted. Unlock OTPeek and try again."
                 lastError = lastSyncStatus
@@ -265,18 +307,140 @@ public final class OtpStore: ObservableObject {
             switch fetched {
             case .failure(let error):
                 lastError = describe(error)
-                lastSyncStatus = "iCloud restore failed."
+                lastSyncStatus = "Restore failed: \(describe(error))"
             case .success(nil):
-                lastError = "No iCloud vault found yet. Enable iCloud Sync on your first device, then try again."
-                lastSyncStatus = "No iCloud vault found."
+                lastError = "No \(label) vault exists yet. Sync from your first device, then try again."
+                lastSyncStatus = "No \(label) vault found."
             case .success(.some(let blob)):
-                if restore(blob: blob.data, password: password) {
-                    setICloudSync(enabled: true)
-                } else {
-                    lastSyncStatus = "iCloud restore failed."
-                }
+                if !apply(blob.data) { lastSyncStatus = lastError ?? "\(label) restore failed." }
             }
         }
+    }
+
+    /// Stage and authenticate the server copy before replacing a local vault.
+    /// For independently created vaults, import local records and retain an encrypted recovery copy.
+    private func joinWebDAVVault(blob: Data, password: String, configuration: WebDAVConfiguration) -> Bool {
+        guard let destination = VaultAccess.vaultURL else { return false }
+        let files = FileManager.default
+        let recoveryName = "pre-webdav-\(UUID().uuidString).otpvault"
+        let directory = destination.deletingLastPathComponent()
+            .appendingPathComponent(".webdav-restore-\(UUID().uuidString)", isDirectory: true)
+        let previousConfiguration = webDAVConfiguration
+        var credentialsChanged = false
+        var installed = false
+        do {
+            try files.createDirectory(at: directory, withIntermediateDirectories: false)
+            defer { try? files.removeItem(at: directory) }
+            let stagedURL = directory.appendingPathComponent(VaultAccess.vaultFileName)
+            let staged = try OtpClient.restore(vaultPath: stagedURL.path, blob: blob, masterPassword: password)
+            let key = staged.vaultKey()
+            let local = client
+            var originalBlob: Data?
+            if let local, local.vaultKey() != key {
+                originalBlob = try Data(contentsOf: destination)
+                try local.reload()
+                var folderIDs: [String: String] = [:]
+                // Independent vaults can contain overlapping IDs and deletion history.
+                for var folder in local.listFolders() {
+                    let originalID = folder.id
+                    folder.id = ""
+                    folderIDs[originalID] = try staged.addFolder(folder: folder).id
+                }
+                for var account in local.listAccounts() {
+                    account.id = ""
+                    account.folderId = account.folderId.flatMap { folderIDs[$0] }
+                    _ = try staged.addAccount(account: account)
+                }
+            }
+
+            guard KeychainHelper.shared.saveWebDAVConfiguration(configuration) else {
+                throw OtpError.Backend(msg: "WebDAV credentials could not be saved to Keychain.")
+            }
+            credentialsChanged = true
+            if let local, local.vaultKey() == key {
+                useWebDAV(configuration, with: local)
+                return true
+            }
+
+            if let originalBlob {
+                let recoveryURL = destination.deletingLastPathComponent().appendingPathComponent(recoveryName)
+                try Self.replaceVault(at: destination, with: stagedURL, originalBlob: originalBlob,
+                                      recoveryURL: recoveryURL)
+                legacyDefaults?.set(recoveryName, forKey: webDAVRecoveryKey)
+            } else {
+                try files.moveItem(at: stagedURL, to: destination)
+            }
+            installed = true
+            vaultExists = true
+            persistWebDAVSelection(configuration)
+            if !KeychainHelper.shared.saveVMK(key) {
+                lastError = "The WebDAV vault was restored, but its key could not be saved. Use its master password to unlock next time."
+            }
+            do {
+                let joined = try OtpClient.openWithKey(vaultPath: destination.path, vmk: key)
+                finishOpen(joined)
+            } catch {
+                // The file is installed. Require the server vault's password if the key cannot be reopened.
+                client = nil
+                isReady = false
+                accounts = []
+                folders = []
+                VaultAccess.notifyChange()
+                throw error
+            }
+            syncNow()
+            return true
+        } catch {
+            if credentialsChanged && !installed {
+                if let previousConfiguration {
+                    _ = KeychainHelper.shared.saveWebDAVConfiguration(previousConfiguration)
+                } else {
+                    KeychainHelper.shared.deleteWebDAVConfiguration()
+                }
+            }
+            vaultExists = VaultAccess.vaultExists
+            lastError = describe(error)
+            return false
+        }
+    }
+
+    private static func replaceVault(at destination: URL, with staged: URL, originalBlob: Data,
+                                     recoveryURL: URL) throws {
+        // Use the Rust vault writer's sidecar so another instance cannot write during the switch.
+        let lockURL = destination.deletingLastPathComponent()
+            .appendingPathComponent(".\(destination.lastPathComponent).lock")
+        let descriptor = open(lockURL.path, O_RDWR | O_CREAT | O_CLOEXEC, S_IRUSR | S_IWUSR)
+        guard descriptor >= 0 else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
+        defer { close(descriptor) }
+        guard flock(descriptor, LOCK_EX | LOCK_NB) == 0,
+              try Data(contentsOf: destination) == originalBlob else {
+            throw OtpError.Backend(msg: "The local vault changed or is being written. Try joining again.")
+        }
+        let files = FileManager.default
+        try files.copyItem(at: destination, to: recoveryURL)
+        guard rename(staged.path, destination.path) == 0 else {
+            let failure = POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+            try? files.removeItem(at: recoveryURL)
+            throw failure
+        }
+    }
+
+    private var webDAVRecoveryURL: URL? {
+        guard let name = legacyDefaults?.string(forKey: webDAVRecoveryKey),
+              name.hasPrefix("pre-webdav-"), !name.contains("/") else { return nil }
+        return VaultAccess.vaultURL?.deletingLastPathComponent().appendingPathComponent(name)
+    }
+
+    var hasWebDAVRecoveryBackup: Bool {
+        guard let url = webDAVRecoveryURL else { return false }
+        return FileManager.default.fileExists(atPath: url.path)
+    }
+
+    func webDAVRecoveryBackup() throws -> Data {
+        guard canAccessVault(), let url = webDAVRecoveryURL else {
+            throw OtpError.Backend(msg: "No WebDAV recovery copy is available.")
+        }
+        return try Data(contentsOf: url)
     }
 
     /// 로컬 볼트와 캐시된 VMK 를 지우고 온보딩(복원 가능 상태)으로 되돌린다.
@@ -285,14 +449,19 @@ public final class OtpStore: ObservableObject {
     /// 복원하기 위한 복구 경로다. 원격(iCloud)은 건드리지 않는다.
     /// 주의: 이 기기에만 있고 아직 동기화되지 않은 계정은 사라진다.
     public func resetForRestore() {
-        guard canAccessVault() else { return }
+        guard !isSyncing, canAccessVault() else { return }
         client?.clearSyncBackend()
         client = nil
         isReady = false
         accounts = []
         folders = []
         iCloudSyncEnabled = false
+        webDAVSyncEnabled = false
+        webDAVConfiguration = nil
+        syncTimer?.cancel()
         legacyDefaults?.set(false, forKey: syncEnabledKey)
+        legacyDefaults?.set(false, forKey: webDAVEnabledKey)
+        KeychainHelper.shared.deleteWebDAVConfiguration()
         KeychainHelper.shared.deleteVMK()
         if let path = VaultAccess.vaultPath {
             try? FileManager.default.removeItem(atPath: path)
@@ -307,7 +476,7 @@ public final class OtpStore: ObservableObject {
     // MARK: - 새로고침
 
     public func refresh() {
-        guard !isSyncing, let client else { return }
+        guard let client else { return }
         accounts = client.listAccounts()
         folders = client.listFolders()
     }
@@ -407,6 +576,7 @@ public final class OtpStore: ObservableObject {
             }
             refresh()
             VaultAccess.notifyChange()
+            localVaultDidChange()
             return true
         } catch {
             lastError = describe(error)
@@ -439,6 +609,7 @@ public final class OtpStore: ObservableObject {
             }
             refresh()
             VaultAccess.notifyChange()
+            localVaultDidChange()
             return .success(Int(count))
         } catch OtpError.WrongPassword {
             return .wrongPassword
@@ -482,6 +653,7 @@ public final class OtpStore: ObservableObject {
             let code = try client.nextHotp(id: accountID)
             refresh()
             VaultAccess.notifyChange()
+            localVaultDidChange()
             return code.code
         } catch {
             // Refresh the snapshot before retrying an advance from a stale client.
@@ -490,31 +662,125 @@ public final class OtpStore: ObservableObject {
         }
     }
 
-    // MARK: - iCloud 동기화
+    // MARK: - Vault sync
+
+    private var hasSyncBackend: Bool { iCloudSyncEnabled || webDAVConfiguration != nil }
+
+    var savedWebDAVConfiguration: WebDAVConfiguration? { webDAVConfiguration }
 
     private func restoreSyncPreference() {
-        iCloudSyncEnabled = legacyDefaults?.bool(forKey: syncEnabledKey) ?? false
-        if iCloudSyncEnabled { client?.setSyncBackend(backend: CloudKitSyncBackend()) }
-    }
-
-    public func setICloudSync(enabled: Bool) {
-        guard canAccessVault() else { return }
-        iCloudSyncEnabled = enabled
-        legacyDefaults?.set(enabled, forKey: syncEnabledKey)
-        guard let client = client else { return }
-        if enabled {
-            client.setSyncBackend(backend: CloudKitSyncBackend())
-            syncNow()
+        webDAVSyncEnabled = legacyDefaults?.bool(forKey: webDAVEnabledKey) ?? false
+        iCloudSyncEnabled = !webDAVSyncEnabled && (legacyDefaults?.bool(forKey: syncEnabledKey) ?? false)
+        if webDAVSyncEnabled {
+            webDAVConfiguration = KeychainHelper.shared.loadWebDAVConfiguration()
+            if let configuration = webDAVConfiguration {
+                client?.setSyncBackend(backend: WebDAVSyncBackend(configuration))
+            } else {
+                lastSyncStatus = "WebDAV credentials are unavailable. Reconnect in Settings."
+            }
         } else {
-            client.clearSyncBackend()
+            webDAVConfiguration = nil
+            if iCloudSyncEnabled {
+                client?.setSyncBackend(backend: CloudKitSyncBackend())
+            }
         }
     }
 
-    /// 동기화는 CloudKit 브리지가 블로킹이므로 메인 스레드 밖에서 실행한다.
-    public func syncNow() {
-        guard canAccessVault(), let client else { return }
+    public func setICloudSync(enabled: Bool) {
+        guard !isSyncing, canAccessVault(), let client else { return }
+        if enabled {
+            webDAVSyncEnabled = false
+            webDAVConfiguration = nil
+            legacyDefaults?.set(false, forKey: webDAVEnabledKey)
+            KeychainHelper.shared.deleteWebDAVConfiguration()
+        }
+        iCloudSyncEnabled = enabled
+        legacyDefaults?.set(enabled, forKey: syncEnabledKey)
+        if enabled {
+            client.setSyncBackend(backend: CloudKitSyncBackend())
+            syncNow()
+        } else if !webDAVSyncEnabled {
+            client.clearSyncBackend()
+            syncTimer?.cancel()
+            lastSyncStatus = "Sync off"
+        }
+    }
+
+    func configureWebDAV(_ configuration: WebDAVConfiguration) {
+        guard !isSyncing, canAccessVault(), let client else { return }
+        guard KeychainHelper.shared.saveWebDAVConfiguration(configuration) else {
+            lastSyncStatus = "WebDAV credentials could not be saved to Keychain."
+            return
+        }
+        useWebDAV(configuration, with: client)
+    }
+
+    private func useWebDAV(_ configuration: WebDAVConfiguration, with client: OtpClient) {
+        persistWebDAVSelection(configuration)
+        client.setSyncBackend(backend: WebDAVSyncBackend(configuration))
+        syncNow()
+    }
+
+    private func persistWebDAVSelection(_ configuration: WebDAVConfiguration) {
+        iCloudSyncEnabled = false
+        webDAVSyncEnabled = true
+        webDAVConfiguration = configuration
+        legacyDefaults?.set(false, forKey: syncEnabledKey)
+        legacyDefaults?.set(true, forKey: webDAVEnabledKey)
+    }
+
+    func disconnectWebDAV() {
+        guard !isSyncing, canAccessVault(), webDAVSyncEnabled else { return }
+        guard KeychainHelper.shared.deleteWebDAVConfiguration() else {
+            lastSyncStatus = "WebDAV credentials could not be removed from Keychain."
+            return
+        }
+        webDAVSyncEnabled = false
+        webDAVConfiguration = nil
+        legacyDefaults?.set(false, forKey: webDAVEnabledKey)
+        client?.clearSyncBackend()
+        syncTimer?.cancel()
+        lastSyncStatus = "Sync off"
+    }
+
+    func setAutomaticSync(enabled: Bool) {
+        automaticSyncEnabled = enabled
+        legacyDefaults?.set(enabled, forKey: automaticSyncKey)
+        scheduleAutomaticSync(after: .seconds(1))
+    }
+
+    func setSyncForeground(_ active: Bool) {
+        syncForeground = active
+        scheduleAutomaticSync(after: .seconds(1))
+    }
+
+    private func scheduleAutomaticSync(after delay: Duration) {
+        syncTimer?.cancel()
+        syncTimer = nil
+        guard automaticSyncEnabled, syncForeground, !appLock.isLocked,
+              hasSyncBackend, !isSyncing, client != nil else { return }
+        syncTimer = Task { [weak self] in
+            do { try await Task.sleep(for: delay) } catch { return }
+            guard !Task.isCancelled else { return }
+            self?.startSync(manual: false)
+        }
+    }
+
+    private func localVaultDidChange() {
+        pendingChanges = true
+        scheduleAutomaticSync(after: .seconds(2))
+    }
+
+    public func syncNow() { startSync(manual: true) }
+
+    private func startSync(manual: Bool) {
+        guard !isSyncing, !appLock.isLocked, hasSyncBackend, let client else { return }
+        syncTimer?.cancel()
+        syncTimer = nil
         isSyncing = true
+        pendingChanges = false
         lastSyncStatus = "Syncing…"
+        let service = webDAVSyncEnabled ? "WebDAV" : "iCloud"
         Task {
             let result = await Self.runCloudWork {
                 Result { try client.sync(unixTimeMs: Int64(Date().timeIntervalSince1970 * 1000)) }
@@ -522,16 +788,19 @@ public final class OtpStore: ObservableObject {
             isSyncing = false
             switch result {
             case .success(let outcome):
-                lastSyncStatus = "Synced (pushed: \(outcome.pushed), pulled: \(outcome.pulled), changes: \(outcome.mergedChanges))"
+                lastSyncStatus = "Synced at \(Date().formatted(date: .omitted, time: .shortened))"
+                if outcome.pulled {
+                    refresh()
+                    VaultAccess.notifyChange()
+                }
             case .failure(OtpError.WrongKey):
-                let message = "Sync failed: this device's vault uses a different key than iCloud. Use Settings → \"Restore from iCloud\" to pull the vault from your other device and share the same key."
+                let message = "The \(service) vault uses a different key. Back up your local accounts before joining that vault."
                 lastSyncStatus = message
-                lastError = message
+                if manual { lastError = message }
             case .failure(let error):
                 lastSyncStatus = "Sync failed: \(describe(error))"
             }
-            reloadFromDisk()
-            VaultAccess.notifyChange()
+            scheduleAutomaticSync(after: pendingChanges ? .seconds(2) : Self.syncInterval)
         }
     }
 
@@ -576,6 +845,7 @@ public final class OtpStore: ObservableObject {
             try action(client)
             refresh()
             VaultAccess.notifyChange()
+            localVaultDidChange()
         } catch {
             lastError = describe(error)
         }
@@ -586,9 +856,9 @@ public final class OtpStore: ObservableObject {
             lastError = "Unlock OTPeek to access the vault."
             return false
         }
-        // Keep vault changes and account actions from racing an iCloud restore or sync.
-        guard !isSyncing else {
-            lastError = "Wait for iCloud to finish, then try again."
+        // Rust checks its on-disk revision when committing a sync. A restore can replace the entire vault.
+        guard !isRestoringVault else {
+            lastError = "Wait for the vault restore to finish, then try again."
             return false
         }
         return true

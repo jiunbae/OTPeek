@@ -10,6 +10,7 @@ struct OnboardingView: View {
     @State private var password = ""
     @State private var confirmPassword = ""
     @State private var showingRestore = false
+    @State private var showingWebDAV = false
     @State private var restorePassword = ""
     @State private var restoreData: Data?
     @State private var showingRestoreImporter = false
@@ -86,11 +87,15 @@ struct OnboardingView: View {
                 .buttonStyle(.plain)
                 .foregroundColor(.accentColor)
                 .disabled(store.isSyncing)
+                Button("Restore from WebDAV") { showingWebDAV = true }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.tint)
+                    .disabled(store.isSyncing)
             }
         }
         .padding(40)
         #if os(macOS)
-        .frame(width: 460, height: mode == .migrate ? 500 : 460)
+        .frame(width: 460, height: mode == .migrate ? 540 : 500)
         #endif
         .confirmationDialog("Create an empty vault?", isPresented: $confirmingEmptyVault, titleVisibility: .visible) {
             Button("Create Empty Vault", role: .destructive) {
@@ -103,6 +108,11 @@ struct OnboardingView: View {
             Text("Accounts from the earlier version will be kept on this device and left out of the new vault.")
         }
         .sheet(isPresented: $showingRestore) { restoreSheet }
+        .sheet(isPresented: $showingWebDAV) {
+            WebDAVConnectionView(joining: true) { configuration, password in
+                store.restoreFromWebDAV(configuration, password: password)
+            }
+        }
         // 신규 설치 상태에서 .otpvault 파일이 열리면, 그 파일을 복원 blob 으로 삼아 복원 시트를 연다.
         .onAppear { consumeIncomingFileIfNeeded() }
         .onChange(of: incoming.pendingData) { _, _ in consumeIncomingFileIfNeeded() }

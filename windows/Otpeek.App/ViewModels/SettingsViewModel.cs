@@ -107,23 +107,29 @@ public partial class SettingsViewModel : BaseViewModel
             RequireAuthentication = settings.RequireAuthentication;
             ShowFavicons = settings.ShowFavicons;
 
-            WebDavEnabled = settings.WebDav.Enabled;
-            WebDavUrl = settings.WebDav.Url;
-            WebDavUsername = settings.WebDav.Username;
-            WebDavPassword = _secureStorage.UnprotectString(settings.WebDav.ProtectedPassword) ?? string.Empty;
-            WebDavAutoSync = settings.WebDav.AutoSync;
-            WebDavSyncIntervalMinutes = settings.WebDav.SyncIntervalMinutes;
-            SyncStatus = settings.WebDav.LastSyncTime is DateTime lastSync
-                ? $"Last synced {lastSync.ToLocalTime():g}"
-                : null;
-
-            AccountCount = _client.IsUnlocked ? _client.ListAccounts().Count : 0;
-            FolderCount = _client.IsUnlocked ? _client.ListFolders().Count : 0;
+            RefreshWebDavSettings();
         }
         finally
         {
             _isLoadingSettings = false;
         }
+    }
+
+    internal void RefreshWebDavSettings()
+    {
+        var webDav = _settingsService.Settings.WebDav;
+        WebDavEnabled = webDav.Enabled;
+        WebDavUrl = webDav.Url;
+        WebDavUsername = webDav.Username;
+        WebDavPassword = _secureStorage.UnprotectString(webDav.ProtectedPassword) ?? string.Empty;
+        WebDavAutoSync = webDav.AutoSync;
+        WebDavSyncIntervalMinutes = webDav.SyncIntervalMinutes;
+        SyncStatus = webDav.LastSyncTime is DateTime lastSync
+            ? $"Last synced {lastSync.ToLocalTime():g}"
+            : null;
+
+        AccountCount = _client.IsUnlocked ? _client.ListAccounts().Count : 0;
+        FolderCount = _client.IsUnlocked ? _client.ListFolders().Count : 0;
     }
 
     [RelayCommand]

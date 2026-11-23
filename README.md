@@ -49,10 +49,11 @@ powered by a **shared Rust core**.
 - **End-to-end-encrypted vault** — AES-256-GCM payload, Argon2id-wrapped master key;
   platform keystores (Keychain / DPAPI / Secret Service) hold only the vault key,
   never the secrets
-- **Sync** — **iCloud (CloudKit)** in the Apple apps and **WebDAV** in the
-  CLI and Windows release. Vaults use last-writer-wins merge with tombstones.
+- **Sync** — automatic **iCloud (CloudKit)** for Apple devices and **WebDAV**
+  for Apple, Windows, and the CLI. Vaults use last-writer-wins merge with tombstones.
 - **QR import** — camera scan, screen capture, image files, plus Google Authenticator
-  migration QR (`otpauth-migration://`)
+  migration QR (`otpauth-migration://`). On macOS, choose **Import from Screen…**
+  in the QR import sheet and select the window or display with the code.
 - **Folders & favorites**, click-to-copy, system tray / menu bar, and widgets
 - **Backup & restore** — portable encrypted `.otpvault` containers (legacy v1
   `.otpbackup` import supported)
@@ -191,10 +192,10 @@ Register once, use everywhere — full guide: **[docs/SYNC.md](docs/SYNC.md)**.
 
 - **All-Apple (same Apple ID)** — enable iCloud Sync on the first device; other
   devices pick "Restore from iCloud" and enter the master password once.
-- **WebDAV / self-hosted** — configure the CLI with
-  `otpeek sync setup webdav <url> --user <u>` and push with `otpeek sync now`.
-  On a new CLI device, run `otpeek restore <url> --user <u>` before using the
-  same sync setup. The server stores an encrypted vault.
+  Changes sync automatically while the app is open and unlocked.
+- **WebDAV / self-hosted** — connect in Apple or Windows Settings, or run
+  `otpeek sync setup webdav <url> --user <u>` and `otpeek sync now`. Other
+  devices join using the same HTTPS vault URL and the vault master password.
 - **No server** — `otpeek export backup.otpvault` produces a portable encrypted
   container. Double-click (Windows/macOS) or share via AirDrop (Apple) and the app
   opens straight into import — enter the backup password and you're done.

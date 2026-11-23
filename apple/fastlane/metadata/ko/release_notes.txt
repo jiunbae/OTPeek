@@ -1,1 +1,3 @@
-OTPeek 첫 출시 — 2FA 코드를 한눈에.
+- OTPeek을 열고 잠금을 풀면 iCloud 볼트가 자동으로 동기화됩니다.
+- iPhone, iPad, Mac과 Windows에서 같은 암호화 WebDAV 볼트를 사용할 수 있습니다. 기존 계정을 유지하면서 공유 볼트에 연결할 수 있습니다.
+- Mac에서 창이나 화면에 표시된 OTP QR 코드를 바로 가져올 수 있습니다.

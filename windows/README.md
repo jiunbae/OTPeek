@@ -99,7 +99,12 @@ Generation config (public access modifier, `Uniffi.Otpeek` namespace) lives in
 `WebDavSyncBackend` implements the generated `SyncBackend` foreign trait using `HttpClient`
 (Basic authentication and conditional writes). In **Settings → WebDAV Sync**, enter the
 direct HTTPS `.otpvault` URL or a collection URL that contains `otpeek-vault.otpvault`.
-To share a vault with the CLI, use the same URL ending in `.otpvault` on both clients.
+To share a vault with Apple devices or the CLI, use the same URL ending in
+`.otpvault` on each client. Choose **Join WebDAV vault** in first-run setup,
+or **Join Existing WebDAV Vault** in Settings if this device already has
+accounts. Enter the server login and the shared vault master password separately.
+Joining from Settings merges local records and keeps an encrypted recovery copy
+when switching to a different vault key.
 Use the final URL after any redirects. The server must provide a strong, quoted ETag for existing vaults.
 Vault transfers are limited to 16 MiB. The WebDAV password is DPAPI-protected in `settings.dat`.
 

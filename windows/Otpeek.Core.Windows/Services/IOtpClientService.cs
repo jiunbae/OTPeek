@@ -32,8 +32,14 @@ public interface IOtpClientService
     /// <summary>마스터 비밀번호로 볼트를 열고 VMK를 DPAPI로 저장 (부트스트랩/키 없음 상황)</summary>
     void OpenWithPassword(string masterPassword);
 
-    /// <summary>백업/원격 blob에서 볼트를 이 기기에 복원하고 VMK를 DPAPI로 저장</summary>
+    /// <summary>Restore a blob to a new local vault and save its key with DPAPI.</summary>
     void RestoreFromBlob(byte[] blob, string masterPassword);
+
+    /// <summary>Fetch and restore an existing WebDAV vault to a new local vault.</summary>
+    void JoinWebDavVault(string url, string username, string password, string masterPassword);
+
+    /// <summary>Join with an open vault and return the recovery path if the local vault was replaced.</summary>
+    string? JoinExistingWebDavVault(string url, string username, string password, string masterPassword);
 
     /// <summary>마스터 비밀번호 변경 (VMK는 재래핑되며 변경되지 않음)</summary>
     void ChangePassword(string oldPassword, string newPassword);

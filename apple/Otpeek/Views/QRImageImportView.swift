@@ -4,6 +4,7 @@ import PhotosUI
 
 #if os(macOS)
 import AppKit
+import ScreenCaptureKit
 #else
 import UIKit
 #endif
@@ -19,6 +20,7 @@ struct QRImageImportView: View {
     #if os(macOS)
     @State private var isDragging = false
     @State private var importedImage: NSImage?
+    @State private var screenPicker: ScreenQRPicker?
     #else
     @State private var importedImage: UIImage?
     @State private var selectedItem: PhotosPickerItem?
@@ -72,15 +74,16 @@ struct QRImageImportView: View {
                             .fill(isDragging ? Color.blue.opacity(0.1) : Color.secondary.opacity(0.05))
                     )
 
-                if let image = importedImage {
-                    Image(nsImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .padding(20)
-                } else if isProcessing {
-                    ProgressView("Processing...")
-                } else {
-                    VStack(spacing: 12) {
+                VStack(spacing: 12) {
+                    if screenPicker != nil {
+                        ProgressView("Waiting for screen capture…")
+                    } else if isProcessing {
+                        ProgressView("Processing...")
+                    } else if let image = importedImage {
+                        Image(nsImage: image)
+                            .resizable()
+                            .scaledToFit()
+                    } else {
                         Image(systemName: "qrcode.viewfinder")
                             .font(.system(size: 48))
                             .foregroundColor(.secondary)
@@ -90,18 +93,24 @@ struct QRImageImportView: View {
 
                         Text("or")
                             .foregroundColor(.secondary)
+                    }
 
-                        HStack(spacing: 12) {
-                            Button("Choose File...") {
-                                selectImageFile()
-                            }
+                    HStack(spacing: 12) {
+                        Button("Choose File...") {
+                            selectImageFile()
+                        }
 
-                            Button("Paste from Clipboard") {
-                                pasteFromClipboard()
-                            }
+                        Button("Paste from Clipboard") {
+                            pasteFromClipboard()
+                        }
+
+                        Button("Import from Screen…") {
+                            importFromScreen()
                         }
                     }
+                    .disabled(isProcessing || screenPicker != nil)
                 }
+                .padding(12)
             }
             .frame(height: 250)
             .onDrop(of: [.image, .fileURL], isTargeted: $isDragging) { providers in
@@ -109,11 +118,16 @@ struct QRImageImportView: View {
             }
 
             resultView
+                .disabled(isProcessing || screenPicker != nil)
 
             Spacer()
         }
         .padding()
         .frame(width: 450, height: 450)
+        .onDisappear {
+            screenPicker?.stop()
+            screenPicker = nil
+        }
     }
     #endif
 
@@ -214,6 +228,38 @@ struct QRImageImportView: View {
     // MARK: - macOS Methods
 
     #if os(macOS)
+    private func importFromScreen() {
+        guard !SCContentSharingPicker.shared.isActive else {
+            errorMessage = "The screen picker is already open."
+            return
+        }
+
+        let picker = ScreenQRPicker()
+        screenPicker = picker
+        picker.present { result in
+            screenPicker = nil
+
+            switch result {
+            case .success(let image?):
+                importedImage = nil
+                detectedCode = nil
+                errorMessage = nil
+                isProcessing = true
+                performQRDetection(on: image)
+            case .success(nil):
+                break
+            case .failure(let error):
+                importedImage = nil
+                detectedCode = nil
+                if (error as? SCStreamError)?.code == .userDeclined {
+                    errorMessage = "Screen capture permission was declined. Choose or paste a QR image to import it."
+                } else {
+                    errorMessage = "Couldn’t capture the selected screen content. Try again or import an image."
+                }
+            }
+        }
+    }
+
     private func selectImageFile() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.image, .png, .jpeg]
@@ -227,7 +273,7 @@ struct QRImageImportView: View {
 
     private func pasteFromClipboard() {
         guard let image = NSPasteboard.general.readObjects(forClasses: [NSImage.self], options: nil)?.first as? NSImage else {
-            errorMessage = "No image found in clipboard"
+            imageLoadFailed("No image found in clipboard")
             return
         }
 
@@ -236,24 +282,34 @@ struct QRImageImportView: View {
     }
 
     private func handleDrop(providers: [NSItemProvider]) -> Bool {
-        guard let provider = providers.first else { return false }
+        guard screenPicker == nil, !isProcessing, let provider = providers.first else {
+            return false
+        }
 
         if provider.hasItemConformingToTypeIdentifier("public.file-url") {
-            provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { item, error in
-                if let data = item as? Data,
-                   let url = URL(dataRepresentation: data, relativeTo: nil) {
-                    DispatchQueue.main.async {
+            isProcessing = true
+            provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { item, _ in
+                let url = (item as? URL) ?? (item as? Data).flatMap {
+                    URL(dataRepresentation: $0, relativeTo: nil)
+                }
+                DispatchQueue.main.async {
+                    if let url {
                         loadImage(from: url)
+                    } else {
+                        imageLoadFailed()
                     }
                 }
             }
             return true
         } else if provider.canLoadObject(ofClass: NSImage.self) {
-            provider.loadObject(ofClass: NSImage.self) { image, error in
-                if let nsImage = image as? NSImage {
-                    DispatchQueue.main.async {
-                        self.importedImage = nsImage
-                        self.detectQRCode(in: nsImage)
+            isProcessing = true
+            provider.loadObject(ofClass: NSImage.self) { image, _ in
+                DispatchQueue.main.async {
+                    if let nsImage = image as? NSImage {
+                        importedImage = nsImage
+                        detectQRCode(in: nsImage)
+                    } else {
+                        imageLoadFailed()
                     }
                 }
             }
@@ -265,12 +321,19 @@ struct QRImageImportView: View {
 
     private func loadImage(from url: URL) {
         guard let image = NSImage(contentsOf: url) else {
-            errorMessage = "Failed to load image"
+            imageLoadFailed()
             return
         }
 
         importedImage = image
         detectQRCode(in: image)
+    }
+
+    private func imageLoadFailed(_ message: String = "Failed to load image") {
+        isProcessing = false
+        importedImage = nil
+        detectedCode = nil
+        errorMessage = message
     }
 
     private func detectQRCode(in image: NSImage) {
@@ -331,34 +394,125 @@ struct QRImageImportView: View {
     // MARK: - Shared QR Detection
 
     private func performQRDetection(on cgImage: CGImage) {
-        let request = VNDetectBarcodesRequest { request, error in
-            DispatchQueue.main.async {
-                isProcessing = false
-
-                if let error = error {
-                    errorMessage = "Detection failed: \(error.localizedDescription)"
-                    return
-                }
-
-                guard let results = request.results as? [VNBarcodeObservation],
-                      let firstQR = results.first(where: { $0.symbology == .qr }),
-                      let payload = firstQR.payloadStringValue else {
-                    errorMessage = "No QR code found in image"
-                    return
-                }
-
-                detectedCode = payload
-            }
-        }
-
-        request.symbologies = [.qr]
-
-        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
         DispatchQueue.global(qos: .userInitiated).async {
-            try? handler.perform([request])
+            let request = VNDetectBarcodesRequest()
+            request.symbologies = [.qr]
+            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+            do {
+                try handler.perform([request])
+                let payload = request.results?.first?.payloadStringValue
+                DispatchQueue.main.async {
+                    isProcessing = false
+                    detectedCode = payload
+                    if payload == nil {
+                        errorMessage = "No QR code found in image"
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    isProcessing = false
+                    errorMessage = "Detection failed: \(error.localizedDescription)"
+                }
+            }
         }
     }
 }
+
+#if os(macOS)
+@MainActor
+private final class ScreenQRPicker: NSObject, SCContentSharingPickerObserver {
+    private let picker = SCContentSharingPicker.shared
+    private var previousConfiguration: SCContentSharingPickerConfiguration?
+    private var completion: ((Result<CGImage?, Error>) -> Void)?
+    private var captureTask: Task<Void, Never>?
+
+    func present(completion: @escaping (Result<CGImage?, Error>) -> Void) {
+        self.completion = completion
+        previousConfiguration = picker.defaultConfiguration
+
+        var configuration = SCContentSharingPickerConfiguration()
+        configuration.allowedPickerModes = [.singleWindow, .singleDisplay]
+        configuration.allowsChangingSelectedContent = false
+        picker.defaultConfiguration = configuration
+        picker.add(self)
+        picker.isActive = true
+        picker.present()
+    }
+
+    func stop() {
+        guard let previousConfiguration else { return }
+        completion = nil
+        captureTask?.cancel()
+        captureTask = nil
+        picker.remove(self)
+        picker.isActive = false
+        picker.defaultConfiguration = previousConfiguration
+        self.previousConfiguration = nil
+    }
+
+    private func finish(_ result: Result<CGImage?, Error>) {
+        let callback = completion
+        stop()
+        callback?(result)
+    }
+
+    nonisolated func contentSharingPicker(
+        _ picker: SCContentSharingPicker,
+        didCancelFor stream: SCStream?
+    ) {
+        guard stream == nil else { return }
+        Task { @MainActor in
+            finish(.success(nil))
+        }
+    }
+
+    nonisolated func contentSharingPickerStartDidFailWithError(_ error: Error) {
+        Task { @MainActor in
+            finish(.failure(error))
+        }
+    }
+
+    nonisolated func contentSharingPicker(
+        _ picker: SCContentSharingPicker,
+        didUpdateWith filter: SCContentFilter,
+        for stream: SCStream?
+    ) {
+        guard stream == nil else { return }
+        Task { @MainActor in
+            capture(using: filter)
+        }
+    }
+
+    private func capture(using filter: SCContentFilter) {
+        guard completion != nil, captureTask == nil else { return }
+
+        let configuration = SCStreamConfiguration()
+        let scale = CGFloat(filter.pointPixelScale)
+        let size = filter.contentRect.size
+        configuration.width = max(1, Int((size.width * scale).rounded()))
+        configuration.height = max(1, Int((size.height * scale).rounded()))
+        configuration.showsCursor = false
+
+        captureTask = Task {
+            do {
+                try Task.checkCancellation()
+                let image = try await SCScreenshotManager.captureImage(
+                    contentFilter: filter,
+                    configuration: configuration
+                )
+                try Task.checkCancellation()
+                finish(.success(image))
+            } catch where Task.isCancelled {
+                return
+            } catch let error as SCStreamError where error.code == .userStopped {
+                finish(.success(nil))
+            } catch {
+                finish(.failure(error))
+            }
+        }
+    }
+}
+#endif
 
 #Preview {
     QRImageImportView()

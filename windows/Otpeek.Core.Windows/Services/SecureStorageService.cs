@@ -44,11 +44,28 @@ public class SecureStorageService : ISecureStorageService
 
         byte[] encrypted = ProtectedData.Protect(vmk, VmkEntropy, DataProtectionScope.CurrentUser);
         // 원자적 저장: temp 파일 작성 후 교체
-        string tmp = VmkPath + ".tmp";
-        File.WriteAllBytes(tmp, encrypted);
-        if (File.Exists(VmkPath))
-            File.Delete(VmkPath);
-        File.Move(tmp, VmkPath);
+        string tmp = $"{VmkPath}.{Guid.NewGuid():N}.tmp";
+        try
+        {
+            using (var file = new FileStream(tmp, FileMode.CreateNew, FileAccess.Write))
+            {
+                file.Write(encrypted);
+                file.Flush(flushToDisk: true);
+            }
+            File.Move(tmp, VmkPath, overwrite: true);
+        }
+        catch
+        {
+            try
+            {
+                File.Delete(tmp);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // Preserve the original write failure. The temporary file is DPAPI-protected.
+            }
+            throw;
+        }
     }
 
     public byte[]? LoadVaultKey()

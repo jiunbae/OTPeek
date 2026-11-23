@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Otpeek.Core.Services.Interfaces;
 using Uniffi.Otpeek;
 
@@ -6,12 +7,13 @@ namespace Otpeek.Core.Windows.Services;
 /// <summary>
 /// <see cref="IOtpClientService"/> 구현. Rust 코어 <see cref="OtpClient"/>를 래핑합니다.
 /// </summary>
-public sealed class OtpClientService : IOtpClientService, IDisposable
+public sealed partial class OtpClientService : IOtpClientService, IDisposable
 {
     private readonly ISecureStorageService _secureStorage;
     private readonly object _gate = new();
     private OtpClient? _client;
     private string? _webDavConfigurationError;
+    private int _activeSyncs;
 
     public OtpClientService(ISecureStorageService secureStorage)
     {
@@ -43,6 +45,18 @@ public sealed class OtpClientService : IOtpClientService, IDisposable
     private static long NowMs() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
     private void RaiseChanged() => VaultChanged?.Invoke(this, EventArgs.Empty);
+
+    private T WithClient<T>(Func<OtpClient, T> operation)
+    {
+        lock (_gate)
+            return operation(Client);
+    }
+
+    private void WithClient(Action<OtpClient> operation)
+    {
+        lock (_gate)
+            operation(Client);
+    }
 
     private void ReplaceClient(OtpClient? client)
     {
@@ -93,16 +107,65 @@ public sealed class OtpClientService : IOtpClientService, IDisposable
     {
         lock (_gate)
         {
-            var client = OtpClient.Restore(_secureStorage.VaultPath, blob, masterPassword);
-            _secureStorage.SaveVaultKey(client.VaultKey());
-            ReplaceClient(client);
+            EnsureNewVaultDestination();
+
+            string vaultPath = _secureStorage.VaultPath;
+            string stagingPath = $"{vaultPath}.{Guid.NewGuid():N}.tmp";
+            try
+            {
+                File.WriteAllBytes(stagingPath, blob);
+                byte[] key;
+                using (var stagedClient = OtpClient.OpenWithPassword(stagingPath, masterPassword))
+                    key = stagedClient.VaultKey();
+
+                try
+                {
+                    // Publish the authenticated snapshot atomically without clobbering a vault
+                    // created after the initial check.
+                    File.Move(stagingPath, vaultPath, overwrite: false);
+                    var client = OtpClient.OpenWithKey(vaultPath, key);
+                    try
+                    {
+                        _secureStorage.SaveVaultKey(key);
+                    }
+                    catch
+                    {
+                        // The installed snapshot can still be unlocked with its password.
+                        client.Dispose();
+                        throw;
+                    }
+                    ReplaceClient(client);
+                }
+                finally
+                {
+                    CryptographicOperations.ZeroMemory(key);
+                }
+            }
+            finally
+            {
+                File.Delete(stagingPath);
+            }
         }
         RaiseChanged();
     }
 
+    public void JoinWebDavVault(string url, string username, string password, string masterPassword)
+    {
+        lock (_gate)
+            EnsureNewVaultDestination();
+
+        RestoreFromBlob(FetchWebDavVault(url, username, password), masterPassword);
+    }
+
+    private void EnsureNewVaultDestination()
+    {
+        if (_client is not null || VaultExists)
+            throw new InvalidOperationException("This device already has a local vault.");
+    }
+
     public void ChangePassword(string oldPassword, string newPassword)
     {
-        Client.ChangePassword(oldPassword, newPassword);
+        WithClient(client => client.ChangePassword(oldPassword, newPassword));
         // VMK는 변경되지 않으므로 vmk.bin은 그대로 유효합니다.
     }
 
@@ -117,90 +180,90 @@ public sealed class OtpClientService : IOtpClientService, IDisposable
 
     // --- 계정 ---
 
-    public IReadOnlyList<OtpAccount> ListAccounts() => Client.ListAccounts();
+    public IReadOnlyList<OtpAccount> ListAccounts() => WithClient(client => client.ListAccounts());
 
-    public OtpAccount? GetAccount(string id) => Client.GetAccount(id);
+    public OtpAccount? GetAccount(string id) => WithClient(client => client.GetAccount(id));
 
     public OtpAccount AddAccount(OtpAccount account)
     {
-        var result = Client.AddAccount(account);
+        var result = WithClient(client => client.AddAccount(account));
         RaiseChanged();
         return result;
     }
 
     public IReadOnlyList<OtpAccount> AddFromUri(string uri)
     {
-        var result = Client.AddFromUri(uri);
+        var result = WithClient(client => client.AddFromUri(uri));
         RaiseChanged();
         return result;
     }
 
     public OtpAccount UpdateAccount(OtpAccount account)
     {
-        var result = Client.UpdateAccount(account);
+        var result = WithClient(client => client.UpdateAccount(account));
         RaiseChanged();
         return result;
     }
 
     public void DeleteAccount(string id)
     {
-        Client.DeleteAccount(id);
+        WithClient(client => client.DeleteAccount(id));
         RaiseChanged();
     }
 
     // --- 폴더 ---
 
-    public IReadOnlyList<OtpFolder> ListFolders() => Client.ListFolders();
+    public IReadOnlyList<OtpFolder> ListFolders() => WithClient(client => client.ListFolders());
 
     public OtpFolder AddFolder(OtpFolder folder)
     {
-        var result = Client.AddFolder(folder);
+        var result = WithClient(client => client.AddFolder(folder));
         RaiseChanged();
         return result;
     }
 
     public OtpFolder UpdateFolder(OtpFolder folder)
     {
-        var result = Client.UpdateFolder(folder);
+        var result = WithClient(client => client.UpdateFolder(folder));
         RaiseChanged();
         return result;
     }
 
     public void DeleteFolder(string id)
     {
-        Client.DeleteFolder(id);
+        WithClient(client => client.DeleteFolder(id));
         RaiseChanged();
     }
 
     // --- 코드 ---
 
-    public OtpCode Code(string id) => Client.Code(id, NowMs());
+    public OtpCode Code(string id) => CodeAt(id, NowMs());
 
-    public OtpCode CodeAt(string id, long unixTimeMs) => Client.Code(id, unixTimeMs);
+    public OtpCode CodeAt(string id, long unixTimeMs) => WithClient(client => client.Code(id, unixTimeMs));
 
     public OtpCode NextHotp(string id)
     {
-        var result = Client.NextHotp(id);
+        var result = WithClient(client => client.NextHotp(id));
         RaiseChanged();
         return result;
     }
 
-    public IReadOnlyList<AccountCode> CodesAt(long unixTimeMs) => Client.CodesAt(unixTimeMs);
+    public IReadOnlyList<AccountCode> CodesAt(long unixTimeMs) => WithClient(client => client.CodesAt(unixTimeMs));
 
     // --- 백업 / 동기화 ---
 
-    public byte[] ExportBackup(string password) => Client.ExportBackup(password);
+    public byte[] ExportBackup(string password) => WithClient(client => client.ExportBackup(password));
 
     public uint ImportBackup(byte[] data, string password, bool merge)
     {
-        var count = Client.ImportBackup(data, password, merge);
+        var count = WithClient(client => client.ImportBackup(data, password, merge));
         RaiseChanged();
         return count;
     }
 
     public uint ImportBackupV1(byte[] data, string password, bool merge)
     {
-        var count = Client.ImportBackupV1(data, password, merge);
+        var count = WithClient(client => client.ImportBackupV1(data, password, merge));
         RaiseChanged();
         return count;
     }
@@ -241,9 +304,19 @@ public sealed class OtpClientService : IOtpClientService, IDisposable
             client = Client;
             if (_webDavConfigurationError is not null)
                 throw new OtpException.Backend(_webDavConfigurationError);
+            _activeSyncs++;
         }
 
-        var outcome = client.Sync(NowMs());
+        SyncOutcome outcome;
+        try
+        {
+            outcome = client.Sync(NowMs());
+        }
+        finally
+        {
+            lock (_gate)
+                _activeSyncs--;
+        }
         if (outcome.pulled)
             RaiseChanged();
         return outcome;
