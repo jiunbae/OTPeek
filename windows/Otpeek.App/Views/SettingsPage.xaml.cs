@@ -52,6 +52,7 @@ public sealed partial class SettingsPage : Page
             WebDavSyncIntervalCombo.IsEnabled = WebDavAutoSyncToggle.IsOn;
         SaveWebDavButton.Click += OnSaveWebDavClick;
         SyncNowButton.Click += OnSyncNowClick;
+        JoinWebDavButton.Click += OnJoinWebDavClick;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
@@ -75,6 +76,27 @@ public sealed partial class SettingsPage : Page
         ApplyWebDavInputs();
         await ViewModel.SaveSettingsCommand.ExecuteAsync(null);
         await ViewModel.SyncNowCommand.ExecuteAsync(null);
+    }
+
+    private async void OnJoinWebDavClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        if (Microsoft.UI.Xaml.Application.Current is not App app)
+            return;
+
+        JoinWebDavButton.IsEnabled = false;
+        try
+        {
+            if (await app.JoinWebDavFromSettingsAsync(
+                XamlRoot, WebDavUrlTextBox.Text, WebDavUserTextBox.Text, WebDavPasswordBox.Password))
+            {
+                ViewModel.RefreshWebDavSettings();
+                UpdateUI();
+            }
+        }
+        finally
+        {
+            JoinWebDavButton.IsEnabled = true;
+        }
     }
 
     private void ApplyWebDavInputs()

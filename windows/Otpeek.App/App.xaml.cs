@@ -305,22 +305,29 @@ public partial class App : Application
                 // 사용자가 복원을 취소 → 일반 볼트 생성 흐름으로 진행
             }
 
-            // 볼트 없음: 마스터 비밀번호 생성 후 볼트 생성
-            string? newPassword = await PromptCreatePasswordAsync(xamlRoot);
-            if (string.IsNullOrEmpty(newPassword))
-                return; // 사용자가 취소 (다음 실행에서 다시 시도)
+            while (!client.VaultExists)
+            {
+                var (newPassword, joinWebDav) = await PromptCreatePasswordAsync(xamlRoot);
+                if (joinWebDav && xamlRoot != null)
+                {
+                    if (await TryJoinWebDavAsync(client, xamlRoot))
+                        break;
+                    continue;
+                }
 
-            client.CreateVault(newPassword);
+                if (string.IsNullOrEmpty(newPassword))
+                    return;
 
-            // 레거시 로컬 계정이 있으면 가져오기
-            if (migration.HasLegacyData())
+                client.CreateVault(newPassword);
+                break;
+            }
+
+            if (client.IsUnlocked && migration.HasLegacyData())
             {
                 int count = migration.Migrate(client);
                 if (count > 0 && xamlRoot != null)
-                {
                     await ShowMessageAsync(xamlRoot, "Migration complete",
                         $"{count} account(s) were migrated from the previous version.");
-                }
             }
         }
         catch (Exception ex)
@@ -456,9 +463,9 @@ public partial class App : Application
 
     // --- 마스터 비밀번호 다이얼로그 ---
 
-    private static async Task<string?> PromptCreatePasswordAsync(XamlRoot? xamlRoot)
+    private static async Task<(string? Password, bool JoinWebDav)> PromptCreatePasswordAsync(XamlRoot? xamlRoot)
     {
-        if (xamlRoot == null) return null;
+        if (xamlRoot == null) return (null, false);
 
         var passwordBox = new PasswordBox { PlaceholderText = "Master password", Margin = new Thickness(0, 8, 0, 0) };
         var confirmBox = new PasswordBox { PlaceholderText = "Confirm password" };
@@ -488,6 +495,7 @@ public partial class App : Application
                 }
             },
             PrimaryButtonText = "Create",
+            SecondaryButtonText = "Join WebDAV vault",
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Primary,
             XamlRoot = xamlRoot
@@ -510,7 +518,8 @@ public partial class App : Application
         };
 
         var result = await dialog.ShowAsync();
-        return result == ContentDialogResult.Primary ? passwordBox.Password : null;
+        return (result == ContentDialogResult.Primary ? passwordBox.Password : null,
+            result == ContentDialogResult.Secondary);
     }
 
     private static async Task<string?> PromptPasswordAsync(XamlRoot? xamlRoot, string title, string message)
@@ -742,7 +751,7 @@ public partial class App : Application
                 errorText.Visibility = Visibility.Visible;
                 e.Cancel = true;
             }
-            catch (OtpException ex)
+            catch (Exception ex)
             {
                 errorText.Text = $"Restore failed: {ex.Message}";
                 errorText.Visibility = Visibility.Visible;

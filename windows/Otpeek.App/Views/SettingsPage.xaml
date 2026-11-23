@@ -245,6 +245,7 @@
                                 Content="Sync Now"
                                 Style="{StaticResource AccentButtonStyle}" />
                     </StackPanel>
+                    <Button x:Name="JoinWebDavButton" Content="Join existing WebDAV vault" />
                     <TextBlock x:Name="SyncStatusText" Style="{StaticResource OtpeekDetailTextStyle}" />
                 </StackPanel>
             </Border>

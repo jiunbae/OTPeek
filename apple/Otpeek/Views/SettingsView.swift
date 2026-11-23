@@ -38,6 +38,8 @@ struct SettingsView: View {
     @State private var showingImportPicker = false
     // 기존 iCloud 볼트를 이 기기로 받아오기(로컬 교체). 볼트가 이미 있어도 쓸 수 있는 진입점.
     @State private var showingICloudRestore = false
+    @State private var showingWebDAV = false
+    @State private var joiningWebDAV = false
     @State private var icloudRestorePassword = ""
 
     // 내보내기 대상: 파일로 저장할지 / 공유 시트(AirDrop 등)로 보낼지.
@@ -340,24 +342,6 @@ struct SettingsView: View {
                 .buttonStyle(.plain)
                 .disabled(appState.isSyncing)
 
-                if appState.iCloudSyncEnabled {
-                    Button { appState.syncNow() } label: {
-                        HStack {
-                            actionRow("Sync Now", "arrow.triangle.2.circlepath")
-                            Spacer()
-                            if appState.isSyncing { ProgressView().controlSize(.small) }
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(appState.isSyncing)
-
-                    LabeledContent("Status") {
-                        Text(appState.lastSyncStatus)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.trailing)
-                    }
-                    .font(.caption)
-                }
 
             case .some(false):
                 Toggle(isOn: .constant(false)) {
@@ -374,10 +358,86 @@ struct SettingsView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
             }
+
+            Button {
+                joiningWebDAV = false
+                showingWebDAV = true
+            } label: {
+                settingLabel(appState.webDAVSyncEnabled ? "Edit WebDAV Connection" : "Connect WebDAV",
+                             "network", detail: "Sync an encrypted vault with Windows or the CLI.")
+            }
+            .buttonStyle(.plain)
+            .disabled(!appState.isReady || appState.isSyncing)
+
+            Button {
+                joiningWebDAV = true
+                showingWebDAV = true
+            } label: {
+                settingLabel("Join Existing WebDAV Vault", "arrow.down.to.line",
+                             detail: "Keep your local accounts and join a vault already on your server.")
+            }
+            .buttonStyle(.plain)
+            .disabled(!appState.isReady || appState.isSyncing)
+
+            if appState.hasWebDAVRecoveryBackup {
+                Button("Export Pre-Join Recovery Copy…") {
+                    do {
+                        saveBackup(try appState.webDAVRecoveryBackup())
+                    } catch {
+                        backupFeedback = BackupFeedback(message: error.localizedDescription, isError: true)
+                    }
+                }
+                .disabled(appState.isSyncing)
+            }
+
+            if appState.webDAVSyncEnabled {
+                Button("Disconnect WebDAV", role: .destructive) {
+                    appState.disconnectWebDAV()
+                }
+                .disabled(appState.isSyncing)
+            }
+
+            if appState.iCloudSyncEnabled || appState.webDAVSyncEnabled {
+                Toggle("Sync Automatically", isOn: Binding(
+                    get: { appState.automaticSyncEnabled },
+                    set: { appState.setAutomaticSync(enabled: $0) }
+                ))
+
+                Button { appState.syncNow() } label: {
+                    HStack {
+                        actionRow("Sync Now", "arrow.triangle.2.circlepath")
+                        Spacer()
+                        if appState.isSyncing { ProgressView().controlSize(.small) }
+                    }
+                }
+                .buttonStyle(.plain)
+                .disabled(appState.isSyncing)
+
+            }
+
+            if appState.iCloudSyncEnabled || appState.webDAVSyncEnabled
+                || appState.lastSyncStatus != "Never synced" {
+                LabeledContent("Status") {
+                    Text(appState.lastSyncStatus)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.trailing)
+                }
+                .font(.caption)
+            }
         } header: {
-            Text("iCloud Sync")
+            Text("Vault Sync")
         } footer: {
-            Text("Only encrypted data leaves your device — codes and secrets are never uploaded in the clear.")
+            Text("Choose one sync service for this vault. New devices can restore it from the same service.")
+        }
+        .sheet(isPresented: $showingWebDAV) {
+            WebDAVConnectionView(joining: joiningWebDAV, keepsLocalVault: joiningWebDAV,
+                                 savedConfiguration: appState.savedWebDAVConfiguration) { configuration, password in
+                if joiningWebDAV {
+                    appState.restoreFromWebDAV(configuration, password: password)
+                } else {
+                    appState.configureWebDAV(configuration)
+                }
+            }
         }
     }
 

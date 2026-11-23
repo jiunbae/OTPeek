@@ -25,16 +25,36 @@ Pick ONE sync path per vault — don't mix iCloud and WebDAV for the same data.
 Zero infrastructure. Works across devices signed into the **same Apple ID**
 (CloudKit private database — it cannot share to a different Apple ID).
 
-1. Device A: add your accounts → Settings → enable **iCloud Sync** → Sync Now.
+1. Device A: add your accounts → Settings → enable **Sync with iCloud**.
 2. Device B: on first launch choose **Restore from iCloud** → enter the same
    master password. Done — the vault key is now in that device's Keychain.
-3. Edits on any device converge on the next sync.
+3. With **Sync Automatically** enabled, the Apple apps sync after opening the
+   vault, shortly after local changes, and every five minutes of unlocked app
+   use. On iPhone and iPad, bring OTPeek to the foreground to pull changes.
+   **Sync Now** is available in Settings for an immediate check.
 
 ## Path B — Cross-platform or self-hosted: WebDAV
 
-The CLI and Windows v2.0.1 release support WebDAV. The Apple apps use iCloud.
-Use a direct HTTPS URL for the vault file with no credentials in the URL.
-The WebDAV backend stores an encrypted vault on your server.
+WebDAV shares an encrypted vault between iPhone, iPad, Mac, Windows, and the
+CLI. Use the same final HTTPS URL ending in `.otpvault` on each device. The
+server needs to support conditional writes and return a strong, quoted ETag.
+Enter the WebDAV login separately from the URL and the vault master password.
+
+1. To put a local vault on WebDAV, use **Connect WebDAV** under Apple **Settings
+   → Vault Sync**, or configure **WebDAV Sync** in Windows Settings. Sync once
+   to create the remote vault.
+2. On a new device, select **Restore from WebDAV** on Apple or **Join WebDAV
+   vault** on Windows. Enter the same URL, server credentials, and the master
+   password of the shared vault.
+3. On a device with its own local vault, use **Join Existing WebDAV Vault** in
+   Settings. OTPeek merges local records into the shared vault and keeps an
+   encrypted recovery copy when adopting a different key. The original master
+   password opens that copy. Records created independently with different IDs
+   can appear as duplicates.
+4. Enable **Sync Automatically** on Apple and scheduled WebDAV sync on
+   Windows for ongoing updates. To switch an Apple vault from iCloud, sync it
+   first and configure WebDAV on the Apple device with the latest accounts.
+   Then join the WebDAV vault from the other devices.
 
 First device (CLI example):
 
@@ -63,8 +83,7 @@ otpeek sync now
   username, or a prompt. Use `OTPEEK_VAULT_PASSWORD` to supply the separate
   master password in headless use. When the username comes from matching sync
   settings, the CLI can also use credentials saved by older versions.
-- Run `otpeek sync now` to sync from the CLI. In the Windows release, WebDAV
-  is configured in Settings and can sync a local copy of the same vault.
+- Run `otpeek sync now` to sync from the CLI.
 
 ## Path C — No server at all: encrypted backup file
 

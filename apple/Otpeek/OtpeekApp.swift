@@ -556,13 +556,16 @@ struct RootView: View {
             }
         }
         #if os(iOS)
-        .onChange(of: scenePhase) { _, phase in
+        .onChange(of: scenePhase, initial: true) { _, phase in
             switch phase {
             case .active:
                 appLock.didBecomeActive()
+                appState.setSyncForeground(true)
                 // 앱이 앞에 있을 때의 리로드는 위젯 예산을 쓰지 않는다. 혹시 멈춰 있던 위젯을 되살린다.
                 WidgetCenter.shared.reloadAllTimelines()
-            case .inactive, .background:      appLock.didResignActive()
+            case .inactive, .background:
+                appLock.didResignActive()
+                appState.setSyncForeground(false)
             @unknown default:                 break
             }
         }

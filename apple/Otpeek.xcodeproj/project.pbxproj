@@ -34,13 +34,16 @@
 		458072363B9D624AD7F5FC28 /* FaviconProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7241B5227ED2EB431B42A95D /* FaviconProvider.swift */; };
 		48901668CB282549AA471FF5 /* OtpWidgetExtension-macOS.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 67FE56860F6D2C1B8E8AAD0F /* OtpWidgetExtension-macOS.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4D51554133A0609F1B2241C4 /* SharedViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B9E2B53D62837C0D688E506 /* SharedViews.swift */; };
+		4D6C68E2697BDEC115E1110C /* WebDAVSyncBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BBC1A8009FE3654657E4EB /* WebDAVSyncBackend.swift */; };
 		4FB7EC5118A934A8A0B580B4 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 70647ADDBAC67B6275121687 /* PrivacyInfo.xcprivacy */; };
 		50A8D6AFE69095020972E30E /* OtpTimelineProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAF0EEF1B739B5AE7D093E2F /* OtpTimelineProvider.swift */; };
 		5278DF8DAE1F8E3AB6981B5E /* ImportVaultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAF107AAC38933ADBEE07389 /* ImportVaultView.swift */; };
 		52C9D77038349B339304EA24 /* AppLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 853A371AB8C03A5298A8BB92 /* AppLock.swift */; };
 		54BB4E552B7DA8CCAF3C8511 /* AddAccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F79A9D77D0B59B01C2D32BE9 /* AddAccountView.swift */; };
 		55A9ACA25FDE292D119AB04E /* FaviconProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7241B5227ED2EB431B42A95D /* FaviconProvider.swift */; };
+		5892A4B34687AEF1536FD7C4 /* WebDAVSyncBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BBC1A8009FE3654657E4EB /* WebDAVSyncBackend.swift */; };
 		5B0524809083EB0800672569 /* QRImageImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8191925DC6408558503DB151 /* QRImageImportView.swift */; };
+		5C04570C32CE71DF8A4A1D71 /* WebDAVConnectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0080C71FA544779D455E60 /* WebDAVConnectionView.swift */; };
 		5CF40873FDC34EE19265C9E0 /* LockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3BD28163A9AB2F1B075332 /* LockView.swift */; };
 		5D8C96CF9366DDD2D7434B95 /* CloudKitSyncBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C8BDE4802E41D52FFA1380 /* CloudKitSyncBackend.swift */; };
 		5DDFC5ABC000B3F79AD5C72D /* OtpeekCore.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA291F60B6661DF0ED5B8042 /* OtpeekCore.xcframework */; };
@@ -62,8 +65,11 @@
 		884D06A8DA6F59E1647E6FFD /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22DE66DC596C2E4DE3C4F5F5 /* ContentView.swift */; };
 		89EBE0728D37904AB1085D36 /* OtpWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF2DDB7DE7AC8C946FAE1375 /* OtpWidget.swift */; };
 		921A5EDE186E6247B7F73AE6 /* OtpModelBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6607ED4CCF1CA8C75A052E22 /* OtpModelBridge.swift */; };
+		947C2212D27AEA347024A853 /* WebDAVConnectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0080C71FA544779D455E60 /* WebDAVConnectionView.swift */; };
+		9487E4A740BBFEE197A0ED90 /* WebDAVSyncBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BBC1A8009FE3654657E4EB /* WebDAVSyncBackend.swift */; };
 		9596A8C334C000BC38048BFD /* otpeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C084D0E337FE64FBD894CD7 /* otpeek.swift */; };
 		95A3C93B3AE8A48977A34620 /* OtpWidgetEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 997918DC98088E032336E738 /* OtpWidgetEntryView.swift */; };
+		9618936A5141EEF386996D04 /* WebDAVSyncBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BBC1A8009FE3654657E4EB /* WebDAVSyncBackend.swift */; };
 		96F74A7F9566BCA6170DDEFF /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28757F94227AC0414CCB6A05 /* SettingsView.swift */; };
 		9CA89CF71F48AEDD241B467A /* AccountIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90644F0FE6A0A4BBC1631D0B /* AccountIconView.swift */; };
 		A057FC3C50FC419493B81442 /* AppLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 853A371AB8C03A5298A8BB92 /* AppLock.swift */; };
@@ -173,12 +179,14 @@
 		909054FBA05D7A4829C5EF1A /* AccountCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountCardView.swift; sourceTree = "<group>"; };
 		997918DC98088E032336E738 /* OtpWidgetEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtpWidgetEntryView.swift; sourceTree = "<group>"; };
 		9E9CC8662C961848BC77ADDB /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		A6BBC1A8009FE3654657E4EB /* WebDAVSyncBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebDAVSyncBackend.swift; sourceTree = "<group>"; };
 		AAF107AAC38933ADBEE07389 /* ImportVaultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportVaultView.swift; sourceTree = "<group>"; };
 		AFC714852F2B3A231B4FA7BA /* OtpWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OtpWidgetExtension.entitlements; sourceTree = "<group>"; };
 		BAF0EEF1B739B5AE7D093E2F /* OtpTimelineProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtpTimelineProvider.swift; sourceTree = "<group>"; };
 		C1CE850EBB9824288125FA65 /* VaultAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultAccess.swift; sourceTree = "<group>"; };
 		CBD05CF608489D2A47C38939 /* WidgetSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSettingsView.swift; sourceTree = "<group>"; };
 		CBE9AF190016D708E994B889 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		CC0080C71FA544779D455E60 /* WebDAVConnectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebDAVConnectionView.swift; sourceTree = "<group>"; };
 		CC83E2AA4F9F250CBEE0514A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D0434FDB92ABA36F8F357074 /* StoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreManager.swift; sourceTree = "<group>"; };
 		D0F66A2E6C7DF32784E6FB71 /* WidgetConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetConfiguration.swift; sourceTree = "<group>"; };
@@ -298,6 +306,7 @@
 				5775C4ED223F502DB17291E6 /* OtpStore.swift */,
 				7B9E2B53D62837C0D688E506 /* SharedViews.swift */,
 				C1CE850EBB9824288125FA65 /* VaultAccess.swift */,
+				A6BBC1A8009FE3654657E4EB /* WebDAVSyncBackend.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -317,6 +326,7 @@
 				8191925DC6408558503DB151 /* QRImageImportView.swift */,
 				DEDDA3C4D93F10FE17D5CC35 /* QRScannerView.swift */,
 				28757F94227AC0414CCB6A05 /* SettingsView.swift */,
+				CC0080C71FA544779D455E60 /* WebDAVConnectionView.swift */,
 				CBD05CF608489D2A47C38939 /* WidgetSettingsView.swift */,
 			);
 			path = Views;
@@ -596,6 +606,7 @@
 				3B5A085CC0F45ABAB3DCEF10 /* OtpWidgetEntryView.swift in Sources */,
 				B52D49B9C328EECE226F1B62 /* SharedViews.swift in Sources */,
 				BF21F445B74895C7678EF01C /* VaultAccess.swift in Sources */,
+				9487E4A740BBFEE197A0ED90 /* WebDAVSyncBackend.swift in Sources */,
 				A8FE4B16E1F89B7AA912CC94 /* WidgetConfiguration.swift in Sources */,
 				D79765C61C3C843D85C0A482 /* otpeek.swift in Sources */,
 			);
@@ -629,6 +640,8 @@
 				C9BD6F0C0EEC707431ACCFD4 /* SharedViews.swift in Sources */,
 				B481D1BEE4B4963A61286EC7 /* StoreManager.swift in Sources */,
 				CA821C9796B3426BDA33365A /* VaultAccess.swift in Sources */,
+				947C2212D27AEA347024A853 /* WebDAVConnectionView.swift in Sources */,
+				9618936A5141EEF386996D04 /* WebDAVSyncBackend.swift in Sources */,
 				1AAE60AB02AE3F4E2A4A6756 /* WidgetSettingsView.swift in Sources */,
 				9596A8C334C000BC38048BFD /* otpeek.swift in Sources */,
 			);
@@ -653,6 +666,7 @@
 				95A3C93B3AE8A48977A34620 /* OtpWidgetEntryView.swift in Sources */,
 				C56E334A6A920D27B143999D /* SharedViews.swift in Sources */,
 				A7C7A7196A5F522EBEB257E5 /* VaultAccess.swift in Sources */,
+				5892A4B34687AEF1536FD7C4 /* WebDAVSyncBackend.swift in Sources */,
 				BE9D745901FF7473A98CB96C /* WidgetConfiguration.swift in Sources */,
 				25456F54FBD2925EE8DB0D1F /* otpeek.swift in Sources */,
 			);
@@ -686,6 +700,8 @@
 				4D51554133A0609F1B2241C4 /* SharedViews.swift in Sources */,
 				BC64EE6E53CA8EFC260A259F /* StoreManager.swift in Sources */,
 				DB246933686D262256AB83EC /* VaultAccess.swift in Sources */,
+				5C04570C32CE71DF8A4A1D71 /* WebDAVConnectionView.swift in Sources */,
+				4D6C68E2697BDEC115E1110C /* WebDAVSyncBackend.swift in Sources */,
 				B887B223CEF32E1973CF428C /* WidgetSettingsView.swift in Sources */,
 				29F974701F493254DE6DF4DE /* otpeek.swift in Sources */,
 			);
@@ -714,7 +730,7 @@
 				CODE_SIGN_ENTITLEMENTS = OtpWidgetExtension/OtpWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 28;
+				CURRENT_PROJECT_VERSION = 29;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
@@ -743,7 +759,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 28;
+				CURRENT_PROJECT_VERSION = 29;
 				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -769,7 +785,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 28;
+				CURRENT_PROJECT_VERSION = 29;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
@@ -797,7 +813,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 28;
+				CURRENT_PROJECT_VERSION = 29;
 				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -824,7 +840,7 @@
 				CODE_SIGN_ENTITLEMENTS = Otpeek/Otpeek.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 28;
+				CURRENT_PROJECT_VERSION = 29;
 				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -910,7 +926,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 28;
+				CURRENT_PROJECT_VERSION = 29;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
@@ -937,7 +953,7 @@
 				CODE_SIGN_ENTITLEMENTS = OtpWidgetExtension/OtpWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 28;
+				CURRENT_PROJECT_VERSION = 29;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
@@ -1032,7 +1048,7 @@
 				CODE_SIGN_ENTITLEMENTS = Otpeek/Otpeek.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 28;
+				CURRENT_PROJECT_VERSION = 29;
 				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
