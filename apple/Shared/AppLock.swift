@@ -80,7 +80,11 @@ public final class AppLock: ObservableObject {
         }
 
         guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
-            authError = error?.localizedDescription ?? "Device authentication is unavailable."
+            if (error as? LAError)?.code == .passcodeNotSet {
+                authError = "Set a device passcode in system settings, then try unlocking again."
+            } else {
+                authError = error?.localizedDescription ?? "Device authentication is unavailable."
+            }
             return
         }
 
