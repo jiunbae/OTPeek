@@ -1,8 +1,8 @@
 # Releasing OTPeek
 
-End-to-end distribution guide for the App Store, the Microsoft Store, and the CLI.
-CI (`.github/workflows/ci.yml`) builds all three platforms on every PR — a release
-starts from a green `main`.
+Distribution guide for the App Store, the Microsoft Store, and the CLI. Gitea CI
+checks advisories, tests the Rust workspace, and builds the Apple apps on pushes
+to `main`. GitHub Actions contains the Windows CI and CLI release workflows.
 
 > **Accounts & secrets you must supply** — none of these live in the repo:
 > - Apple Developer Program membership (Team `728FW73BS8`) + App Store Connect app record
@@ -29,13 +29,15 @@ from the parent app — bump the app and widget together.
 
 ## Apple — App Store (macOS & iOS)
 
-Requires **full Xcode 15+** and the iOS Rust targets
-(`rustup target add aarch64-apple-ios aarch64-apple-ios-sim`).
+Requires an **Apple Silicon Mac** and **full Xcode 15+**. Install the Rust
+targets for universal macOS, iOS device, and arm64 iOS simulator builds.
 
 1. **Build the Rust core & regenerate the project**
    ```bash
-   apple/scripts/build-core.sh
-   cd apple && xcodegen generate
+   rustup target add aarch64-apple-darwin x86_64-apple-darwin \
+     aarch64-apple-ios aarch64-apple-ios-sim
+   apple/scripts/build-core.sh --require-all-targets
+   (cd apple && xcodegen generate)
    ```
 
 2. **Archive** (repeat per scheme: `Otpeek-macOS`, `Otpeek-iOS`)

@@ -22,6 +22,14 @@ info() { printf 'otpeek-install: %s\n' "$1" >&2; }
 command -v curl >/dev/null 2>&1 || err "curl is required"
 command -v tar  >/dev/null 2>&1 || err "tar is required"
 
+if command -v sha256sum >/dev/null 2>&1; then
+  set -- sha256sum
+elif command -v shasum >/dev/null 2>&1; then
+  set -- shasum -a 256
+else
+  err "sha256sum or shasum is required"
+fi
+
 os="$(uname -s)"
 arch="$(uname -m)"
 
@@ -54,17 +62,16 @@ info "downloading ${asset} (${VERSION})"
 curl -fsSL "$url" -o "$tmp/$asset" \
   || err "download failed: $url — is there a published release with this asset?"
 
-# Verify the SHA-256 sum when the release ships one (it always does via CI).
-if curl -fsSL "${url}.sha256" -o "$tmp/$asset.sha256" 2>/dev/null; then
-  info "verifying checksum"
-  if command -v shasum >/dev/null 2>&1; then
-    ( cd "$tmp" && shasum -a 256 -c "$asset.sha256" >/dev/null 2>&1 ) || err "checksum mismatch"
-  elif command -v sha256sum >/dev/null 2>&1; then
-    ( cd "$tmp" && sha256sum -c "$asset.sha256" >/dev/null 2>&1 ) || err "checksum mismatch"
-  else
-    info "no shasum/sha256sum available — skipping checksum verification"
-  fi
-fi
+info "verifying checksum"
+curl -fsSL "${url}.sha256" -o "$tmp/$asset.sha256" \
+  || err "checksum download failed: ${url}.sha256"
+expected="$(awk -v asset="$asset" '
+  NR == 1 && NF == 2 && ($2 == asset || $2 == "*" asset) &&
+      length($1) == 64 && $1 !~ /[^0-9a-fA-F]/ { digest = tolower($1) }
+  END { if (NR != 1 || digest == "") exit 1; print digest }
+' "$tmp/$asset.sha256")" || err "invalid checksum for $asset"
+actual="$("$@" "$tmp/$asset")" || err "could not compute checksum for $asset"
+[ "${actual%% *}" = "$expected" ] || err "checksum mismatch for $asset"
 
 tar -xzf "$tmp/$asset" -C "$tmp"
 src="$tmp/${BIN}-${target}/${BIN}"

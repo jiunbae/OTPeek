@@ -7,16 +7,16 @@ How to register your OTP accounts once and use them on every device.
 All your accounts live in one **end-to-end-encrypted vault**. Two keys matter:
 
 - **Vault key (VMK)** — random 256-bit key that encrypts the vault. Each device
-  keeps it in its OS keystore (Keychain / DPAPI / Secret Service), so daily use
-  never asks for a password.
-- **Master password** — the thing you type ONCE per device to join. It unwraps
-  the vault key via Argon2id. Anyone (or any server) without it sees only
-  ciphertext.
+  can save it in its OS keystore (Keychain / DPAPI / Secret Service) to unlock
+  the vault without re-entering the master password.
+- **Master password** — used to join a new device and to unlock a vault where
+  a saved key is unavailable. It unwraps the vault key using Argon2id.
 
-So the flow is always the same: **first device creates the vault and pushes it
-somewhere; every other device "restores" from there with the master password;
-after that, everything merges automatically** (newest edit wins, deletions
-propagate, HOTP counters never regress).
+The first device creates the vault and pushes it to the sync service. A new
+device restores that vault using its master password. Each sync merges edits
+and deletions. For HOTP, a merge keeps the higher counter. Two devices can
+still use the same HOTP counter if they both advance before syncing. Use one
+device for HOTP or sync between advances on different devices.
 
 Pick ONE sync path per vault — don't mix iCloud and WebDAV for the same data.
 
@@ -32,9 +32,9 @@ Zero infrastructure. Works across devices signed into the **same Apple ID**
 
 ## Path B — Cross-platform or self-hosted: WebDAV
 
-Works everywhere (Windows, macOS, iOS, Linux CLI) and keeps you in control of
-the server. Any WebDAV endpoint works: Nextcloud, Synology/QNAP NAS, Apache/
-nginx WebDAV, etc. The server only ever stores an encrypted blob.
+The CLI and Windows v2.0.1 release support WebDAV. The Apple apps use iCloud.
+Use a direct HTTPS URL for the vault file with no credentials in the URL.
+The WebDAV backend stores an encrypted vault on your server.
 
 First device (CLI example):
 
@@ -45,16 +45,26 @@ otpeek sync setup webdav https://nas.example.com/dav/otpeek-vault.otpvault --use
 otpeek sync now                               # first push
 ```
 
-Every other device:
+On a new CLI device:
 
 ```bash
-otpeek restore https://nas.example.com/dav/otpeek-vault.otpvault   # asks master password
+otpeek restore https://nas.example.com/dav/otpeek-vault.otpvault --user june
 otpeek sync setup webdav https://nas.example.com/dav/otpeek-vault.otpvault --user june
 otpeek sync now
 ```
 
-- Windows app: Settings → WebDAV → same URL/user → restore flow.
-- Sync anytime with `otpeek sync now` (CLI) or the Sync Now button (apps).
+- `restore` creates a new local vault. If the destination already exists, use
+  `OTPEEK_VAULT=<unused-path> otpeek restore …` or pass `--vault <unused-path>`
+  before `restore`. The environment variable takes precedence. Use
+  `import --merge` to add accounts from a backup to an existing vault.
+- `restore` takes the WebDAV username from `--user`, `OTP_WEBDAV_USER`, or
+  saved sync settings for the same URL, in that order. The WebDAV password comes
+  from `OTP_WEBDAV_PASSWORD`, the system keystore entry for the URL and
+  username, or a prompt. Use `OTPEEK_VAULT_PASSWORD` to supply the separate
+  master password in headless use. When the username comes from matching sync
+  settings, the CLI can also use credentials saved by older versions.
+- Run `otpeek sync now` to sync from the CLI. In the Windows release, WebDAV
+  is configured in Settings and can sync a local copy of the same vault.
 
 ## Path C — No server at all: encrypted backup file
 
@@ -64,8 +74,8 @@ it is AES-256-GCM encrypted under a password you choose at export time
 (independent from your master password).
 
 ```bash
-otpeek export backup.otpvault                 # prompts for a backup password
-# move the file to the other device, then:
+otpeek export backup.otpvault                 # choose a new file and set a backup password
+# move the file to the other device, then import to an existing vault:
 otpeek import backup.otpvault --merge        # prompts for that backup password
 ```
 
@@ -74,9 +84,10 @@ file type: **double-click the file (macOS/Windows), or AirDrop/share it to an
 Apple device, and the app opens directly into the import dialog**
 (on Windows this requires the MSIX-installed app, not an unpackaged debug run) — type the
 backup password, keep "merge" on, done. Export on Apple offers the share sheet,
-so moving to a nearby device is export → AirDrop → tap. On a fresh install the
-opened file can also serve as the "restore" source (you'll be asked for the
-master password instead).
+so moving to a nearby device is export → AirDrop → tap. To create a new CLI
+vault from the backup, run `otpeek restore backup.otpvault` at an unused
+destination. Enter the password that protects that file. This becomes the
+master password for the restored local vault.
 
 All platforms read the same file, and the legacy v1 `.otpbackup` from the old
 apps imports with `--legacy`.
@@ -85,7 +96,8 @@ Notes:
 - This is a **snapshot** — later changes don't propagate. Use it for one-time
   moves, cold backups, or air-gapped machines; use Path A/B for continuous sync.
 - `--merge` adds accounts you don't have and **restores ones you deleted by
-  mistake**; without `--merge` the import replaces your vault entirely.
+  mistake**. Without `--merge`, the import replaces the existing vault contents
+  with the backup contents.
 - To move a single account instead of the whole vault: `otpeek qr <account>`
   (or the app's per-account QR) and scan it on the other device.
 
@@ -94,12 +106,11 @@ Notes:
 - iCloud/WebDAV servers, and anyone who copies a `.otpvault` file, only ever
   hold ciphertext. The protection level is your master/backup password run
   through Argon2id (64 MiB) — pick a strong one; it guards every device.
-- The master password is needed only when a device **joins** (and for password
-  changes). Day-to-day unlock is silent via the OS keystore.
-- Losing the master password does not lock out already-joined devices (they
-  hold the vault key), but no NEW device can join and the remote blob becomes
-  unrecoverable — change the password from a joined device (`otpeek passwd`),
-  which takes effect everywhere on the next sync.
+- A device with a saved vault key can still open the vault if you forget the
+  master password. Export an encrypted backup with a new backup password
+  to move those accounts into a new vault.
+- `otpeek passwd` changes a known master password. Run `otpeek sync now` to
+  publish the new password wrap. Other joined devices pick it up on sync.
 
 ## Choosing
 

@@ -11,15 +11,16 @@ import UIKit
 struct AccountCardView: View {
     let account: OtpAccount
     @EnvironmentObject var appState: AppState
-    @State private var isCopied = false
+    @State private var copiedCode: String?
+    @State private var showingCopyError = false
+    @State private var copyError = ""
     @State private var showingEditSheet = false
     @State private var showingDeleteAlert = false
     @State private var hovering = false
     // 행 탭 시 코드 복사 여부(설정에서 끌 수 있음). 기본 ON.
     @AppStorage("autoClipboard") private var autoClipboard = true
 
-    /// Freshly computed code, used for the copy action (read-only).
-    private var currentCode: String { appState.code(for: account) ?? "------" }
+    private var isCopied: Bool { copiedCode != nil }
 
     private var title: String {
         account.issuerText.isEmpty ? account.accountName : account.issuerText
@@ -62,17 +63,17 @@ struct AccountCardView: View {
             // on copy the ring swaps to a check so digits are never covered.
             OTPTick(account: account,
                     code: { appState.code(for: account, at: $0) ?? "------" }) { code, remaining, progress in
-                let urgent = remaining < 10
+                let urgent = account.type == .totp && remaining < 10
                 HStack(spacing: 10) {
                     if isCopied {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 22))
                             .foregroundColor(.green)
                             .frame(width: 22, height: 22)
-                    } else {
+                    } else if account.type == .totp {
                         CountdownRing(progress: progress, remaining: remaining, urgent: urgent, size: 22)
                     }
-                    Text(formatOtpCode(code))
+                    Text(formatOtpCode(account.type == .hotp ? copiedCode ?? code : code))
                         .font(.system(.title3, design: .monospaced))
                         .fontWeight(.semibold)
                         .monospacedDigit()
@@ -89,6 +90,10 @@ struct AccountCardView: View {
 
             // Overflow menu (quiet until hover on macOS)
             Menu {
+                Button { copyCode() } label: {
+                    Label(account.type == .hotp ? "Copy Code and Advance Counter" : "Copy Code",
+                          systemImage: "doc.on.doc")
+                }
                 Button { showingEditSheet = true } label: { Label("Edit", systemImage: "pencil") }
                 Button { appState.toggleFavorite(account) } label: {
                     Label(account.isFavorite ? "Remove from Favorites" : "Add to Favorites",
@@ -130,6 +135,11 @@ struct AccountCardView: View {
             EditAccountView(account: account)
                 .environmentObject(appState)
         }
+        .alert("Couldn’t Copy Code", isPresented: $showingCopyError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(copyError)
+        }
         .alert("Delete Account", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) { appState.deleteAccount(account) }
@@ -148,16 +158,38 @@ struct AccountCardView: View {
     }
 
     private func copyCode() {
-        #if os(macOS)
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(currentCode, forType: .string)
-        #else
-        UIPasteboard.general.string = currentCode
-        #endif
-        withAnimation { isCopied = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            withAnimation { isCopied = false }
+        do {
+            let code = try appState.copyCodeToClipboard(accountID: account.id)
+            withAnimation { copiedCode = code }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                if copiedCode == code {
+                    withAnimation { copiedCode = nil }
+                }
+            }
+        } catch {
+            copyError = error.localizedDescription
+            showingCopyError = true
         }
+    }
+}
+
+extension OtpStore {
+    @discardableResult
+    func copyCodeToClipboard(accountID: String) throws -> String {
+        let code = try codeForCopy(accountID: accountID)
+        #if os(macOS)
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        guard pasteboard.setString(code, forType: .string) else {
+            if accounts.first(where: { $0.id == accountID })?.type == .hotp {
+                throw OtpError.Backend(msg: "Could not write to the clipboard. Use the HOTP code \(formatOtpCode(code)).")
+            }
+            throw OtpError.Backend(msg: "Could not write to the clipboard.")
+        }
+        #else
+        UIPasteboard.general.string = code
+        #endif
+        return code
     }
 }
 

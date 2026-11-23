@@ -46,14 +46,14 @@ public final class OtpStore: ObservableObject {
     /// 온보딩이 필요한 상태(=아직 준비되지 않음).
     public var needsOnboarding: Bool { !isReady }
 
+    public let appLock = AppLock()
+
     // MARK: - Private
 
     private var client: OtpClient?
 
     private let legacyAccountsKey = "otp_accounts"
     private let legacyFoldersKey = "otp_folders"
-    private let migratedAccountsKey = "migrated_otp_accounts"
-    private let migratedFoldersKey = "migrated_otp_folders"
     private let syncEnabledKey = "icloudSyncEnabled"
     private static let legacyBackupMagic = Data("OTPB".utf8)
 
@@ -147,7 +147,8 @@ public final class OtpStore: ObservableObject {
 
     /// 새 볼트 생성 (기존 데이터 없음).
     public func createVault(password: String) {
-        guard let path = VaultAccess.vaultPath else { return }
+        guard canAccessVault(), !vaultExists, !VaultAccess.vaultExists,
+              let path = VaultAccess.vaultPath else { return }
         do {
             let client = try OtpClient.create(vaultPath: path, masterPassword: password)
             KeychainHelper.shared.saveVMK(client.vaultKey())
@@ -159,23 +160,57 @@ public final class OtpStore: ObservableObject {
 
     /// 새 볼트 생성 + 레거시 데이터 마이그레이션.
     public func createVaultAndMigrate(password: String) {
-        guard let path = VaultAccess.vaultPath else { return }
+        guard canAccessVault() else { return }
+        guard let destination = VaultAccess.vaultURL else {
+            lastError = "App Group container unavailable."
+            return
+        }
+        let files = FileManager.default
         do {
-            let client = try OtpClient.create(vaultPath: path, masterPassword: password)
-            migrateLegacyData(into: client)
-            KeychainHelper.shared.saveVMK(client.vaultKey())
-            finishOpen(client)
+            guard !files.fileExists(atPath: destination.path) else {
+                vaultExists = true
+                throw LegacyMigrationError("A vault already exists. Unlock it with its master password.")
+            }
+            let (accounts, folders) = try readLegacyData()
+            let staging = destination.deletingLastPathComponent()
+                .appendingPathComponent(".migration-\(UUID().uuidString)", isDirectory: true)
+            try files.createDirectory(at: staging, withIntermediateDirectories: false)
+            defer { try? files.removeItem(at: staging) }
+
+            let stagedVault = staging.appendingPathComponent(VaultAccess.vaultFileName)
+            let staged = try OtpClient.create(vaultPath: stagedVault.path, masterPassword: password)
+            try migrateLegacyData(accounts: accounts, folders: folders, into: staged)
+            let key = staged.vaultKey()
+            let verified = try OtpClient.openWithKey(vaultPath: stagedVault.path, vmk: key)
+            guard verified.listAccounts().count == accounts.count,
+                  verified.listFolders().count == folders.count else {
+                throw LegacyMigrationError("The encrypted vault did not contain all the migrated records.")
+            }
+
+            // Both paths are on the same volume. Moving refuses to replace an existing vault.
+            try files.moveItem(at: stagedVault, to: destination)
+            vaultExists = true
+            hasLegacyData = false
+            legacyCount = 0
+            guard KeychainHelper.shared.saveVMK(key) else {
+                lastError = "Migration succeeded, but the vault key could not be saved. Unlock with your master password."
+                return
+            }
+            finishOpen(try OtpClient.openWithKey(vaultPath: destination.path, vmk: key))
+            lastError = nil
         } catch {
-            lastError = describe(error)
+            vaultExists = files.fileExists(atPath: destination.path)
+            lastError = "Migration failed: \(describe(error))"
         }
     }
 
     /// 볼트는 있으나 VMK 가 없는 경우: 비밀번호로 잠금 해제 후 VMK 재캐시.
     public func unlock(password: String) {
-        guard let path = VaultAccess.vaultPath else { return }
+        guard canAccessVault(), let path = VaultAccess.vaultPath else { return }
         do {
             let client = try OtpClient.openWithPassword(vaultPath: path, masterPassword: password)
             KeychainHelper.shared.saveVMK(client.vaultKey())
+            lastError = nil
             finishOpen(client)
         } catch {
             lastError = describe(error)
@@ -186,7 +221,7 @@ public final class OtpStore: ObservableObject {
     /// 복원 성공 여부를 반환한다(호출부가 성공했을 때만 후속 동작을 하도록).
     @discardableResult
     public func restore(blob: Data, password: String) -> Bool {
-        guard let path = VaultAccess.vaultPath else { return false }
+        guard canAccessVault(), let path = VaultAccess.vaultPath else { return false }
         do {
             let client = try OtpClient.restore(vaultPath: path, blob: blob, masterPassword: password)
             KeychainHelper.shared.saveVMK(client.vaultKey())
@@ -208,6 +243,7 @@ public final class OtpStore: ObservableObject {
     ///
     /// CloudKit fetch 는 블로킹이므로 메인 스레드 밖에서 수행하고, 복원(상태 변경)만 메인에서 한다.
     public func restoreFromICloud(password: String) {
+        guard canAccessVault() else { return }
         guard VaultAccess.vaultPath != nil else {
             lastError = "App Group container unavailable"
             return
@@ -215,24 +251,29 @@ public final class OtpStore: ObservableObject {
         lastError = nil
         isSyncing = true
         lastSyncStatus = "Fetching from iCloud…"
-        Task.detached { [weak self] in
-            let backend = CloudKitSyncBackend()
-            let fetched: Result<RemoteBlob?, Error> = Result { try backend.fetch() }
-            await MainActor.run {
-                guard let self else { return }
-                self.isSyncing = false
-                switch fetched {
-                case .failure(let error):
-                    self.lastError = self.describe(error)
-                case .success(nil):
-                    self.lastError = "No iCloud vault found yet. Enable iCloud Sync on your first device, then try again."
-                case .success(.some(let blob)):
-                    // 복원이 실제로 성공했을 때만 동기화를 켠다. (기존 볼트가 있는 기기에서
-                    // 비밀번호가 틀리면 restore 는 실패하고 isReady 는 이전 값 그대로이므로,
-                    // isReady 를 조건으로 쓰면 실패해도 동기화가 켜지는 버그가 있었다.)
-                    if self.restore(blob: blob.data, password: password) {
-                        self.setICloudSync(enabled: true)
-                    }
+        let generation = appLock.lockGeneration
+        Task {
+            let fetched = await Self.runCloudWork {
+                Result { try CloudKitSyncBackend().fetch() }
+            }
+            isSyncing = false
+            guard !appLock.isLocked, generation == appLock.lockGeneration else {
+                lastSyncStatus = "Restore interrupted. Unlock OTPeek and try again."
+                lastError = lastSyncStatus
+                return
+            }
+            switch fetched {
+            case .failure(let error):
+                lastError = describe(error)
+                lastSyncStatus = "iCloud restore failed."
+            case .success(nil):
+                lastError = "No iCloud vault found yet. Enable iCloud Sync on your first device, then try again."
+                lastSyncStatus = "No iCloud vault found."
+            case .success(.some(let blob)):
+                if restore(blob: blob.data, password: password) {
+                    setICloudSync(enabled: true)
+                } else {
+                    lastSyncStatus = "iCloud restore failed."
                 }
             }
         }
@@ -244,6 +285,7 @@ public final class OtpStore: ObservableObject {
     /// 복원하기 위한 복구 경로다. 원격(iCloud)은 건드리지 않는다.
     /// 주의: 이 기기에만 있고 아직 동기화되지 않은 계정은 사라진다.
     public func resetForRestore() {
+        guard canAccessVault() else { return }
         client?.clearSyncBackend()
         client = nil
         isReady = false
@@ -265,16 +307,20 @@ public final class OtpStore: ObservableObject {
     // MARK: - 새로고침
 
     public func refresh() {
-        guard let client = client else { return }
+        guard !isSyncing, let client else { return }
         accounts = client.listAccounts()
         folders = client.listFolders()
     }
 
     /// 위젯 등 외부 프로세스 변경 반영.
     public func reloadFromDisk() {
-        guard let client = client else { return }
-        try? client.reload()
-        refresh()
+        guard !isSyncing, let client else { return }
+        do {
+            try client.reload()
+            refresh()
+        } catch {
+            lastError = describe(error)
+        }
     }
 
     // 기존 호출부 호환 (AppState.loadAccounts / loadFolders)
@@ -284,7 +330,7 @@ public final class OtpStore: ObservableObject {
     // MARK: - 계정 mutation
 
     public func addAccount(_ account: OtpAccount) {
-        perform { try $0.addAccount(account: account) }
+        perform { _ = try $0.addAccount(account: account) }
     }
 
     public func addFromUri(_ uri: String) {
@@ -292,7 +338,14 @@ public final class OtpStore: ObservableObject {
     }
 
     public func updateAccount(_ account: OtpAccount) {
-        perform { try $0.updateAccount(account: account) }
+        perform { client in
+            var updated = account
+            // An edit sheet may have captured this account before a HOTP copy.
+            if account.type == .hotp, let current = client.getAccount(id: account.id) {
+                updated.counter = current.counter
+            }
+            _ = try client.updateAccount(account: updated)
+        }
     }
 
     public func deleteAccount(_ account: OtpAccount) {
@@ -314,11 +367,11 @@ public final class OtpStore: ObservableObject {
     // MARK: - 폴더 mutation
 
     public func addFolder(_ folder: OtpFolder) {
-        perform { try $0.addFolder(folder: folder) }
+        perform { _ = try $0.addFolder(folder: folder) }
     }
 
     public func updateFolder(_ folder: OtpFolder) {
-        perform { try $0.updateFolder(folder: folder) }
+        perform { _ = try $0.updateFolder(folder: folder) }
     }
 
     public func deleteFolder(_ folder: OtpFolder) {
@@ -328,6 +381,7 @@ public final class OtpStore: ObservableObject {
     // MARK: - 백업 (SettingsView)
 
     public func exportBackup(password: String) -> Data? {
+        guard canAccessVault() else { return nil }
         guard let client = client else {
             lastError = "Vault is not open."
             return nil
@@ -344,7 +398,7 @@ public final class OtpStore: ObservableObject {
 
     @discardableResult
     public func importBackup(data: Data, password: String, merge: Bool = true) -> Bool {
-        guard let client = client else { return false }
+        guard canAccessVault(), let client else { return false }
         do {
             if data.starts(with: Self.legacyBackupMagic) {
                 _ = try client.importBackupV1(data: data, password: password, merge: merge)
@@ -370,7 +424,8 @@ public final class OtpStore: ObservableObject {
 
     /// `importBackup` 과 동일하지만 가져온 계정 수와 오류 종류를 함께 돌려준다.
     public func importBackupChecked(data: Data, password: String, merge: Bool) -> ImportOutcome {
-        guard let client = client else { return .failure("Vault is not open.") }
+        guard canAccessVault() else { return .failure(lastError ?? "Vault unavailable.") }
+        guard let client else { return .failure("Vault is not open.") }
         do {
             // v2 containers begin with "OTPVAULT"; legacy v1 `.otpbackup`
             // files begin with "OTPB". The picker accepts both formats, so
@@ -396,10 +451,43 @@ public final class OtpStore: ObservableObject {
 
     /// 계정의 현재 코드. HOTP 는 코어에서 카운터 증가 없이 peek.
     public func code(for account: OtpAccount, at date: Date = Date()) -> String? {
+        guard !appLock.isLocked else { return nil }
         if let local = account.generateCode(at: date) { return local }
-        guard let client = client else { return nil }
+        guard let client else { return nil }
         let ms = Int64(date.timeIntervalSince1970 * 1000)
         return (try? client.code(id: account.id, unixTimeMs: ms))?.code
+    }
+
+    /// Returns a fresh code for an explicit copy. HOTP must persist the increment first.
+    func codeForCopy(accountID: String) throws -> String {
+        guard !appLock.isLocked else {
+            throw OtpError.Auth(msg: "Unlock OTPeek before copying a code.")
+        }
+        guard let account = accounts.first(where: { $0.id == accountID }) else {
+            throw OtpError.NotFound(id: accountID)
+        }
+        if account.type == .totp {
+            guard let code = account.generateCode() else {
+                throw OtpError.InvalidParameter(msg: "Could not generate a TOTP code.")
+            }
+            return code
+        }
+        guard canAccessVault(), let client else {
+            throw OtpError.Backend(msg: lastError ?? "Vault is not open.")
+        }
+        guard let current = client.getAccount(id: accountID), current.counter < UInt64.max else {
+            throw OtpError.InvalidParameter(msg: "The HOTP counter cannot be advanced.")
+        }
+        do {
+            let code = try client.nextHotp(id: accountID)
+            refresh()
+            VaultAccess.notifyChange()
+            return code.code
+        } catch {
+            // Refresh the snapshot before retrying an advance from a stale client.
+            reloadFromDisk()
+            throw error
+        }
     }
 
     // MARK: - iCloud 동기화
@@ -410,6 +498,7 @@ public final class OtpStore: ObservableObject {
     }
 
     public func setICloudSync(enabled: Bool) {
+        guard canAccessVault() else { return }
         iCloudSyncEnabled = enabled
         legacyDefaults?.set(enabled, forKey: syncEnabledKey)
         guard let client = client else { return }
@@ -423,32 +512,33 @@ public final class OtpStore: ObservableObject {
 
     /// 동기화는 CloudKit 브리지가 블로킹이므로 메인 스레드 밖에서 실행한다.
     public func syncNow() {
-        guard let client = client, !isSyncing else { return }
+        guard canAccessVault(), let client else { return }
         isSyncing = true
         lastSyncStatus = "Syncing…"
-        Task.detached { [weak self] in
-            let now = Int64(Date().timeIntervalSince1970 * 1000)
-            let result: String
-            var wrongKey = false
-            do {
-                let outcome = try client.sync(unixTimeMs: now)
-                result = "Synced (pushed: \(outcome.pushed), pulled: \(outcome.pulled), changes: \(outcome.mergedChanges))"
-            } catch OtpError.WrongKey {
-                // 이 기기의 볼트가 원격과 다른 VMK 로 만들어졌다(대개 다른 기기에서 각각 "새로
-                // 생성"한 경우). 원격을 이 기기의 키로 열 수 없다. 정석 해법은 이 기기를 iCloud 에서
-                // 다시 복원해 원격 VMK 를 공유하는 것이다(설정 → "Reset & Restore from iCloud").
-                wrongKey = true
-                result = "Sync failed: this device's vault uses a different key than iCloud. Use Settings → \"Restore from iCloud\" to pull the vault from your other device and share the same key."
-            } catch {
-                result = "Sync failed: \(await self?.describe(error) ?? "error")"
+        Task {
+            let result = await Self.runCloudWork {
+                Result { try client.sync(unixTimeMs: Int64(Date().timeIntervalSince1970 * 1000)) }
             }
-            await MainActor.run {
-                self?.isSyncing = false
-                self?.lastSyncStatus = result
-                if wrongKey { self?.lastError = result }
-                self?.reloadFromDisk()
-                // 다른 기기에서 받아 온 변경을 위젯에도 반영.
-                VaultAccess.notifyChange()
+            isSyncing = false
+            switch result {
+            case .success(let outcome):
+                lastSyncStatus = "Synced (pushed: \(outcome.pushed), pulled: \(outcome.pulled), changes: \(outcome.mergedChanges))"
+            case .failure(OtpError.WrongKey):
+                let message = "Sync failed: this device's vault uses a different key than iCloud. Use Settings → \"Restore from iCloud\" to pull the vault from your other device and share the same key."
+                lastSyncStatus = message
+                lastError = message
+            case .failure(let error):
+                lastSyncStatus = "Sync failed: \(describe(error))"
+            }
+            reloadFromDisk()
+            VaultAccess.notifyChange()
+        }
+    }
+
+    private static func runCloudWork<Value: Sendable>(_ work: @escaping @Sendable () -> Value) async -> Value {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                continuation.resume(returning: work())
             }
         }
     }
@@ -481,7 +571,7 @@ public final class OtpStore: ObservableObject {
 
     /// 변경 실행 → 새로고침 → 위젯 알림. 실패 시 lastError 설정.
     private func perform(_ action: (OtpClient) throws -> Void) {
-        guard let client = client else { return }
+        guard canAccessVault(), let client else { return }
         do {
             try action(client)
             refresh()
@@ -491,6 +581,19 @@ public final class OtpStore: ObservableObject {
         }
     }
 
+    private func canAccessVault() -> Bool {
+        guard !appLock.isLocked else {
+            lastError = "Unlock OTPeek to access the vault."
+            return false
+        }
+        // Keep vault changes and account actions from racing an iCloud restore or sync.
+        guard !isSyncing else {
+            lastError = "Wait for iCloud to finish, then try again."
+            return false
+        }
+        return true
+    }
+
     nonisolated private func describe(_ error: Error) -> String {
         if let otp = error as? OtpError { return "\(otp)" }
         return error.localizedDescription
@@ -498,89 +601,107 @@ public final class OtpStore: ObservableObject {
 
     // MARK: - 레거시 마이그레이션
 
+    private var legacySource: UserDefaults? {
+        var candidates = [legacyDefaults, UserDefaults.standard]
+        for group in ["group.com.otpauthenticator", "group.com.otpeek"] {
+            if FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group) != nil {
+                candidates.append(UserDefaults(suiteName: group))
+            }
+        }
+        return candidates.compactMap { $0 }.first {
+            $0.object(forKey: legacyAccountsKey) != nil || $0.object(forKey: legacyFoldersKey) != nil
+        }
+    }
+
     private func detectLegacyData() {
-        guard !vaultExists,
-              let defaults = legacyDefaults,
-              let data = defaults.data(forKey: legacyAccountsKey),
-              let decoded = try? JSONDecoder().decode([LegacyAccount].self, from: data),
-              !decoded.isEmpty else {
-            hasLegacyData = false
-            legacyCount = 0
-            return
-        }
-        hasLegacyData = true
-        legacyCount = decoded.count
-    }
-
-    private func migrateLegacyData(into client: OtpClient) {
-        guard let defaults = legacyDefaults else { return }
-
-        // 1) 폴더 먼저 삽입하고 (old id -> new id) 매핑 구성
-        var folderIdMap: [String: String] = [:]
-        if let fdata = defaults.data(forKey: legacyFoldersKey),
-           let legacyFolders = try? JSONDecoder().decode([LegacyFolder].self, from: fdata) {
-            for lf in legacyFolders {
-                let folder = OtpFolder(
-                    name: lf.name,
-                    icon: lf.icon ?? "folder.fill",
-                    color: lf.color ?? "#007AFF",
-                    sortOrder: lf.sortOrder ?? 0
-                )
-                if let created = try? client.addFolder(folder: folder) {
-                    folderIdMap[lf.id] = created.id
-                }
-            }
-        }
-
-        // 2) 계정 삽입 (비밀키는 JSON, 없으면 Keychain "secret_<id>" 폴백)
-        if let adata = defaults.data(forKey: legacyAccountsKey),
-           let legacyAccounts = try? JSONDecoder().decode([LegacyAccount].self, from: adata) {
-            for la in legacyAccounts {
-                let secret = la.secretKey?.isEmpty == false
-                    ? la.secretKey!
-                    : (KeychainHelper.shared.loadLegacySecret(forAccountId: la.id) ?? "")
-                guard !secret.isEmpty else { continue }
-
-                let account = OtpAccount(
-                    issuer: la.issuer ?? "",
-                    accountName: la.accountName ?? "",
-                    secretKey: secret,
-                    type: la.type?.uppercased() == "HOTP" ? .hotp : .totp,
-                    algorithm: Self.mapAlgorithm(la.algorithm),
-                    digits: la.digits ?? 6,
-                    period: la.period ?? 30,
-                    counter: la.counter ?? 0,
-                    isFavorite: la.isFavorite ?? false,
-                    sortOrder: la.sortOrder ?? 0,
-                    color: la.color ?? "#512BD4",
-                    folderId: la.folderId.flatMap { folderIdMap[$0] }
-                )
-                _ = try? client.addAccount(account: account)
-            }
-        }
-
-        // 3) 레거시 키 이름 변경(안전망). 한 릴리스 유지.
-        if let adata = defaults.data(forKey: legacyAccountsKey) {
-            defaults.set(adata, forKey: migratedAccountsKey)
-            defaults.removeObject(forKey: legacyAccountsKey)
-        }
-        if let fdata = defaults.data(forKey: legacyFoldersKey) {
-            defaults.set(fdata, forKey: migratedFoldersKey)
-            defaults.removeObject(forKey: legacyFoldersKey)
+        guard !vaultExists, legacySource != nil else { return }
+        do {
+            let (accounts, folders) = try readLegacyData()
+            legacyCount = accounts.count
+            hasLegacyData = !accounts.isEmpty || !folders.isEmpty
+        } catch {
+            hasLegacyData = true
+            lastError = describe(error)
         }
     }
 
-    private static func mapAlgorithm(_ raw: String?) -> HashAlgorithm {
-        switch raw?.uppercased() {
-        case "SHA256": return .sha256
-        case "SHA512": return .sha512
-        default: return .sha1
+    private func readLegacyData() throws -> ([LegacyAccount], [LegacyFolder]) {
+        guard let source = legacySource else {
+            throw LegacyMigrationError("The legacy account store could not be found.")
+        }
+        func decode<T: Decodable>(_ key: String, label: String) throws -> [T] {
+            guard let value = source.object(forKey: key) else { return [] }
+            guard let data = value as? Data,
+                  let records = try? JSONDecoder().decode([T].self, from: data) else {
+                throw LegacyMigrationError("The legacy \(label) could not be decoded.")
+            }
+            return records
+        }
+        return (try decode(legacyAccountsKey, label: "accounts"),
+                try decode(legacyFoldersKey, label: "folders"))
+    }
+
+    private func migrateLegacyData(
+        accounts: [LegacyAccount], folders: [LegacyFolder], into client: OtpClient
+    ) throws {
+        var folderIDs = Set<String>()
+        for (index, legacy) in folders.enumerated() {
+            guard !legacy.id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  folderIDs.insert(legacy.id).inserted,
+                  let sortOrder = Int32(exactly: legacy.sortOrder ?? 0) else {
+                throw LegacyMigrationError("Legacy folder \(index + 1) has an invalid ID or sort order.")
+            }
+            let folder = OtpFolder(
+                id: legacy.id, name: legacy.name, icon: legacy.icon, color: legacy.color,
+                sortOrder: sortOrder, createdAt: 0, updatedAt: 0, deletedAt: nil
+            )
+            do { _ = try client.addFolder(folder: folder) }
+            catch { throw LegacyMigrationError("Legacy folder \(index + 1) could not be saved.") }
+        }
+
+        var accountIDs = Set<String>()
+        for (index, legacy) in accounts.enumerated() {
+            let label = "Legacy account \(index + 1)"
+            let secret = legacy.secretKey.flatMap { $0.isEmpty ? nil : $0 }
+                ?? KeychainHelper.shared.loadLegacySecret(forAccountId: legacy.id)
+            guard let secret, !secret.isEmpty else {
+                throw LegacyMigrationError("\(label) has no readable secret.")
+            }
+            let type = legacy.type?.uppercased() ?? "TOTP"
+            let algorithm = legacy.algorithm?.uppercased() ?? "SHA1"
+            guard !legacy.id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  accountIDs.insert(legacy.id).inserted,
+                  ["TOTP", "HOTP"].contains(type),
+                  let hash = ["SHA1": HashAlgorithm.sha1, "SHA256": .sha256, "SHA512": .sha512][algorithm],
+                  let digits = UInt32(exactly: legacy.digits ?? 6), (1...9).contains(digits),
+                  let period = UInt32(exactly: legacy.period ?? 30), period > 0,
+                  let counter = UInt64(exactly: legacy.counter ?? 0),
+                  let sortOrder = Int32(exactly: legacy.sortOrder ?? 0) else {
+                throw LegacyMigrationError("\(label) has invalid OTP settings or an invalid ID.")
+            }
+            let account = OtpAccount(
+                id: legacy.id, otpType: type == "HOTP" ? .hotp : .totp, secret: secret,
+                issuer: legacy.issuer, accountName: legacy.accountName ?? "", algorithm: hash,
+                digits: digits, period: period, counter: counter, folderId: legacy.folderId,
+                isFavorite: legacy.isFavorite ?? false, sortOrder: sortOrder,
+                icon: nil, color: legacy.color, createdAt: 0, updatedAt: 0, deletedAt: nil
+            )
+            do { _ = try client.addAccount(account: account) }
+            catch { throw LegacyMigrationError("\(label) could not be saved. Check the secret and available storage.") }
         }
     }
 }
 
 // MARK: - 레거시 디코딩 모델 (v1 UserDefaults 포맷)
 // 날짜(createdAt/lastUsedAt)는 마이그레이션에 불필요하므로 무시한다.
+
+private struct LegacyMigrationError: LocalizedError {
+    let message: String
+
+    init(_ message: String) { self.message = message }
+
+    var errorDescription: String? { message }
+}
 
 private struct LegacyAccount: Decodable {
     let id: String

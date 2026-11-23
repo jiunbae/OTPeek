@@ -102,7 +102,8 @@ struct SettingsView: View {
                 allowedContentTypes: [.data, .item],
                 allowsMultipleSelection: false
             ) { result in
-                guard case .success(let urls) = result, let url = urls.first else { return }
+                guard !appLock.isLocked,
+                      case .success(let urls) = result, let url = urls.first else { return }
                 let didAccess = url.startAccessingSecurityScopedResource()
                 defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
                 guard let data = try? Data(contentsOf: url) else { return }
@@ -183,7 +184,7 @@ struct SettingsView: View {
         } header: {
             Text("Support OTPeek")
         } footer: {
-            Text("OTPeek is free and open source. Support is optional, one-time, and never unlocks features.")
+            Text("OTPeek is free to use. Support is optional and never unlocks features.")
         }
 
         Section {
@@ -327,6 +328,7 @@ struct SettingsView: View {
                                  detail: "Encrypted vault syncs across your devices.")
                 }
                 .tint(.green)
+                .disabled(appState.isSyncing)
 
                 // 다른 기기에서 이미 iCloud 동기화를 켠 경우, 이 기기(로컬 볼트가 이미 있어도)로
                 // 원격 볼트를 받아오는 진입점. 원격을 비밀번호로 열어 공유 키를 채택하므로
@@ -336,6 +338,7 @@ struct SettingsView: View {
                                  detail: "Pull the vault from another device and replace this one.")
                 }
                 .buttonStyle(.plain)
+                .disabled(appState.isSyncing)
 
                 if appState.iCloudSyncEnabled {
                     Button { appState.syncNow() } label: {
@@ -540,6 +543,8 @@ struct SettingsView: View {
     // MARK: - Backup export/import (v2 encrypted container)
 
     private func exportBackup() {
+        guard !appLock.isLocked else { return }
+        let generation = appLock.lockGeneration
         let password = backupPassword
         let destination = exportDestination
         backupPassword = ""
@@ -548,6 +553,7 @@ struct SettingsView: View {
         // AppKit cannot reliably begin a save/share modal while SwiftUI is still
         // dismissing the password alert. Wait for that modal transition to finish.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            guard !appLock.isLocked, generation == appLock.lockGeneration else { return }
             guard let data = appState.exportBackup(password: password) else {
                 backupFeedback = BackupFeedback(
                     message: appState.lastError ?? "The encrypted backup could not be created.",
@@ -664,10 +670,16 @@ struct SettingsView: View {
     /// to an app-modal panel when no key/main window is available.
     private func presentPanel(_ panel: NSSavePanel,
                               completion: @escaping (NSApplication.ModalResponse) -> Void) {
+        guard !appLock.isLocked else { return }
+        let generation = appLock.lockGeneration
+        let guardedCompletion: (NSApplication.ModalResponse) -> Void = { response in
+            guard !appLock.isLocked, generation == appLock.lockGeneration else { return }
+            completion(response)
+        }
         if let window = presentationWindow {
-            panel.beginSheetModal(for: window, completionHandler: completion)
+            panel.beginSheetModal(for: window, completionHandler: guardedCompletion)
         } else {
-            panel.begin(completionHandler: completion)
+            panel.begin(completionHandler: guardedCompletion)
         }
     }
 
@@ -682,7 +694,9 @@ struct SettingsView: View {
     /// `.alert` synchronously from a file-picker completion collides with the
     /// picker's dismissal and SwiftUI silently drops it — so defer past it.
     private func presentImportPasswordAfterDismiss() {
+        let generation = appLock.lockGeneration
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            guard !appLock.isLocked, generation == appLock.lockGeneration else { return }
             showingImportPassword = true
         }
     }
@@ -717,6 +731,9 @@ struct SettingsView: View {
 // MARK: - Preview
 
 #Preview {
+    let appState = OtpStore()
     SettingsView()
-        .environmentObject(OtpStore())
+        .environmentObject(appState)
+        .environmentObject(appState.appLock)
+        .environmentObject(StoreManager())
 }

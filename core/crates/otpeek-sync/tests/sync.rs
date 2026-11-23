@@ -323,12 +323,16 @@ fn merge_push_combines_both_sides() {
 #[test]
 fn etag_conflict_retries_then_succeeds() {
     let mut local = vault_with(vec![acct("a", 30, None, 0)]);
-    let blob = remote_blob_with(&mut local, vec![acct("a", 10, None, 0)]);
+    let blob = remote_blob_with(&mut local, vec![acct("r", 10, None, 0)]);
     let backend = InMemoryBackend::with_blob(blob);
     backend.state.lock().unwrap().inject_conflicts = 1; // first store conflicts
+    let generation = local.generation();
 
     let outcome = SyncEngine::sync(&mut local, &backend, NOW).expect("sync");
     assert!(outcome.pushed);
+    assert!(outcome.pulled);
+    assert_eq!(outcome.merged_changes, 1);
+    assert_eq!(local.generation(), generation + 1);
     let s = backend.state.lock().unwrap();
     assert_eq!(s.stores, 2, "one conflict + one success");
     assert!(s.fetches >= 2, "refetched after conflict");
@@ -337,15 +341,94 @@ fn etag_conflict_retries_then_succeeds() {
 #[test]
 fn etag_conflict_exhausts_retries() {
     let mut local = vault_with(vec![acct("a", 30, None, 0)]);
-    let blob = remote_blob_with(&mut local, vec![acct("a", 10, None, 0)]);
+    let blob = remote_blob_with(&mut local, vec![acct("r", 10, None, 0)]);
     let backend = InMemoryBackend::with_blob(blob);
     backend.state.lock().unwrap().inject_conflicts = 99; // always conflict
+    let original = local.payload().clone();
+    let generation = local.generation();
 
     match SyncEngine::sync(&mut local, &backend, NOW) {
         Err(SyncError::Conflict) => {}
         other => panic!("expected Conflict after retries, got {other:?}"),
     }
     assert_eq!(backend.state.lock().unwrap().stores, 3, "max 3 attempts");
+    assert_eq!(local.generation(), generation);
+    assert_eq!(local.payload(), &original);
+}
+
+#[test]
+fn stale_device_cannot_replace_new_password_with_a_newer_payload_save() {
+    let mut stale = vault_with(vec![]);
+    let mut changed = remote_sharing_key(&mut stale);
+    changed
+        .change_password("test-password-123", "replacement password")
+        .unwrap();
+    let backend = InMemoryBackend::with_blob(changed.to_bytes(NOW).unwrap());
+    stale
+        .payload_mut()
+        .accounts
+        .push(acct("unsynced", 30, None, 0));
+    stale.to_bytes(NOW + 10).unwrap();
+    stale.to_bytes(NOW + 20).unwrap();
+
+    let result = SyncEngine::sync(&mut stale, &backend, NOW + 30).unwrap();
+    assert!(result.pulled);
+    assert_eq!(result.merged_changes, 0);
+    let local_bytes = stale.to_bytes(NOW + 40).unwrap();
+    assert!(Vault::open_with_password(&local_bytes, "replacement password").is_ok());
+    let stored = backend.fetch().unwrap().unwrap();
+    let remote = Vault::open_with_password(&stored.data, "replacement password").unwrap();
+    assert_eq!(remote.payload().accounts[0].id, "unsynced");
+    assert!(matches!(
+        Vault::open_with_password(&stored.data, "test-password-123"),
+        Err(VaultError::WrongPassword)
+    ));
+}
+
+#[test]
+fn stale_device_does_not_resurrect_old_tombstones() {
+    let mut stale = vault_with(vec![acct("old", 10, None, 0)]);
+    stale
+        .payload_mut()
+        .folders
+        .push(folder("old-folder", 10, None, "old"));
+    let mut deleted = remote_sharing_key(&mut stale);
+    *deleted.payload_mut() = payload(
+        vec![acct("old", 20, Some(20), 0)],
+        vec![folder("old-folder", 20, Some(20), "old")],
+    );
+    let backend = InMemoryBackend::with_blob(deleted.to_bytes(NOW).unwrap());
+
+    let result = SyncEngine::sync(&mut stale, &backend, NOW).unwrap();
+    assert_eq!(result.merged_changes, 2);
+    let stored = backend.fetch().unwrap().unwrap();
+    let reopened = stale.open_peer(&stored.data).unwrap();
+    assert_eq!(reopened.payload().accounts[0].deleted_at, Some(20));
+    assert!(reopened.payload().accounts[0].secret.is_empty());
+    assert_eq!(reopened.payload().folders[0].deleted_at, Some(20));
+    assert!(reopened.payload().folders[0].name.is_empty());
+}
+
+#[test]
+fn remote_without_etag_is_not_overwritten() {
+    let mut local = vault_with(vec![acct("a", 30, None, 0)]);
+    let backend = InMemoryBackend::with_blob(remote_blob_with(&mut local, vec![]));
+    backend
+        .state
+        .lock()
+        .unwrap()
+        .blob
+        .as_mut()
+        .unwrap()
+        .1
+        .clear();
+    let generation = local.generation();
+    assert!(matches!(
+        SyncEngine::sync(&mut local, &backend, NOW),
+        Err(SyncError::Backend(msg)) if msg.contains("ETag")
+    ));
+    assert_eq!(backend.state.lock().unwrap().stores, 0);
+    assert_eq!(local.generation(), generation);
 }
 
 #[test]

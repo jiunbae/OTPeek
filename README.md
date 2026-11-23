@@ -6,8 +6,8 @@
 
 **Your 2FA codes at a glance — copy in one tap.**
 
-A cross-platform OTP authenticator with a home-screen / desktop **widget** on every
-platform, powered by a single **shared Rust core**.
+A cross-platform OTP authenticator with **widgets** on Apple and Windows,
+powered by a **shared Rust core**.
 
 <br/>
 
@@ -19,7 +19,6 @@ platform, powered by a single **shared Rust core**.
 ![Rust](https://img.shields.io/badge/core-Rust-DEA584?logo=rust&logoColor=white)
 ![TOTP / HOTP](https://img.shields.io/badge/2FA-TOTP%20%7C%20HOTP-5A5AAD)
 ![E2E encrypted](https://img.shields.io/badge/vault-AES--256--GCM-2E7D32)
-![License](https://img.shields.io/badge/license-MIT-blue)
 
 <br/>
 
@@ -50,8 +49,8 @@ platform, powered by a single **shared Rust core**.
 - **End-to-end-encrypted vault** — AES-256-GCM payload, Argon2id-wrapped master key;
   platform keystores (Keychain / DPAPI / Secret Service) hold only the vault key,
   never the secrets
-- **Sync** — encrypted-blob sync with pluggable backends: **iCloud (CloudKit)** on
-  Apple, **WebDAV** everywhere (Nextcloud etc.); last-writer-wins merge with tombstones
+- **Sync** — **iCloud (CloudKit)** in the Apple apps and **WebDAV** in the
+  CLI and Windows release. Vaults use last-writer-wins merge with tombstones.
 - **QR import** — camera scan, screen capture, image files, plus Google Authenticator
   migration QR (`otpauth-migration://`)
 - **Folders & favorites**, click-to-copy, system tray / menu bar, and widgets
@@ -62,7 +61,7 @@ platform, powered by a single **shared Rust core**.
 
 | Platform | Shell | Widget | Status | Min version |
 |----------|-------|:------:|:------:|-------------|
-| Windows | WinUI 3 | ✅ | ✅ | Windows 10 1809+ |
+| Windows | WinUI 3 | ✅ | [v2.0.1 release](https://github.com/jiunbae/OTPeek/releases/tag/v2.0.1) | Windows 11 for widgets |
 | macOS | SwiftUI + menu bar | ✅ | ✅ | macOS 14.0+ |
 | iOS | SwiftUI | ✅ | ✅ | iOS 17.0+ |
 | Linux / macOS CLI | `otpeek` binary | — | ✅ | — |
@@ -100,14 +99,17 @@ neither app reimplements any OTP, crypto, or sync logic.
 <details>
 <summary><b>🦀 Rust core & CLI</b></summary>
 
-**Install the prebuilt binary** (Linux / macOS, x86_64 / aarch64):
+**Install a prebuilt binary** on Linux or macOS. Check that your architecture
+has an archive and checksum in the [release assets](https://github.com/jiunbae/OTPeek/releases):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jiunbae/OTPeek/main/install.sh | sh
 ```
 
-Installs `otpeek` into `~/.local/bin` (override with `OTPEEK_BIN_DIR`; pin a version
-with `OTPEEK_VERSION=v2.0.0`). On Linux the binary needs `libdbus-1` (keystore) and
+The installer checks the release archive's SHA-256 checksum before extracting
+it and requires `sha256sum` or `shasum`. It installs `otpeek` into
+`~/.local/bin` (override with `OTPEEK_BIN_DIR`; pin a version
+with `OTPEEK_VERSION=v2.0.1`). On Linux the binary needs `libdbus-1` (keystore) and
 `libxcb` (clipboard) at runtime — present on any desktop install; on a headless box
 `sudo apt-get install -y libdbus-1-3 libxcb1`.
 
@@ -128,38 +130,48 @@ otpeek add 'otpauth://totp/GitHub:me?secret=JBSWY3DPEHPK3PXP&issuer=GitHub'
 otpeek code github --copy
 ```
 
-Vault: `~/.local/share/otpeek/vault.otpvault` (override with `$OTPEEK_VAULT`).
+The CLI vault defaults to `otpeek/vault.otpvault` under the system data
+directory (`~/.local/share` on Linux by default, `~/Library/Application Support`
+on macOS). Set `OTPEEK_VAULT` to override it.
 The vault key lives in the OS keystore; headless environments can use
 `$OTPEEK_VAULT_PASSWORD` (and `$OTPEEK_BACKUP_PASSWORD` for export/import).
 Configure sync: `otpeek sync setup webdav <url> --user <name>`, then `otpeek sync now`.
+For HOTP, `otpeek code <account>` displays the current code.
+Use `otpeek code <account> --advance` to save the incremented counter before
+displaying or copying the code. This option is for HOTP and cannot be combined
+with `--watch`.
 
 </details>
 
 <details>
 <summary><b>🍎 Apple (macOS / iOS)</b></summary>
 
-Requires **full Xcode 15+** (Command Line Tools alone cannot build the app or the
-XCFramework — check `xcode-select -p` points into `Xcode.app`), [XcodeGen](https://github.com/yonaskolb/XcodeGen)
-(`brew install xcodegen`), and the iOS Rust targets:
+Requires an **Apple Silicon Mac**, **full Xcode 15+** selected via
+`xcode-select`, and [XcodeGen](https://github.com/yonaskolb/XcodeGen)
+(`brew install xcodegen`).
 
 ```bash
-rustup target add aarch64-apple-ios aarch64-apple-ios-sim
-apple/scripts/build-core.sh     # Rust → XCFramework + Swift bindings
+rustup target add aarch64-apple-darwin x86_64-apple-darwin \
+  aarch64-apple-ios aarch64-apple-ios-sim
+apple/scripts/build-core.sh --require-all-targets
 cd apple && xcodegen generate && open Otpeek.xcodeproj
 ```
 
 - macOS: `Otpeek-macOS` scheme → My Mac → ⌘R
-- iOS: `Otpeek-iOS` scheme → Simulator → ⌘R
+- iOS: `Otpeek-iOS` scheme → iOS device or an arm64 simulator → ⌘R
+
+Rerun `apple/scripts/build-core.sh` after changing the Rust sources or lockfile.
+The Xcode targets check that the XCFramework and Swift bindings are current.
 
 iCloud sync requires the `iCloud.com.otpeek.app` CloudKit container on your signing team.
 
 </details>
 
 <details>
-<summary><b>🪟 Windows</b></summary>
+<summary><b>🪟 Windows (v2.0.1 source build)</b></summary>
 
 Requires Visual Studio 2022 (.NET Desktop + Windows App SDK), .NET 8 SDK, and Rust
-with the MSVC target:
+with the MSVC target. Run these commands from the v2.0.1 source checkout:
 
 ```powershell
 rustup target add x86_64-pc-windows-msvc
@@ -179,15 +191,16 @@ Register once, use everywhere — full guide: **[docs/SYNC.md](docs/SYNC.md)**.
 
 - **All-Apple (same Apple ID)** — enable iCloud Sync on the first device; other
   devices pick "Restore from iCloud" and enter the master password once.
-- **Cross-platform / self-hosted** — point every device at the same WebDAV URL
-  (`otpeek sync setup webdav <url> --user <u>`, then `otpeek restore <url>` on new
-  devices). The server only ever stores an encrypted blob.
+- **WebDAV / self-hosted** — configure the CLI with
+  `otpeek sync setup webdav <url> --user <u>` and push with `otpeek sync now`.
+  On a new CLI device, run `otpeek restore <url> --user <u>` before using the
+  same sync setup. The server stores an encrypted vault.
 - **No server** — `otpeek export backup.otpvault` produces a portable encrypted
   container. Double-click (Windows/macOS) or share via AirDrop (Apple) and the app
   opens straight into import — enter the backup password and you're done.
 
-The master password is only typed when a device joins; afterwards each device unlocks
-silently via its OS keystore and merges syncs automatically.
+Restoring a sync vault requires its master password. Devices with a saved vault
+key can unlock through their OS keystore. Run `otpeek sync now` to sync from the CLI.
 
 ## Security Model
 
@@ -197,7 +210,7 @@ silently via its OS keystore and merges syncs automatically.
   sync/recovery, and stored in the platform keystore for password-less local unlock.
   **Widgets never run the KDF.**
 - Sync backends only ever see encrypted bytes.
-- See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §14 for the full notes and
+- See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#14-security-notes) for the full notes and
   tradeoffs (widget code visibility, clipboard).
 
 ## Documentation
@@ -210,7 +223,7 @@ silently via its OS keystore and merges syncs automatically.
 
 ## License
 
-[MIT](LICENSE) © OTPeek
+Earlier versions of this README named MIT. The repository has no license file.
 
 ## Contributing
 

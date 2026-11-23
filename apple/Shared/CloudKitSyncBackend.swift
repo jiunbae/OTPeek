@@ -1,5 +1,6 @@
 import Foundation
 import CloudKit
+import os
 
 /// 코어의 `SyncBackend`(UniFFI foreign trait) 를 CloudKit 으로 구현한다.
 /// 백엔드는 암호화된 불투명 바이트만 옮기며 평문을 절대 보지 않는다.
@@ -36,29 +37,11 @@ public final class CloudKitSyncBackend: SyncBackend, @unchecked Sendable {
     // MARK: - SyncBackend
 
     public func fetch() throws -> RemoteBlob? {
-        let semaphore = DispatchSemaphore(value: 0)
-        var result: Result<RemoteBlob?, OtpError> = .success(nil)
-
-        database.fetch(withRecordID: recordID) { record, error in
-            defer { semaphore.signal() }
-            if let error = error {
-                if Self.isNotFound(error) {
-                    result = .success(nil)   // 아직 원격 볼트 없음
-                } else {
-                    result = .failure(Self.map(error))
-                }
-                return
-            }
-            guard let record = record,
-                  let data = record[self.blobField] as? Data else {
-                result = .success(nil)
-                return
-            }
-            result = .success(RemoteBlob(data: data, etag: record.recordChangeTag))
+        guard let record = try fetchRecord() else { return nil }
+        guard let data = record[blobField] as? Data, let tag = record.recordChangeTag else {
+            throw OtpError.Backend(msg: "The iCloud vault record is missing its data or version.")
         }
-
-        semaphore.wait()
-        return try result.get()
+        return RemoteBlob(data: data, etag: tag)
     }
 
     public func store(data: Data, ifMatch: String?) throws -> String {
@@ -70,7 +53,7 @@ public final class CloudKitSyncBackend: SyncBackend, @unchecked Sendable {
                 // 원격이 사라짐 → 충돌로 처리하여 상위에서 재-fetch 하도록.
                 throw OtpError.Conflict
             }
-            if let tag = existing.recordChangeTag, tag != ifMatch {
+            if existing.recordChangeTag != ifMatch {
                 throw OtpError.Conflict
             }
             record = existing
@@ -80,43 +63,79 @@ public final class CloudKitSyncBackend: SyncBackend, @unchecked Sendable {
         }
         record[blobField] = data as CKRecordValue
 
-        let semaphore = DispatchSemaphore(value: 0)
-        var result: Result<String, OtpError> = .failure(.Backend(msg: "unknown"))
-
+        let savedRecord = OSAllocatedUnfairLock(initialState: Optional<Result<String, Error>>.none)
+        let completion = CloudOperationResult<String>()
         let op = CKModifyRecordsOperation(recordsToSave: [record], recordIDsToDelete: nil)
         op.savePolicy = .ifServerRecordUnchanged
         op.isAtomic = true
-        op.modifyRecordsResultBlock = { _ in }
-        op.perRecordSaveBlock = { _, saveResult in
-            switch saveResult {
-            case .success(let saved):
-                result = .success(saved.recordChangeTag ?? "")
-            case .failure(let error):
-                result = .failure(Self.map(error))
+        op.perRecordSaveBlock = { _, result in
+            savedRecord.withLock { outcome in
+                outcome = result.flatMap { saved in
+                    guard let tag = saved.recordChangeTag else {
+                        return .failure(OtpError.Backend(msg: "The saved iCloud vault has no version."))
+                    }
+                    return .success(tag)
+                }
             }
-            semaphore.signal()
         }
-        database.add(op)
-
-        semaphore.wait()
-        return try result.get()
+        let id = recordID
+        op.modifyRecordsResultBlock = { result in
+            let saved = savedRecord.withLock { $0 }
+            switch result {
+            case .success:
+                completion.finish(saved?.mapError { Self.map($0) }
+                    ?? .failure(.Backend(msg: "iCloud returned no vault save result.")))
+            case .failure(let error):
+                let recordError = (error as? CKError)?.partialErrorsByItemID?[id]
+                if case .failure(let error)? = saved {
+                    completion.finish(.failure(Self.map(error)))
+                } else {
+                    completion.finish(.failure(Self.map(recordError ?? error)))
+                }
+            }
+        }
+        return try run(op, waitingFor: completion)
     }
 
     // MARK: - Private
 
     private func fetchRecord() throws -> CKRecord? {
-        let semaphore = DispatchSemaphore(value: 0)
-        var result: Result<CKRecord?, OtpError> = .success(nil)
-        database.fetch(withRecordID: recordID) { record, error in
-            defer { semaphore.signal() }
-            if let error = error {
-                result = Self.isNotFound(error) ? .success(nil) : .failure(Self.map(error))
+        let completion = CloudOperationResult<CKRecord?>()
+        let id = recordID
+        let op = CKFetchRecordsOperation(recordIDs: [id])
+        let fetchedRecord = OSAllocatedUnfairLock(initialState: Optional<Result<CKRecord, Error>>.none)
+        op.perRecordResultBlock = { _, result in
+            fetchedRecord.withLock { $0 = result }
+        }
+        op.fetchRecordsResultBlock = { result in
+            let fetched = fetchedRecord.withLock { $0 }
+            let outcome: Result<CKRecord, Error>
+            if let fetched {
+                outcome = fetched
+            } else if case .failure(let error) = result {
+                outcome = .failure((error as? CKError)?.partialErrorsByItemID?[id] ?? error)
             } else {
-                result = .success(record)
+                outcome = .failure(OtpError.Backend(msg: "iCloud returned no vault fetch result."))
+            }
+            switch outcome {
+            case .success(let record):
+                completion.finish(.success(record))
+            case .failure(let error):
+                completion.finish(Self.isNotFound(error) ? .success(nil) : .failure(Self.map(error)))
             }
         }
-        semaphore.wait()
-        return try result.get()
+        return try run(op, waitingFor: completion)
+    }
+
+    private func run<Value>(_ operation: CKDatabaseOperation, waitingFor result: CloudOperationResult<Value>) throws -> Value {
+        let configuration = CKOperation.Configuration()
+        configuration.timeoutIntervalForRequest = 15
+        configuration.timeoutIntervalForResource = 25
+        operation.configuration = configuration
+        database.add(operation)
+        return try result.wait {
+            operation.cancel()
+        }
     }
 
     private static func isNotFound(_ error: Error) -> Bool {
@@ -124,6 +143,7 @@ public final class CloudKitSyncBackend: SyncBackend, @unchecked Sendable {
     }
 
     private static func map(_ error: Error) -> OtpError {
+        if let otp = error as? OtpError { return otp }
         guard let ck = error as? CKError else {
             return .Backend(msg: error.localizedDescription)
         }
@@ -137,5 +157,28 @@ public final class CloudKitSyncBackend: SyncBackend, @unchecked Sendable {
         default:
             return .Backend(msg: ck.localizedDescription)
         }
+    }
+}
+
+/// CloudKit may deliver a callback after a timeout. Keep the result and semaphore
+/// alive with the callback and synchronize access across queues.
+private final class CloudOperationResult<Value: Sendable>: Sendable {
+    private let semaphore = DispatchSemaphore(value: 0)
+    private let result = OSAllocatedUnfairLock(initialState: Optional<Result<Value, OtpError>>.none)
+
+    func finish(_ outcome: Result<Value, OtpError>) {
+        result.withLock { $0 = outcome }
+        semaphore.signal()
+    }
+
+    func wait(onTimeout: () -> Void) throws -> Value {
+        guard semaphore.wait(timeout: .now() + 30) == .success else {
+            onTimeout()
+            throw OtpError.Network(msg: "iCloud did not respond in time.")
+        }
+        guard let outcome = result.withLock({ $0 }) else {
+            throw OtpError.Backend(msg: "iCloud returned no operation result.")
+        }
+        return try outcome.get()
     }
 }

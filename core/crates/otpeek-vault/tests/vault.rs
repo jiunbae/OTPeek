@@ -1,8 +1,10 @@
-//! Integration tests for otpeek-vault: round-trips, error mapping, tombstone
-//! purge, v1 import, and a committed-fixture format-stability guard.
+//! Integration tests for vault round-trips, tombstones, file transactions,
+//! v1 import and a committed-fixture format-stability guard.
 
-use aes_gcm::aead::{Aead, KeyInit};
+use aes_gcm::aead::{Aead, KeyInit, Payload};
 use aes_gcm::{Aes256Gcm, Nonce};
+use base64::engine::general_purpose::STANDARD as B64;
+use base64::Engine;
 use otpeek_core::{HashAlgorithm, OtpAccount, OtpType};
 use otpeek_vault::{import_backup_v1, Vault, VaultError};
 
@@ -213,17 +215,18 @@ fn change_password_wrong_old_errors() {
 }
 
 #[test]
-fn tombstone_purge_boundary() {
+fn old_tombstones_survive_serialization() {
     let mut v = Vault::create("test-password-123").expect("create");
 
     let mut live = sample_account("live");
     live.deleted_at = None;
 
-    let mut at_boundary = sample_account("boundary"); // exactly 90 days → kept
+    let mut at_boundary = sample_account("boundary");
     at_boundary.deleted_at = Some(NOW - NINETY_DAYS_MS);
 
-    let mut just_old = sample_account("old"); // 90 days + 1ms → purged
+    let mut just_old = sample_account("old");
     just_old.deleted_at = Some(NOW - NINETY_DAYS_MS - 1);
+    just_old.counter = 42;
 
     v.payload_mut().accounts.push(live);
     v.payload_mut().accounts.push(at_boundary);
@@ -239,8 +242,60 @@ fn tombstone_purge_boundary() {
         .collect();
     assert!(ids.contains(&"live"));
     assert!(ids.contains(&"boundary"), "boundary (exactly 90d) is kept");
-    assert!(!ids.contains(&"old"), "older than 90d is purged");
-    assert_eq!(opened.payload().accounts.len(), 2);
+    assert!(ids.contains(&"old"), "older deletions still replicate");
+    assert_eq!(opened.payload().accounts.len(), 3);
+    let old = &opened.payload().accounts[2];
+    assert_eq!(old.counter, 42);
+    assert_eq!(old.updated_at, NOW);
+    assert_eq!(old.deleted_at, Some(NOW - NINETY_DAYS_MS - 1));
+    assert!(old.secret.is_empty());
+    assert!(old.account_name.is_empty());
+    assert!(old.issuer.is_none());
+
+    // Inspect the wire data independently of the reader's legacy compaction.
+    let header_end = 16 + u32::from_le_bytes(bytes[12..16].try_into().unwrap()) as usize;
+    let header: serde_json::Value = serde_json::from_slice(&bytes[16..header_end]).unwrap();
+    let nonce = B64.decode(header["vaultNonce"].as_str().unwrap()).unwrap();
+    let wire = Aes256Gcm::new_from_slice(&v.vmk())
+        .unwrap()
+        .decrypt(
+            Nonce::from_slice(&nonce),
+            Payload {
+                msg: &bytes[header_end..],
+                aad: &bytes[..header_end],
+            },
+        )
+        .unwrap();
+    let wire: serde_json::Value = serde_json::from_slice(&wire).unwrap();
+    assert_eq!(wire["accounts"][2]["secret"], "");
+    assert_eq!(wire["accounts"][2]["accountName"], "");
+}
+
+#[test]
+fn validates_v2_kdf_before_derivation() {
+    let data = include_bytes!("fixtures/vault-v2.otpvault");
+    let header_len = u32::from_le_bytes(data[12..16].try_into().unwrap()) as usize;
+    let mut header: serde_json::Value = serde_json::from_slice(&data[16..16 + header_len]).unwrap();
+    header["kdf"]["mKib"] = 32768.into();
+    let header = serde_json::to_vec(&header).unwrap();
+    let mut modified = data[..12].to_vec();
+    modified.extend_from_slice(&(header.len() as u32).to_le_bytes());
+    modified.extend_from_slice(&header);
+    modified.extend_from_slice(&data[16 + header_len..]);
+    assert!(matches!(
+        Vault::open_with_password(&modified, "test-password-123"),
+        Err(VaultError::Corrupt(msg)) if msg.contains("KDF")
+    ));
+}
+
+#[test]
+fn limits_streamed_vault_bytes() {
+    use std::io::{self, Read};
+    let reader = io::repeat(0).take(otpeek_vault::MAX_VAULT_BYTES as u64 + 2);
+    assert!(matches!(
+        otpeek_vault::read_vault_reader(reader),
+        Err(VaultError::Corrupt(msg)) if msg.contains("size limit")
+    ));
 }
 
 // -- v1 legacy import ------------------------------------------------------
@@ -381,4 +436,69 @@ fn atomic_file_round_trip() {
     assert_eq!(opened.payload().accounts.len(), 1);
 
     let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn concurrent_saves_reject_one_stale_snapshot_and_allow_reload() {
+    use std::sync::Barrier;
+    let dir = std::env::temp_dir().join(uuid::Uuid::new_v4().to_string());
+    std::fs::create_dir(&dir).unwrap();
+    let path = dir.join("vault.otpvault");
+    let (mut original, vmk) = new_vault_with_account();
+    original.save_to_file(&path, NOW).unwrap();
+
+    let read = otpeek_vault::read_vault_file(&path).unwrap();
+    let mut first = Vault::open_with_key(&read, &vmk).unwrap();
+    let mut second = Vault::open_with_key(&read, &vmk).unwrap();
+    first.payload_mut().accounts.push(sample_account("first"));
+    second.payload_mut().accounts.push(sample_account("second"));
+    let generation = second.generation();
+    let barrier = Barrier::new(2);
+    let outcomes = std::thread::scope(|scope| {
+        let first = scope.spawn(|| {
+            barrier.wait();
+            first.save_to_file(&path, NOW)
+        });
+        barrier.wait();
+        let second_result = second.save_to_file(&path, NOW);
+        (first.join().unwrap(), second_result)
+    });
+    match outcomes {
+        (Ok(()), Err(VaultError::StaleFile)) | (Err(VaultError::StaleFile), Ok(())) => {}
+        other => panic!("one save must report a stale snapshot, got {other:?}"),
+    }
+    assert_eq!(first.generation().min(second.generation()), generation);
+
+    let read = otpeek_vault::read_vault_file(&path).unwrap();
+    let mut reloaded = Vault::open_with_key(&read, &vmk).unwrap();
+    assert_eq!(reloaded.payload().accounts.len(), 2);
+    assert!(matches!(
+        reloaded.restore_to_new_file(&path, NOW),
+        Err(VaultError::StaleFile)
+    ));
+    let restored_path = dir.join("restored.otpvault");
+    let mut restored = Vault::open_with_key(&read, &vmk).unwrap();
+    restored.restore_to_new_file(&restored_path, NOW).unwrap();
+    restored.save_to_file(&restored_path, NOW).unwrap();
+    reloaded
+        .payload_mut()
+        .accounts
+        .push(sample_account("retried"));
+    reloaded.save_to_file(&path, NOW).unwrap();
+
+    let mut new = Vault::create("another password").unwrap();
+    assert!(matches!(
+        new.save_to_file(&path, NOW),
+        Err(VaultError::StaleFile)
+    ));
+    assert_eq!(new.generation(), 0);
+    assert_eq!(
+        Vault::open_with_key(&otpeek_vault::read_vault_file(&path).unwrap(), &vmk)
+            .unwrap()
+            .payload()
+            .accounts
+            .len(),
+        3
+    );
+    std::fs::remove_dir_all(&dir).unwrap();
 }

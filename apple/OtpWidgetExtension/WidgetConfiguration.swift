@@ -36,14 +36,14 @@ struct AccountEntity: AppEntity {
 
 struct AccountQuery: EntityQuery {
     func entities(for identifiers: [String]) async throws -> [AccountEntity] {
-        let accounts = WidgetVault.openClient()?.listAccounts() ?? []
+        let accounts = WidgetVault.openClient().map(WidgetVault.accounts(from:)) ?? []
         return accounts
             .filter { identifiers.contains($0.id) }
             .map { AccountEntity(from: $0) }
     }
 
     func suggestedEntities() async throws -> [AccountEntity] {
-        let accounts = WidgetVault.openClient()?.listAccounts() ?? []
+        let accounts = WidgetVault.openClient().map(WidgetVault.accounts(from:)) ?? []
         return accounts.map { AccountEntity(from: $0) }
     }
 
@@ -189,7 +189,10 @@ struct ConfigurableOtpTimelineProvider: AppIntentTimelineProvider {
     private func getAccount(for configuration: SelectAccountIntent) -> OtpAccount? {
         guard let client = WidgetVault.openClient() else { return nil }
         if let accountEntity = configuration.account {
-            return client.getAccount(id: accountEntity.id)
+            guard let account = client.getAccount(id: accountEntity.id), account.type == .totp else {
+                return nil
+            }
+            return account
         }
         return WidgetVault.firstAccount(from: client)
     }

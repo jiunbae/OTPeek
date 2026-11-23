@@ -13,6 +13,7 @@ argon2.workspace = true
 rand.workspace = true
 zeroize.workspace = true
 fd-lock.workspace = true
+tempfile = "3"
 uuid.workspace = true
 base64 = "0.22"
 pbkdf2 = { version = "0.12", default-features = false, features = ["hmac"] }

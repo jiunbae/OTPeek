@@ -37,14 +37,18 @@ struct OTPTick<Content: View>: View {
     @ViewBuilder let content: (_ code: String, _ remaining: Int, _ progress: Double) -> Content
 
     var body: some View {
-        // `from` epoch 0 keeps ticks aligned to whole-second boundaries.
-        TimelineView(.periodic(from: Date(timeIntervalSince1970: 0), by: 1)) { context in
-            let now = context.date
-            content(
-                code(now),
-                OtpGenerator.getRemainingSeconds(period: account.period, date: now),
-                OtpGenerator.getProgress(period: account.period, date: now)
-            )
+        if account.type == .hotp {
+            content(code(Date()), 0, 0)
+        } else {
+            // `from` epoch 0 keeps ticks aligned to whole-second boundaries.
+            TimelineView(.periodic(from: Date(timeIntervalSince1970: 0), by: 1)) { context in
+                let now = context.date
+                content(
+                    code(now),
+                    OtpGenerator.getRemainingSeconds(period: account.period, date: now),
+                    OtpGenerator.getProgress(period: account.period, date: now)
+                )
+            }
         }
     }
 }

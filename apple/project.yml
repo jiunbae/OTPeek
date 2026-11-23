@@ -39,15 +39,15 @@ coreFramework: &coreFramework
   framework: Frameworks/OtpeekCore.xcframework
   embed: false
 
-# 빌드 전에 xcframework 가 없으면 build-core.sh 로 생성한다(멱등).
+# Build the XCFramework before Xcode plans the build. Reject stale inputs.
 buildCoreScript: &buildCoreScript
-  name: Build Rust Core (otpeek-ffi)
+  name: Verify Rust Core (otpeek-ffi)
   basedOnDependencyAnalysis: false
-  script: |
-    set -e
-    if [ ! -d "${PROJECT_DIR}/Frameworks/OtpeekCore.xcframework" ]; then
-      "${PROJECT_DIR}/scripts/build-core.sh"
-    fi
+  script: '"${PROJECT_DIR}/scripts/build-core.sh" --verify'
+
+iosArchitectures: &iosArchitectures
+  # The Rust iOS simulator slice supports Apple Silicon.
+  "ARCHS[sdk=iphonesimulator*]": arm64
 
 # `.otpvault` 파일 연결 (Path C: 백업 파일을 열면 앱이 바로 가져오기로 진입).
 # Exported UTI + CFBundleDocumentTypes 를 iOS/macOS 앱 타깃 Info.plist 에 심는다.
@@ -133,6 +133,7 @@ targets:
         CFBundleURLTypes: *deepLinkUrlTypes
     settings:
       base:
+        <<: *iosArchitectures
         PRODUCT_BUNDLE_IDENTIFIER: com.otpeek.app
         CODE_SIGN_ENTITLEMENTS: Otpeek/Otpeek.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -214,6 +215,7 @@ targets:
       - *coreFramework
     settings:
       base:
+        <<: *iosArchitectures
         PRODUCT_BUNDLE_IDENTIFIER: com.otpeek.app.widget
         INFOPLIST_FILE: OtpWidgetExtension/Info.plist
         CODE_SIGN_ENTITLEMENTS: OtpWidgetExtension/OtpWidgetExtension.entitlements

@@ -69,7 +69,7 @@ jobs:
 
       - name: Build otpeek (release)
         working-directory: core
-        run: cargo build -p otpeek-cli --release --target ${{ matrix.target }}
+        run: cargo build --locked -p otpeek-cli --release --target ${{ matrix.target }}
 
       - name: Package tarball + checksum
         working-directory: core
@@ -80,7 +80,7 @@ jobs:
           dir="otpeek-${{ matrix.target }}"
           mkdir -p "$dir"
           cp "$bin" "$dir/"
-          cp ../LICENSE "$dir/" 2>/dev/null || true
+          if [ -f ../LICENSE ]; then cp ../LICENSE "$dir/"; fi
           tar -czf "$dir.tar.gz" "$dir"
           shasum -a 256 "$dir.tar.gz" > "$dir.tar.gz.sha256"
           ls -l "$dir.tar.gz" "$dir.tar.gz.sha256"

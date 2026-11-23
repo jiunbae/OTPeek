@@ -53,6 +53,10 @@ struct OnboardingView: View {
             }
             .frame(maxWidth: 320)
 
+            if store.isSyncing {
+                ProgressView(store.lastSyncStatus)
+            }
+
             if let error = store.lastError {
                 Text(error)
                     .font(.caption)
@@ -65,7 +69,7 @@ struct OnboardingView: View {
                     .frame(maxWidth: 320)
             }
             .buttonStyle(.borderedProminent)
-            .disabled(!isValid)
+            .disabled(!isValid || store.isSyncing)
 
             if mode != .unlock {
                 Button("Restore from Backup / iCloud") {
@@ -73,6 +77,7 @@ struct OnboardingView: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundColor(.accentColor)
+                .disabled(store.isSyncing)
             }
         }
         .padding(40)
@@ -109,7 +114,10 @@ struct OnboardingView: View {
         case .unlock:
             return "Enter your master password to unlock your accounts on this device."
         case .migrate:
-            return "We found \(store.legacyCount) existing account(s). Create a master password to move them into your new encrypted vault."
+            if store.legacyCount == 0 {
+                return "We found data from an earlier version. Create a master password to import it into an encrypted vault."
+            }
+            return "We found \(store.legacyCount) existing account(s). Create a master password to import them into your new encrypted vault."
         case .create:
             return "Create a master password to protect your encrypted vault. It secures backups and syncing across devices."
         }

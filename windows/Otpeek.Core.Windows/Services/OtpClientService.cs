@@ -11,6 +11,7 @@ public sealed class OtpClientService : IOtpClientService, IDisposable
     private readonly ISecureStorageService _secureStorage;
     private readonly object _gate = new();
     private OtpClient? _client;
+    private string? _webDavConfigurationError;
 
     public OtpClientService(ISecureStorageService secureStorage)
     {
@@ -43,6 +44,14 @@ public sealed class OtpClientService : IOtpClientService, IDisposable
 
     private void RaiseChanged() => VaultChanged?.Invoke(this, EventArgs.Empty);
 
+    private void ReplaceClient(OtpClient? client)
+    {
+        var previous = _client;
+        _client = client;
+        _webDavConfigurationError = null;
+        previous?.Dispose();
+    }
+
     // --- 생명주기 ---
 
     public void CreateVault(string masterPassword)
@@ -51,8 +60,7 @@ public sealed class OtpClientService : IOtpClientService, IDisposable
         {
             var client = OtpClient.Create(_secureStorage.VaultPath, masterPassword);
             _secureStorage.SaveVaultKey(client.VaultKey());
-            _client?.Dispose();
-            _client = client;
+            ReplaceClient(client);
         }
         RaiseChanged();
     }
@@ -65,8 +73,7 @@ public sealed class OtpClientService : IOtpClientService, IDisposable
         lock (_gate)
         {
             var client = OtpClient.OpenWithKey(_secureStorage.VaultPath, vmk);
-            _client?.Dispose();
-            _client = client;
+            ReplaceClient(client);
         }
         RaiseChanged();
     }
@@ -77,8 +84,7 @@ public sealed class OtpClientService : IOtpClientService, IDisposable
         {
             var client = OtpClient.OpenWithPassword(_secureStorage.VaultPath, masterPassword);
             _secureStorage.SaveVaultKey(client.VaultKey());
-            _client?.Dispose();
-            _client = client;
+            ReplaceClient(client);
         }
         RaiseChanged();
     }
@@ -89,8 +95,7 @@ public sealed class OtpClientService : IOtpClientService, IDisposable
         {
             var client = OtpClient.Restore(_secureStorage.VaultPath, blob, masterPassword);
             _secureStorage.SaveVaultKey(client.VaultKey());
-            _client?.Dispose();
-            _client = client;
+            ReplaceClient(client);
         }
         RaiseChanged();
     }
@@ -105,8 +110,7 @@ public sealed class OtpClientService : IOtpClientService, IDisposable
     {
         lock (_gate)
         {
-            _client?.Dispose();
-            _client = null;
+            ReplaceClient(null);
         }
         RaiseChanged();
     }
@@ -203,15 +207,43 @@ public sealed class OtpClientService : IOtpClientService, IDisposable
 
     public void ConfigureWebDavSync(string url, string username, string password)
     {
-        var backend = new WebDavSyncBackend(url, username, password);
-        Client.SetSyncBackend(backend);
+        lock (_gate)
+        {
+            var client = Client;
+            try
+            {
+                client.SetSyncBackend(new WebDavSyncBackend(url, username, password));
+                _webDavConfigurationError = null;
+            }
+            catch (Exception ex)
+            {
+                _webDavConfigurationError = ex is OtpException ? ex.Message : "Could not configure WebDAV sync.";
+                client.ClearSyncBackend();
+                throw;
+            }
+        }
     }
 
-    public void ClearSync() => Client.ClearSyncBackend();
+    public void ClearSync()
+    {
+        lock (_gate)
+        {
+            Client.ClearSyncBackend();
+            _webDavConfigurationError = null;
+        }
+    }
 
     public SyncOutcome Sync()
     {
-        var outcome = Client.Sync(NowMs());
+        OtpClient client;
+        lock (_gate)
+        {
+            client = Client;
+            if (_webDavConfigurationError is not null)
+                throw new OtpException.Backend(_webDavConfigurationError);
+        }
+
+        var outcome = client.Sync(NowMs());
         if (outcome.pulled)
             RaiseChanged();
         return outcome;
@@ -221,8 +253,7 @@ public sealed class OtpClientService : IOtpClientService, IDisposable
     {
         lock (_gate)
         {
-            _client?.Dispose();
-            _client = null;
+            ReplaceClient(null);
         }
     }
 }

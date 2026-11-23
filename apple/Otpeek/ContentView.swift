@@ -11,15 +11,19 @@ struct ContentView: View {
         iosTabs
             .sheet(isPresented: $appState.showingAddAccount) {
                 AddAccountView().environmentObject(appState)
+                    .disabled(appState.isSyncing)
             }
             .sheet(isPresented: $appState.showingQRScanner) {
                 QRScannerView().environmentObject(appState)
+                    .disabled(appState.isSyncing)
             }
             .sheet(isPresented: $appState.showingQRImageImport) {
                 QRImageImportView().environmentObject(appState)
+                    .disabled(appState.isSyncing)
             }
             .sheet(isPresented: $appState.showingAddFolder) {
                 AddFolderView().environmentObject(appState)
+                    .disabled(appState.isSyncing)
             }
         #else
         NavigationSplitView {
@@ -30,17 +34,21 @@ struct ContentView: View {
             AccountListView(groupByFolder: true)
         }
         .frame(minWidth: 700, minHeight: 450)
+        .disabled(appState.isSyncing)
         .sheet(isPresented: $appState.showingAddAccount) {
             AddAccountView()
                 .environmentObject(appState)
+                .disabled(appState.isSyncing)
         }
         .sheet(isPresented: $appState.showingQRImageImport) {
             QRImageImportView()
                 .environmentObject(appState)
+                .disabled(appState.isSyncing)
         }
         .sheet(isPresented: $appState.showingAddFolder) {
             AddFolderView()
                 .environmentObject(appState)
+                .disabled(appState.isSyncing)
         }
         #endif
     }
@@ -72,6 +80,7 @@ struct ContentView: View {
                 // subtitle beneath it; scrolling collapses it into the glass bar.
                 .navigationBarTitleDisplayMode(.large)
         }
+        .disabled(appState.isSyncing)
     }
     @ViewBuilder private var settingsTab: some View {
         NavigationStack {
@@ -84,6 +93,7 @@ struct ContentView: View {
         NavigationStack {
             AccountListView(searchable: true, titleOverride: "Search")
         }
+        .disabled(appState.isSyncing)
     }
     #endif
 }

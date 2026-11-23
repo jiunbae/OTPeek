@@ -13,7 +13,7 @@ struct WidgetSettingsView: View {
         NavigationStack {
             List {
                 Section {
-                    Text("Select accounts to show in widgets. The first account or your favorite will be shown in the quick widget.")
+                    Text("Widgets show time-based codes. The quick widget shows your favorite or first time-based account.")
                         .font(.footnote)
                         .foregroundColor(.secondary)
                 }
@@ -105,12 +105,16 @@ struct WidgetSettingsView: View {
 
     private var availableAccounts: [OtpAccount] {
         let widgetIds = Set(widgetAccounts.map { $0.id })
-        return appState.accounts.filter { !widgetIds.contains($0.id) }
+        return timeBasedAccounts.filter { !widgetIds.contains($0.id) }
+    }
+
+    private var timeBasedAccounts: [OtpAccount] {
+        appState.accounts.filter { $0.type == .totp }
     }
 
     private func loadWidgetAccounts() {
         // Load accounts with widget order
-        widgetAccounts = appState.accounts.sorted { $0.sortOrder < $1.sortOrder }
+        widgetAccounts = timeBasedAccounts.sorted { $0.sortOrder < $1.sortOrder }
     }
 
     private func moveAccounts(from source: IndexSet, to destination: Int) {
@@ -142,7 +146,7 @@ struct WidgetSettingsView: View {
     }
 
     private func resetWidgetOrder() {
-        widgetAccounts = appState.accounts
+        widgetAccounts = timeBasedAccounts
         for (index, var account) in widgetAccounts.enumerated() {
             account.sortOrder = Int32(index)
             account.isFavorite = false

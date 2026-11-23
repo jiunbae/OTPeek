@@ -10,7 +10,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand};
 use otpeek_core::{HashAlgorithm, OtpAccount, OtpFolder, OtpType};
-use otpeek_vault::{Vault, VaultPayload};
+use otpeek_vault::{Vault, VaultError, VaultPayload};
 use serde::{Deserialize, Serialize};
 
 const KEYRING_SERVICE: &str = "otpeek";
@@ -57,7 +57,7 @@ enum Command {
         #[command(subcommand)]
         action: FolderCmd,
     },
-    /// Export a v2 encrypted backup container.
+    /// Export a v2 encrypted backup to an unused file path.
     Export {
         file: String,
         #[arg(long = "password-stdin")]
@@ -76,8 +76,11 @@ enum Command {
         #[command(subcommand)]
         action: SyncCmd,
     },
-    /// Bootstrap this device from a backup file or WebDAV URL.
-    Restore { target: String },
+    /// Restore a backup file or HTTPS WebDAV URL to an unused vault path.
+    #[command(
+        after_help = "Choose an unused destination with OTPEEK_VAULT or --vault. For WebDAV, supply --user or OTP_WEBDAV_USER, and set OTP_WEBDAV_PASSWORD for headless use."
+    )]
+    Restore(RestoreArgs),
     /// Change the master password.
     Passwd,
 }
@@ -107,8 +110,56 @@ struct AddArgs {
 struct ListArgs {
     #[arg(long)]
     folder: Option<String>,
+    /// Print account metadata as JSON without OTP secrets.
     #[arg(long)]
     json: bool,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AccountMetadata<'a> {
+    id: &'a str,
+    #[serde(rename = "type")]
+    otp_type: OtpType,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    issuer: Option<&'a str>,
+    account_name: &'a str,
+    algorithm: HashAlgorithm,
+    digits: u32,
+    period: u32,
+    counter: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    folder_id: Option<&'a str>,
+    is_favorite: bool,
+    sort_order: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    icon: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    color: Option<&'a str>,
+    created_at: i64,
+    updated_at: i64,
+}
+
+impl<'a> From<&'a OtpAccount> for AccountMetadata<'a> {
+    fn from(account: &'a OtpAccount) -> Self {
+        Self {
+            id: &account.id,
+            otp_type: account.otp_type,
+            issuer: account.issuer.as_deref(),
+            account_name: &account.account_name,
+            algorithm: account.algorithm,
+            digits: account.digits,
+            period: account.period,
+            counter: account.counter,
+            folder_id: account.folder_id.as_deref(),
+            is_favorite: account.is_favorite,
+            sort_order: account.sort_order,
+            icon: account.icon.as_deref(),
+            color: account.color.as_deref(),
+            created_at: account.created_at,
+            updated_at: account.updated_at,
+        }
+    }
 }
 
 #[derive(Args)]
@@ -120,6 +171,18 @@ struct CodeArgs {
     watch: bool,
     #[arg(long)]
     json: bool,
+    /// Save the next HOTP counter before releasing the current code.
+    /// By default, HOTP only peeks at the current code.
+    #[arg(long, conflicts_with = "watch")]
+    advance: bool,
+}
+
+#[derive(Args)]
+struct RestoreArgs {
+    target: String,
+    /// WebDAV username. Overrides OTP_WEBDAV_USER and the matching sync configuration.
+    #[arg(long, value_parser = clap::builder::NonEmptyStringValueParser::new())]
+    user: Option<String>,
 }
 
 #[derive(Args)]
@@ -219,7 +282,7 @@ fn run(cli: Cli) -> Result<()> {
             legacy,
         } => cmd_import(&vault_flag, &file, merge, legacy),
         Command::Sync { action } => cmd_sync(&vault_flag, action),
-        Command::Restore { target } => cmd_restore(&vault_flag, &target),
+        Command::Restore(args) => cmd_restore(&vault_flag, args),
         Command::Passwd => cmd_passwd(&vault_flag),
     }
 }
@@ -239,6 +302,17 @@ fn resolve_vault_path(flag: &Option<String>) -> Result<PathBuf> {
     }
     let base = dirs::data_dir().ok_or_else(|| anyhow!("cannot determine data directory"))?;
     Ok(base.join("otpeek").join("vault.otpvault"))
+}
+
+fn check_new_vault_path(path: &Path) -> Result<()> {
+    match path.symlink_metadata() {
+        Ok(_) => bail!(
+            "vault path already exists at {}; choose an unused path with OTPEEK_VAULT or --vault",
+            path.display()
+        ),
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(err) => Err(err).with_context(|| format!("checking {}", path.display())),
+    }
 }
 
 fn config_path() -> Result<PathBuf> {
@@ -366,14 +440,24 @@ fn keyring_store_vmk(path: &Path, vmk: &[u8]) {
     }
 }
 
-fn webdav_password(url: &str) -> Result<String> {
+fn webdav_keyring_entry(url: &str, user: &str) -> Result<keyring::Entry, keyring::Error> {
+    let account = format!("{}:{url}:{user}", url.len());
+    keyring::Entry::new(KEYRING_WEBDAV, &account)
+}
+
+fn webdav_password(url: &str, user: &str, allow_legacy: bool) -> Result<String> {
     if let Ok(p) = std::env::var("OTP_WEBDAV_PASSWORD") {
         if !p.is_empty() {
             return Ok(p);
         }
     }
-    if let Ok(entry) = keyring::Entry::new(KEYRING_WEBDAV, url) {
-        if let Ok(p) = entry.get_password() {
+    if let Ok(p) = webdav_keyring_entry(url, user).and_then(|entry| entry.get_password()) {
+        return Ok(p);
+    }
+    if allow_legacy {
+        if let Ok(p) =
+            keyring::Entry::new(KEYRING_WEBDAV, url).and_then(|entry| entry.get_password())
+        {
             return Ok(p);
         }
     }
@@ -391,8 +475,7 @@ struct Session {
 
 impl Session {
     fn save(&mut self) -> Result<()> {
-        let bytes = self.vault.to_bytes(now_ms())?;
-        otpeek_vault::write_vault_file(&self.path, &bytes)?;
+        self.vault.save_to_file(&self.path, now_ms())?;
         Ok(())
     }
 }
@@ -404,7 +487,11 @@ fn open_session(flag: &Option<String>) -> Result<Session> {
     }
     let data = otpeek_vault::read_vault_file(&path)?;
 
-    // Prefer the keyring VMK (no password needed); fall back to a password.
+    // An explicit password keeps headless commands independent of the keyring.
+    if let Some(pw) = env_password() {
+        let vault = Vault::open_with_password(&data, &pw)?;
+        return Ok(Session { vault, path });
+    }
     if let Some(vmk) = keyring_get_vmk(&path) {
         if let Ok(vault) = Vault::open_with_key(&data, &vmk) {
             return Ok(Session { vault, path });
@@ -513,16 +600,13 @@ fn resolve_query(accounts: &[OtpAccount], query: &str) -> Result<usize> {
 
 fn cmd_init(flag: &Option<String>) -> Result<()> {
     let path = resolve_vault_path(flag)?;
-    if path.exists() {
-        bail!("vault already exists at {}", path.display());
-    }
+    check_new_vault_path(&path)?;
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
     }
     let pw = new_master_password()?;
     let mut vault = Vault::create(&pw)?;
-    let bytes = vault.to_bytes(now_ms())?;
-    otpeek_vault::write_vault_file(&path, &bytes)?;
+    vault.save_to_file(&path, now_ms())?;
     keyring_store_vmk(&path, &vault.vmk());
     println!("Created vault at {}", path.display());
     Ok(())
@@ -607,7 +691,8 @@ fn cmd_list(flag: &Option<String>, args: ListArgs) -> Result<()> {
     }
 
     if args.json {
-        println!("{}", serde_json::to_string_pretty(&accounts)?);
+        let metadata: Vec<_> = accounts.iter().map(AccountMetadata::from).collect();
+        println!("{}", serde_json::to_string_pretty(&metadata)?);
         return Ok(());
     }
 
@@ -643,7 +728,7 @@ fn cmd_list(flag: &Option<String>, args: ListArgs) -> Result<()> {
 }
 
 fn cmd_code(flag: &Option<String>, args: CodeArgs) -> Result<()> {
-    let session = open_session(flag)?;
+    let mut session = open_session(flag)?;
     let accounts = live_accounts_sorted(session.vault.payload());
     let idx = resolve_query(&accounts, &args.query)?;
     let account = &accounts[idx];
@@ -652,14 +737,41 @@ fn cmd_code(flag: &Option<String>, args: CodeArgs) -> Result<()> {
         return watch_code(account);
     }
 
-    let code = otpeek_core::generate_code(account, now_ms())?;
-    if args.copy {
+    let now = now_ms();
+    let code = if args.advance {
+        if account.otp_type != OtpType::Hotp {
+            bail!("--advance requires a HOTP account");
+        }
+        let next = account
+            .counter
+            .checked_add(1)
+            .ok_or_else(|| anyhow!("HOTP counter is exhausted"))?;
+        let code = otpeek_core::generate_code(account, now)?;
+        let stored = session
+            .vault
+            .payload_mut()
+            .accounts
+            .iter_mut()
+            .find(|a| *a == account)
+            .ok_or_else(|| anyhow!("account no longer exists"))?;
+        stored.counter = next;
+        stored.updated_at = stored.updated_at.max(now);
+        session.save()?;
+        code
+    } else {
+        otpeek_core::generate_code(account, now)?
+    };
+    drop(session);
+    if args.copy && !args.advance {
         copy_to_clipboard(&code.code)?;
     }
     if args.json {
         println!("{}", serde_json::to_string(&code)?);
     } else {
         println!("{}", code.code);
+    }
+    if args.copy && args.advance {
+        copy_to_clipboard(&code.code).context("HOTP counter advanced; use the printed code")?;
     }
     Ok(())
 }
@@ -878,15 +990,17 @@ fn cmd_export(flag: &Option<String>, file: &str, password_stdin: bool) -> Result
     let payload = session.vault.payload().clone();
     let mut container = Vault::create(&pw)?;
     *container.payload_mut() = payload;
-    let bytes = container.to_bytes(now_ms())?;
-    std::fs::write(file, bytes).with_context(|| format!("writing {file}"))?;
+    container
+        .save_to_file(Path::new(file), now_ms())
+        .with_context(|| format!("creating backup at {file}; choose an unused output path"))?;
     println!("Exported backup to {file}");
     Ok(())
 }
 
 fn cmd_import(flag: &Option<String>, file: &str, merge: bool, legacy: bool) -> Result<()> {
     let mut session = open_session(flag)?;
-    let data = std::fs::read(file).with_context(|| format!("reading {file}"))?;
+    let data = otpeek_vault::read_vault_file(Path::new(file))
+        .with_context(|| format!("reading {file}"))?;
     let pw = match env_backup_password() {
         Some(p) => p,
         None => open_password()?,
@@ -960,8 +1074,9 @@ fn cmd_sync(flag: &Option<String>, action: SyncCmd) -> Result<()> {
     match action {
         SyncCmd::Setup { backend } => match backend {
             SyncBackendCmd::Webdav { url, user } => {
+                otpeek_sync::webdav::WebDavBackend::validate_url(&url)?;
                 let pw = rpassword::prompt_password("WebDAV password: ")?;
-                if let Ok(entry) = keyring::Entry::new(KEYRING_WEBDAV, &url) {
+                if let Ok(entry) = webdav_keyring_entry(&url, &user) {
                     entry
                         .set_password(&pw)
                         .context("storing WebDAV password in keyring")?;
@@ -984,9 +1099,20 @@ fn cmd_sync(flag: &Option<String>, action: SyncCmd) -> Result<()> {
                 .ok_or_else(|| anyhow!("sync not configured (run `otp sync setup ...`)"))?;
             let backend = build_backend(&sc)?;
             let mut session = open_session(flag)?;
+            session.vault.check_file_revision(&session.path)?;
             let outcome =
                 otpeek_sync::SyncEngine::sync(&mut session.vault, backend.as_ref(), now_ms())?;
-            session.save()?;
+            if let Err(err) = session.save() {
+                if matches!(
+                    err.downcast_ref::<VaultError>(),
+                    Some(VaultError::StaleFile)
+                ) {
+                    return Err(err.context(
+                        "local save conflicted after remote sync; rerun `otpeek sync now`",
+                    ));
+                }
+                return Err(err);
+            }
             println!(
                 "Sync complete: pushed={} pulled={} merged_changes={}",
                 outcome.pushed, outcome.pulled, outcome.merged_changes
@@ -1011,7 +1137,8 @@ fn cmd_sync(flag: &Option<String>, action: SyncCmd) -> Result<()> {
 fn build_backend(sc: &SyncConfig) -> Result<Box<dyn otpeek_sync::SyncBackend>> {
     match sc.backend.as_str() {
         "webdav" => {
-            let pw = webdav_password(&sc.url)?;
+            otpeek_sync::webdav::WebDavBackend::validate_url(&sc.url)?;
+            let pw = webdav_password(&sc.url, &sc.user, true)?;
             Ok(Box::new(otpeek_sync::webdav::WebDavBackend::new(
                 sc.url.clone(),
                 sc.user.clone(),
@@ -1022,26 +1149,47 @@ fn build_backend(sc: &SyncConfig) -> Result<Box<dyn otpeek_sync::SyncBackend>> {
     }
 }
 
-fn cmd_restore(flag: &Option<String>, target: &str) -> Result<()> {
+fn restore_webdav_user(
+    target: &str,
+    user: Option<String>,
+    env_user: Option<String>,
+    load_config: impl FnOnce() -> Result<Config>,
+) -> Result<(String, bool)> {
+    if let Some(user) = user.or_else(|| env_user.filter(|user| !user.is_empty())) {
+        return Ok((user, false));
+    }
+
+    load_config()?
+        .sync
+        .filter(|sc| sc.backend == "webdav" && sc.url == target && !sc.user.is_empty())
+        .map(|sc| (sc.user, true))
+        .ok_or_else(|| anyhow!("WebDAV user unknown; pass --user or set OTP_WEBDAV_USER"))
+}
+
+fn cmd_restore(flag: &Option<String>, args: RestoreArgs) -> Result<()> {
     let path = resolve_vault_path(flag)?;
+    check_new_vault_path(&path)?;
+    let target = args.target.as_str();
 
     let blob = if target.starts_with("http://") || target.starts_with("https://") {
-        let cfg = read_config()?;
-        let user = cfg
-            .sync
-            .as_ref()
-            .map(|s| s.user.clone())
-            .or_else(|| std::env::var("OTP_WEBDAV_USER").ok())
-            .ok_or_else(|| {
-                anyhow!("WebDAV user unknown; run `otp sync setup` or set OTP_WEBDAV_USER")
-            })?;
-        let pw = webdav_password(target)?;
+        otpeek_sync::webdav::WebDavBackend::validate_url(target)?;
+        let (user, allow_legacy) = restore_webdav_user(
+            target,
+            args.user,
+            std::env::var("OTP_WEBDAV_USER").ok(),
+            read_config,
+        )?;
+        let pw = webdav_password(target, &user, allow_legacy)?;
         let backend = otpeek_sync::webdav::WebDavBackend::new(target.to_string(), user, pw);
         let remote = otpeek_sync::SyncBackend::fetch(&backend)?
             .ok_or_else(|| anyhow!("no remote vault found"))?;
         remote.data
     } else {
-        std::fs::read(target).with_context(|| format!("reading {target}"))?
+        if args.user.is_some() {
+            bail!("--user requires a WebDAV URL");
+        }
+        otpeek_vault::read_vault_file(Path::new(target))
+            .with_context(|| format!("reading {target}"))?
     };
 
     let pw = open_password()?;
@@ -1049,8 +1197,7 @@ fn cmd_restore(flag: &Option<String>, target: &str) -> Result<()> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
     }
-    let bytes = vault.to_bytes(now_ms())?;
-    otpeek_vault::write_vault_file(&path, &bytes)?;
+    vault.restore_to_new_file(&path, now_ms())?;
     keyring_store_vmk(&path, &vault.vmk());
     println!("Restored vault to {}", path.display());
     Ok(())
@@ -1089,4 +1236,37 @@ fn copy_to_clipboard(text: &str) -> Result<()> {
         .set_text(text.to_string())
         .context("writing clipboard")?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn webdav_restore_user_prefers_explicit_then_env_then_matching_config() {
+        let url = "https://example.test/backup.otpvault";
+        let unavailable = || bail!("config is unavailable");
+        assert_eq!(
+            restore_webdav_user(url, Some("flag".into()), Some("env".into()), unavailable).unwrap(),
+            ("flag".into(), false)
+        );
+        assert_eq!(
+            restore_webdav_user(url, None, Some("env".into()), unavailable).unwrap(),
+            ("env".into(), false)
+        );
+        let configured = || {
+            Ok(Config {
+                sync: Some(SyncConfig {
+                    backend: "webdav".into(),
+                    url: url.into(),
+                    user: "configured".into(),
+                }),
+            })
+        };
+        assert_eq!(
+            restore_webdav_user(url, None, Some(String::new()), configured).unwrap(),
+            ("configured".into(), true)
+        );
+        assert!(restore_webdav_user("https://other.test/vault", None, None, configured).is_err());
+    }
 }
