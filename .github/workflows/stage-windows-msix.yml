@@ -1,0 +1,37 @@
+name: Stage Windows 2.1.0 unsigned package
+
+on:
+  push:
+    branches: [release/windows-v2.1.0-staging]
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - uses: microsoft/setup-msbuild@v2
+      - name: Build x64 MSIX bundle
+        shell: pwsh
+        run: |
+          dotnet build windows/Otpeek.App/Otpeek.App.csproj -c Release -p:Platform=x64 -p:WindowsPackageType=MSIX -p:GenerateAppxPackageOnBuild=true -p:AppxBundlePlatforms=x64 -p:AppxBundle=Always -p:UapAppxPackageBuildMode=SideloadOnly -p:AppxPackageSigningEnabled=false
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Upload bundle for release signing
+        uses: actions/upload-artifact@v4
+        with:
+          name: OTPeek-Windows-x64-v2.1.0-unsigned
+          path: windows/Otpeek.App/AppPackages/**/*.msixbundle
+          if-no-files-found: error
+          retention-days: 14
